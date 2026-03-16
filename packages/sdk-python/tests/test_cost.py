@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from agentlens.patchers.openai import _calculate_cost
 
 

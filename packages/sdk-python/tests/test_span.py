@@ -11,7 +11,6 @@ import pytest
 from agentlens.agentlens import AgentLens
 from agentlens.span import Span
 
-
 # ---------------------------------------------------------------------------
 # Span unit tests
 # ---------------------------------------------------------------------------
@@ -166,17 +165,15 @@ class TestAgentLensTrace:
 
     def test_trace_marks_error_on_exception(self) -> None:
         captured = self._init()
-        with pytest.raises(RuntimeError):
-            with AgentLens.trace("failing-step"):
-                raise RuntimeError("oops")
+        with pytest.raises(RuntimeError), AgentLens.trace("failing-step"):
+            raise RuntimeError("oops")
         assert captured[0]["status"] == "error"
         assert captured[0]["errorMessage"] == "oops"
 
     def test_nested_traces_are_child_spans(self) -> None:
         captured = self._init()
-        with AgentLens.trace("parent"):
-            with AgentLens.trace("child"):
-                pass
+        with AgentLens.trace("parent"), AgentLens.trace("child"):
+            pass
 
         assert len(captured) == 2
         child = next(d for d in captured if d["name"] == "child")

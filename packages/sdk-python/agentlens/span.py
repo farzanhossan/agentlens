@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 from .models import SpanData
 
@@ -27,7 +27,7 @@ class Span:
         trace_id: str,
         name: str,
         project_id: str,
-        parent_span_id: Optional[str] = None,
+        parent_span_id: str | None = None,
     ) -> None:
         self._span_id = span_id
         self._trace_id = trace_id
@@ -36,37 +36,37 @@ class Span:
         self._parent_span_id = parent_span_id
         self._started_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
 
-        self._model: Optional[str] = None
-        self._provider: Optional[str] = None
-        self._input: Optional[str] = None
-        self._output: Optional[str] = None
-        self._input_tokens: Optional[int] = None
-        self._output_tokens: Optional[int] = None
-        self._cost_usd: Optional[float] = None
-        self._latency_ms: Optional[int] = None
+        self._model: str | None = None
+        self._provider: str | None = None
+        self._input: str | None = None
+        self._output: str | None = None
+        self._input_tokens: int | None = None
+        self._output_tokens: int | None = None
+        self._cost_usd: float | None = None
+        self._latency_ms: int | None = None
         self._status: str = "success"
-        self._error_message: Optional[str] = None
+        self._error_message: str | None = None
         self._metadata: dict[str, Any] = {}
-        self._ended_at: Optional[datetime.datetime] = None
+        self._ended_at: datetime.datetime | None = None
 
     # ── Fluent setters ──────────────────────────────────────────────────────────
 
-    def set_input(self, data: str) -> "Span":
+    def set_input(self, data: str) -> Span:
         """Set the raw LLM prompt or tool input (stored in Elasticsearch only)."""
         self._input = data
         return self
 
-    def set_output(self, data: str) -> "Span":
+    def set_output(self, data: str) -> Span:
         """Set the raw LLM completion or tool output (stored in Elasticsearch only)."""
         self._output = data
         return self
 
-    def set_metadata(self, key: str, value: Any) -> "Span":
+    def set_metadata(self, key: str, value: Any) -> Span:
         """Attach a free-form metadata key-value pair to this span."""
         self._metadata[key] = value
         return self
 
-    def set_model(self, model: str, provider: Optional[str] = None) -> "Span":
+    def set_model(self, model: str, provider: str | None = None) -> Span:
         """Set the model name and optional provider (e.g. ``'gpt-4o'``, ``'openai'``)."""
         self._model = model
         if provider is not None:
@@ -77,8 +77,8 @@ class Span:
         self,
         input_tokens: int,
         output_tokens: int,
-        cost_usd: Optional[float] = None,
-    ) -> "Span":
+        cost_usd: float | None = None,
+    ) -> Span:
         """Set token counts and optionally the USD cost."""
         self._input_tokens = input_tokens
         self._output_tokens = output_tokens
@@ -86,7 +86,7 @@ class Span:
             self._cost_usd = cost_usd
         return self
 
-    def set_error(self, error: Union[Exception, str]) -> "Span":
+    def set_error(self, error: Exception | str) -> Span:
         """Record an error on this span; automatically sets status to ``'error'``."""
         self._status = "error"
         self._error_message = str(error) if isinstance(error, Exception) else error

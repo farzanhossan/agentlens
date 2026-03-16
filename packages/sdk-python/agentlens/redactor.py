@@ -14,7 +14,6 @@ Usage::
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Redaction rules — identical patterns to the TypeScript SDK's redactor.ts
@@ -66,7 +65,7 @@ def redact(text: str) -> str:
     return result
 
 
-def maybe_redact(text: Optional[str], enabled: bool) -> Optional[str]:
+def maybe_redact(text: str | None, enabled: bool) -> str | None:
     """Conditionally redact *text*; returns ``None`` / ``undefined`` unchanged."""
     if not enabled or text is None:
         return text

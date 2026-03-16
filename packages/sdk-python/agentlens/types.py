@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Union
+
+from typing_extensions import TypeAlias
 
 
 class SpanKind(str, Enum):
@@ -23,7 +25,7 @@ class SpanStatus(str, Enum):
     ERROR = "ERROR"
 
 
-SpanAttributes = dict[str, str | int | float | bool | list[str]]
+SpanAttributes: TypeAlias = dict[str, Union[str, int, float, bool, list[str]]]
 
 
 @dataclass

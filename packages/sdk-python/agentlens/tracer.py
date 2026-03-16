@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Optional
+from typing import Any, Callable
 
 from .context import _current_span_id, _current_trace_id, get_current_span_id, get_current_trace_id
 from .span import Span
@@ -50,7 +51,7 @@ class Tracer:
         """
         span_id = str(uuid.uuid4())
         trace_id = get_current_trace_id() or str(uuid.uuid4())
-        parent_span_id: Optional[str] = get_current_span_id()
+        parent_span_id: str | None = get_current_span_id()
 
         span = Span(span_id, trace_id, name, self._project_id, parent_span_id)
 

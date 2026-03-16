@@ -38,7 +38,7 @@ class Buffer:
 
     def __init__(
         self,
-        transport: "Transport",
+        transport: Transport,
         flush_interval_ms: int = _DEFAULT_FLUSH_INTERVAL_MS,
         max_batch_size: int = _DEFAULT_MAX_BATCH_SIZE,
     ) -> None:

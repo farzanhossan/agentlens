@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import functools
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
 from .buffer import Buffer
 from .config import AgentLensConfig
@@ -38,7 +39,7 @@ class AgentLens:
             ...
     """
 
-    _instance: Optional["AgentLens"] = None
+    _instance: AgentLens | None = None
 
     def __init__(self, config: AgentLensConfig) -> None:
         self._project_id = config.project_id
@@ -60,7 +61,10 @@ class AgentLens:
                 span_data.get("output"), self._redact_pii
             )
             # Remove None values introduced by maybe_redact
-            sanitised = {k: v for k, v in sanitised.items() if v is not None or k in ("input", "output")}
+            sanitised = {
+                k: v for k, v in sanitised.items()
+                if v is not None or k in ("input", "output")
+            }
             self._buffer.push(sanitised)
 
         self._tracer = Tracer(config.project_id, _sink)
@@ -185,7 +189,7 @@ class AgentLens:
         return cls._instance is not None
 
     @classmethod
-    def _get_project_id(cls) -> Optional[str]:
+    def _get_project_id(cls) -> str | None:
         """Return the configured project ID, or ``None`` if uninitialised."""
         return cls._instance._project_id if cls._instance else None
 
@@ -207,7 +211,7 @@ class AgentLens:
     # ── Private ──────────────────────────────────────────────────────────────
 
     @classmethod
-    def _require_instance(cls) -> "AgentLens":
+    def _require_instance(cls) -> AgentLens:
         if cls._instance is None:
             raise RuntimeError(
                 "AgentLens is not initialised. "

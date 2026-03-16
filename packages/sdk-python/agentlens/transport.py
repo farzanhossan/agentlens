@@ -113,4 +113,4 @@ class Transport:
             except ValueError:
                 pass
         cap = _BASE_DELAY_S * (2**attempt)
-        return random.random() * cap  # full jitter
+        return float(random.random() * cap)  # full jitter

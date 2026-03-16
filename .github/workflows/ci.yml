@@ -47,7 +47,7 @@ jobs:
 # ── Job: lint ─────────────────────────────────────────────────────────────────
   lint:
     name: Lint
-    needs: install
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +69,14 @@ jobs:
             packages/*/node_modules
             apps/*/node_modules
           key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Restore build outputs
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+          key: build-${{ runner.os }}-${{ github.sha }}
 
       - name: Restore Turbo cache
         uses: actions/cache/restore@v4

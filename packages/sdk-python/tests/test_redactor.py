@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from agentlens.redactor import maybe_redact, redact
 
 

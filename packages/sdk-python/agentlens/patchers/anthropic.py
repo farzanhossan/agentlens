@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from ..agentlens import AgentLens
 from ..context import get_current_span_id, get_current_trace_id
@@ -35,7 +35,7 @@ _PRICING: dict[str, tuple[float, float]] = {
 }
 
 
-def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> Optional[float]:
+def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
     import re
 
     pricing = _PRICING.get(model) or _PRICING.get(
@@ -46,7 +46,7 @@ def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> Option
     return (input_tokens / 1000) * pricing[0] + (output_tokens / 1000) * pricing[1]
 
 
-def _make_span(name: str) -> Optional[Span]:
+def _make_span(name: str) -> Span | None:
     project_id = AgentLens._get_project_id()
     if not project_id:
         return None
@@ -178,7 +178,7 @@ def patch() -> None:
         return
 
     try:
-        import anthropic as _anthropic  # type: ignore[import]
+        import anthropic as _anthropic
     except ImportError:
         import warnings
         warnings.warn(

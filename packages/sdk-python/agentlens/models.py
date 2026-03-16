@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
@@ -27,21 +27,21 @@ class SpanData(BaseModel):
     project_id: str
     name: str
     status: Literal["success", "error", "timeout"] = "success"
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
     started_at: str  # ISO-8601
 
-    parent_span_id: Optional[str] = None
-    model: Optional[str] = None
-    provider: Optional[str] = None
-    input: Optional[str] = None
-    output: Optional[str] = None
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    cost_usd: Optional[float] = None
-    latency_ms: Optional[int] = None
-    error_message: Optional[str] = None
-    ended_at: Optional[str] = None
+    parent_span_id: str | None = None
+    model: str | None = None
+    provider: str | None = None
+    input: str | None = None
+    output: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cost_usd: float | None = None
+    latency_ms: int | None = None
+    error_message: str | None = None
+    ended_at: str | None = None
 
-    def to_wire(self) -> Dict[str, Any]:
+    def to_wire(self) -> dict[str, Any]:
         """Serialise to a camelCase dict, omitting ``None`` values."""
         return self.model_dump(mode="json", by_alias=True, exclude_none=True)

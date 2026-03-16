@@ -16,7 +16,7 @@ Requires the ``openai`` extra::
 from __future__ import annotations
 
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from ..agentlens import AgentLens
 from ..context import get_current_span_id, get_current_trace_id
@@ -47,7 +47,7 @@ _PRICING: dict[str, tuple[float, float]] = {
 }
 
 
-def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> Optional[float]:
+def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
     import re
 
     pricing = _PRICING.get(model) or _PRICING.get(
@@ -62,7 +62,7 @@ def _calculate_cost(model: str, input_tokens: int, output_tokens: int) -> Option
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_span(name: str) -> Optional[Span]:
+def _make_span(name: str) -> Span | None:
     """Create a raw Span using the current trace context."""
     project_id = AgentLens._get_project_id()
     if not project_id:
@@ -188,7 +188,9 @@ def _patch_chat_completions(completions_cls: Any) -> None:
                 if content:
                     span.set_output(content)
             if result.usage:
-                cost = _calculate_cost(model, result.usage.prompt_tokens, result.usage.completion_tokens)
+                cost = _calculate_cost(
+                    model, result.usage.prompt_tokens, result.usage.completion_tokens
+                )
                 span.set_tokens(result.usage.prompt_tokens, result.usage.completion_tokens, cost)
             return result
         except Exception as exc:
@@ -235,7 +237,9 @@ def _patch_async_chat_completions(completions_cls: Any) -> None:
                 if content:
                     span.set_output(content)
             if result.usage:
-                cost = _calculate_cost(model, result.usage.prompt_tokens, result.usage.completion_tokens)
+                cost = _calculate_cost(
+                    model, result.usage.prompt_tokens, result.usage.completion_tokens
+                )
                 span.set_tokens(result.usage.prompt_tokens, result.usage.completion_tokens, cost)
             return result
         except Exception as exc:
@@ -300,7 +304,7 @@ def patch() -> None:
         return
 
     try:
-        import openai as _openai  # type: ignore[import]
+        import openai as _openai
     except ImportError:
         import warnings
         warnings.warn(
