@@ -1,0 +1,37 @@
+{
+  "name": "@agentlens/anthropic",
+  "version": "0.1.0",
+  "description": "AgentLens auto-patcher for the Anthropic Node.js SDK",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint src --ext .ts --max-warnings 0",
+    "test": "jest --passWithNoTests",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.20.0"
+  },
+  "dependencies": {
+    "@agentlens/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.24.3",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/__tests__/**/*.test.ts"]
+  }
+}

@@ -1,0 +1,70 @@
+name = "agentlens-ingest"
+main = "src/index.ts"
+compatibility_date = "2024-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Worker settings ───────────────────────────────────────────────────────────
+workers_dev = true
+
+[vars]
+ENVIRONMENT = "production"
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+# Uncomment and set your custom domain after deploying:
+# [[routes]]
+# pattern = "ingest.agentlens.ai/v1/*"
+# zone_name = "agentlens.ai"
+
+# ── KV Namespaces ─────────────────────────────────────────────────────────────
+# Used by the rate-limiter middleware (1 000 req/min per project, fixed window).
+# Create with:
+#   wrangler kv namespace create RATE_LIMIT_KV
+#   wrangler kv namespace create RATE_LIMIT_KV --preview
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
+
+# ── Secrets (set via `wrangler secret put`) ───────────────────────────────────
+# HMAC_SECRET              — shared secret for HMAC-SHA256 API key verification
+# UPSTASH_REDIS_REST_URL   — Upstash Redis REST endpoint
+# UPSTASH_REDIS_REST_TOKEN — Upstash Redis REST auth token
+#
+# Setup:
+#   wrangler secret put HMAC_SECRET
+#   wrangler secret put UPSTASH_REDIS_REST_URL
+#   wrangler secret put UPSTASH_REDIS_REST_TOKEN
+
+# ── Observability ─────────────────────────────────────────────────────────────
+[observability]
+enabled = true
+
+# ── Limits ────────────────────────────────────────────────────────────────────
+[limits]
+cpu_ms = 50
+
+# ── Development environment ──────────────────────────────────────────────────
+[env.development]
+name = "agentlens-ingest-dev"
+workers_dev = true
+
+[env.development.vars]
+ENVIRONMENT = "development"
+
+[[env.development.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_DEV_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_DEV_PREVIEW_KV_NAMESPACE_ID"
+
+# ── Staging environment ───────────────────────────────────────────────────────
+[env.staging]
+name = "agentlens-ingest-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+[[env.staging.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_STAGING_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_STAGING_PREVIEW_KV_NAMESPACE_ID"

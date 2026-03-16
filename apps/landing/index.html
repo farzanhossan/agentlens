@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentLens — Full visibility into every AI decision</title>
+  <meta name="description" content="AgentLens gives you full visibility into every LLM call, every decision, every dollar. Debug AI agents faster. Ship with confidence." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AgentLens — Full visibility into every AI decision" />
+  <meta property="og:description" content="Trace every LLM call, track costs, replay sessions. The observability platform built for AI engineers." />
+  <meta property="og:image" content="https://agentlens.ai/og.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://agentlens.ai" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AgentLens — Full visibility into every AI decision" />
+  <meta name="twitter:description" content="Trace every LLM call, track costs, replay sessions. The observability platform built for AI engineers." />
+  <meta name="twitter:image" content="https://agentlens.ai/og.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- GA placeholder -->
+  <!-- GA_TAG_HERE -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0a;
+      --bg2:      #111111;
+      --bg3:      #161616;
+      --border:   #1f1f1f;
+      --border2:  #2a2a2a;
+      --text:     #f4f4f5;
+      --muted:    #71717a;
+      --muted2:   #52525b;
+      --accent:   #6366f1;
+      --accent2:  #818cf8;
+      --accent3:  #4f46e5;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --orange:   #f97316;
+      --radius:   12px;
+      --shadow:   0 0 0 1px var(--border);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Utilities ─────────────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .section    { padding: 100px 0; }
+    .section-sm { padding: 60px 0; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: var(--accent2);
+      font-size: 13px; font-weight: 500;
+      padding: 6px 14px; border-radius: 999px;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.4); }
+    }
+
+    /* ── Buttons ───────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 8px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; border: none; transition: all .2s;
+      text-decoration: none; position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.08) 50%, transparent 100%);
+      transform: translateX(-100%);
+      transition: transform .5s;
+    }
+    .btn:hover::after { transform: translateX(100%); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 0 rgba(99,102,241,.5);
+    }
+    .btn-primary:hover {
+      background: var(--accent3);
+      box-shadow: 0 0 20px rgba(99,102,241,.4);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted2); transform: translateY(-1px); }
+
+    .btn-sm { padding: 8px 16px; font-size: 13px; }
+
+    /* ── Nav ───────────────────────────────────────────────────────────── */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 0;
+      transition: background .3s, border-color .3s, backdrop-filter .3s;
+      border-bottom: 1px solid transparent;
+    }
+    #nav.scrolled {
+      background: rgba(10,10,10,.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom-color: var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; gap: 32px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 700; color: var(--text);
+      flex-shrink: 0;
+    }
+    .nav-logo svg { color: var(--accent); }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px;
+      list-style: none; margin-left: auto;
+    }
+    .nav-links a {
+      font-size: 14px; font-weight: 500; color: var(--muted);
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { margin-left: 8px; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-cta   { margin-left: auto; }
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────────────── */
+    #hero {
+      padding: 160px 0 100px;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+    }
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    .hero-eyebrow { margin-bottom: 20px; }
+    .hero-headline {
+      font-size: clamp(36px, 5vw, 58px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -.03em;
+      margin-bottom: 20px;
+    }
+    .hero-headline span {
+      background: linear-gradient(135deg, var(--accent2), #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 18px; color: var(--muted); line-height: 1.7;
+      max-width: 480px; margin-bottom: 36px;
+    }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .hero-proof {
+      font-size: 13px; color: var(--muted2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-proof::before {
+      content: ''; display: inline-block; width: 8px; height: 8px;
+      background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    /* Terminal */
+    .hero-terminal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 0 1px var(--border);
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .terminal-dot:nth-child(1) { background: #ff5f57; }
+    .terminal-dot:nth-child(2) { background: #febc2e; }
+    .terminal-dot:nth-child(3) { background: #28c840; }
+    .terminal-label {
+      margin-left: auto; font-size: 12px; color: var(--muted2); font-family: monospace;
+    }
+    .terminal-body {
+      padding: 24px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 14px; line-height: 1.8; min-height: 200px;
+    }
+    .terminal-line { opacity: 0; display: block; white-space: pre; }
+    .terminal-line.visible { opacity: 1; }
+    .terminal-line.cmd    { color: #e2e8f0; }
+    .terminal-line.comment{ color: #6b7280; }
+    .terminal-line.import { color: #93c5fd; }
+    .terminal-line.method { color: #86efac; }
+    .terminal-line.success{ color: #86efac; }
+    .terminal-line.blank  { display: block; height: 8px; }
+    .cursor {
+      display: inline-block; width: 2px; height: 16px;
+      background: var(--accent2); vertical-align: middle;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Fade-in animations ────────────────────────────────────────────── */
+    .fade-up {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .fade-up.in { opacity: 1; transform: translateY(0); }
+
+    /* ── Section headings ──────────────────────────────────────────────── */
+    .section-label {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--accent2); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800; letter-spacing: -.02em; line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 17px; color: var(--muted); max-width: 520px;
+    }
+    .section-head { margin-bottom: 56px; }
+
+    /* ── Problem ───────────────────────────────────────────────────────── */
+    #problem { background: var(--bg); }
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    }
+    @media (max-width: 640px) { .problem-grid { grid-template-columns: 1fr; } }
+
+    .problem-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      transition: border-left-color .2s, transform .2s;
+    }
+    .problem-card:nth-child(2) { border-left-color: var(--orange); }
+    .problem-card:nth-child(3) { border-left-color: #f59e0b; }
+    .problem-card:nth-child(4) { border-left-color: #e879f9; }
+    .problem-card:hover { transform: translateY(-2px); }
+    .problem-emoji { font-size: 24px; margin-bottom: 12px; display: block; }
+    .problem-text  { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Features ──────────────────────────────────────────────────────── */
+    #features { background: var(--bg3); }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    @media (max-width: 860px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 540px) { .features-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99,102,241,.4);
+      box-shadow: 0 8px 32px rgba(99,102,241,.12);
+    }
+    .feature-icon {
+      font-size: 26px; margin-bottom: 14px; display: block;
+    }
+    .feature-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
+    }
+    .feature-desc  { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Demo ──────────────────────────────────────────────────────────── */
+    #demo { background: var(--bg); }
+    .demo-inner { max-width: 680px; margin: 0 auto; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+    .tab {
+      padding: 10px 20px; font-size: 14px; font-weight: 500;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer; border: 1px solid transparent;
+      color: var(--muted); background: var(--bg3);
+      transition: all .2s; border-bottom: none;
+    }
+    .tab.active {
+      color: var(--text); background: var(--bg2);
+      border-color: var(--border);
+    }
+    .tab-panels {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 0 8px 8px 8px;
+      overflow: hidden;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .tab-panel pre {
+      margin: 0 !important; padding: 28px !important;
+      font-size: 14px !important; line-height: 1.7 !important;
+      background: transparent !important;
+    }
+    .demo-caption {
+      text-align: center; margin-top: 28px;
+      font-size: 16px; color: var(--muted);
+    }
+    .demo-caption strong { color: var(--text); }
+
+    /* ── Comparison ────────────────────────────────────────────────────── */
+    #comparison { background: var(--bg3); }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 14px 20px; text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    th:first-child, td:first-child { text-align: left; font-weight: 500; color: var(--text); }
+    thead tr { background: var(--bg2); }
+    th { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    tbody tr { background: var(--bg); }
+    tbody tr:hover { background: var(--bg2); }
+    tbody tr:last-child td { border-bottom: none; }
+    .col-us { background: rgba(99,102,241,.07) !important; }
+    .col-us-head { background: rgba(99,102,241,.15) !important; color: var(--accent2) !important; }
+    .check    { color: var(--green); }
+    .cross    { color: var(--red); }
+    .partial  { color: var(--orange); }
+    .money    { color: var(--muted); font-weight: 600; }
+
+    /* ── Pricing ───────────────────────────────────────────────────────── */
+    #pricing { background: var(--bg); }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    }
+    @media (max-width: 960px) { .pricing-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 520px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+    .pricing-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      position: relative;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .pricing-card:hover { transform: scale(1.02); }
+    .pricing-card.popular {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 40px rgba(99,102,241,.2);
+    }
+    .popular-badge {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+    }
+    .pricing-plan  { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
+    .pricing-price { font-size: 42px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 4px; }
+    .pricing-price span { font-size: 16px; font-weight: 400; color: var(--muted); }
+    .pricing-sub   { font-size: 13px; color: var(--muted2); margin-bottom: 24px; }
+    .pricing-list  { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+    .pricing-list li {
+      font-size: 14px; color: var(--muted);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .pricing-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .pricing-cta { width: 100%; text-align: center; }
+
+    /* ── Waitlist ──────────────────────────────────────────────────────── */
+    #waitlist {
+      background: var(--bg3);
+      text-align: center;
+    }
+    .waitlist-inner { max-width: 520px; margin: 0 auto; }
+    .waitlist-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 12px; }
+    .waitlist-sub   { font-size: 16px; color: var(--muted); margin-bottom: 36px; }
+    .waitlist-form  { display: flex; gap: 10px; margin-bottom: 16px; }
+    .waitlist-input {
+      flex: 1; padding: 12px 18px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text); font-size: 15px;
+      font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    .waitlist-input:focus { border-color: var(--accent); }
+    .waitlist-input::placeholder { color: var(--muted2); }
+    .waitlist-msg { font-size: 14px; min-height: 20px; margin-bottom: 20px; }
+    .waitlist-msg.success { color: var(--green); }
+    .waitlist-msg.error   { color: var(--red); }
+    .trust-badges { font-size: 13px; color: var(--muted2); }
+
+    @media (max-width: 480px) { .waitlist-form { flex-direction: column; } }
+
+    /* ── Footer ────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 48px 0;
+    }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px;
+    }
+    .footer-logo  { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .footer-logo-sub { font-size: 13px; color: var(--muted2); margin-top: 4px; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 14px; color: var(--muted); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-right { text-align: right; }
+    .footer-by    { font-size: 13px; color: var(--muted2); }
+    .footer-copy  { font-size: 13px; color: var(--muted2); }
+
+    @media (max-width: 640px) {
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .footer-right { text-align: left; }
+    }
+
+    /* ── hljs overrides ────────────────────────────────────────────────── */
+    .hljs { background: transparent !important; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ NAV ═══ -->
+<nav id="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <!-- Eye/lens SVG icon -->
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5" />
+          <ellipse cx="14" cy="14" rx="8" ry="5" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="14" cy="14" r="3" fill="currentColor"/>
+          <circle cx="15.2" cy="12.8" r=".9" fill="rgba(255,255,255,.6)"/>
+        </svg>
+        AgentLens
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#demo">Docs</a></li>
+        <li><a href="https://github.com/farzanh/agentlens" target="_blank">GitHub</a></li>
+      </ul>
+      <a href="#waitlist" class="btn btn-primary btn-sm nav-cta">Start Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════ HERO ═══ -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-eyebrow fade-up">
+          <span class="badge">AI Agent Observability</span>
+        </div>
+        <h1 class="hero-headline fade-up" style="transition-delay:.1s">
+          Never wonder what your<br/><span>AI agent did</span> again.
+        </h1>
+        <p class="hero-sub fade-up" style="transition-delay:.2s">
+          AgentLens gives you full visibility into every LLM call, every decision, every dollar.
+          Debug faster. Ship with confidence.
+        </p>
+        <div class="hero-ctas fade-up" style="transition-delay:.3s">
+          <a href="#waitlist" class="btn btn-primary">Start Free — No credit card</a>
+          <a href="#demo" class="btn btn-ghost">View Demo →</a>
+        </div>
+        <p class="hero-proof fade-up" style="transition-delay:.4s">
+          Used by 500+ developers &nbsp;·&nbsp; 10M+ LLM calls traced
+        </p>
+      </div>
+
+      <!-- Terminal -->
+      <div class="hero-terminal fade-up" style="transition-delay:.2s">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-label">terminal</span>
+        </div>
+        <div class="terminal-body" id="terminal">
+          <span class="terminal-line blank"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ PROBLEM ═══ -->
+<section id="problem" class="section">
+  <div class="container">
+    <div class="section-head fade-up">
+      <div class="section-label">The problem</div>
+      <h2 class="section-title">AI agents fail silently.<br/>You deserve to know why.</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card fade-up">
+        <span class="problem-emoji">🔴</span>
+        <p class="problem-text">Your agent returned the wrong answer. You have no idea which step went wrong.</p>
+      </div>
+      <div class="problem-card fade-up">
+        <span class="problem-emoji">💸</span>
+        <p class="problem-text">Your OpenAI bill hit $2,000. You can't explain where it went.</p>
+      </div>
+      <div class="problem-card fade-up">
+        <span class="problem-emoji">🐛</span>
+        <p class="problem-text">A bug in production. You can't reproduce it because you have no logs.</p>
+      </div>
+      <div class="problem-card fade-up">
+        <span class="problem-emoji">🤯</span>
+        <p class="problem-text">5 agents, 3 models. Something broke. Good luck figuring out which one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ FEATURES ═══ -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="section-head fade-up">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need to<br/>debug AI agents.</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <span class="feature-icon">🔭</span>
+        <div class="feature-title">Trace Viewer</div>
+        <p class="feature-desc">See every LLM call in a timeline. Full prompt, full response, exact latency.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">💰</span>
+        <div class="feature-title">Cost Analytics</div>
+        <p class="feature-desc">Token usage broken down by agent, feature, user, model.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">🚨</span>
+        <div class="feature-title">Failure Alerts</div>
+        <p class="feature-desc">Get notified on Slack or email the moment an agent fails.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">⏪</span>
+        <div class="feature-title">Session Replay</div>
+        <p class="feature-desc">Replay any past agent run exactly as it happened.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">PII Scrubbing</div>
+        <p class="feature-desc">Sensitive data auto-masked before it leaves your infra. GDPR ready.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">🔌</span>
+        <div class="feature-title">Any Framework</div>
+        <p class="feature-desc">3 lines to integrate. OpenAI, Anthropic, LangChain, custom.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ DEMO ═══ -->
+<section id="demo" class="section">
+  <div class="container">
+    <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
+      <div class="section-label">Integration</div>
+      <h2 class="section-title">Integrate in 60 seconds.</h2>
+    </div>
+    <div class="demo-inner fade-up">
+      <div class="tabs">
+        <button class="tab active" data-tab="0">1. Install</button>
+        <button class="tab" data-tab="1">2. Init</button>
+        <button class="tab" data-tab="2">3. Trace</button>
+      </div>
+      <div class="tab-panels">
+        <div class="tab-panel active">
+          <pre><code class="language-bash">npm install @agentlens/core @agentlens/openai</code></pre>
+        </div>
+        <div class="tab-panel">
+          <pre><code class="language-typescript">import { AgentLens } from '@agentlens/core'
+
+AgentLens.init({
+  apiKey: 'proj_xxx',
+  projectId: 'my-agent'
+})</code></pre>
+        </div>
+        <div class="tab-panel">
+          <pre><code class="language-typescript">import '@agentlens/openai'
+// done. every OpenAI call is now traced.
+
+// Works with Anthropic too:
+import '@agentlens/anthropic'</code></pre>
+        </div>
+      </div>
+      <p class="demo-caption">
+        <strong>That's it.</strong> No YAML. No config files. No agent rewrites.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ COMPARISON ═══ -->
+<section id="comparison" class="section">
+  <div class="container">
+    <div class="section-head fade-up">
+      <div class="section-label">Comparison</div>
+      <h2 class="section-title">Why developers choose AgentLens.</h2>
+    </div>
+    <div class="table-wrap fade-up">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="col-us-head">AgentLens</th>
+            <th>LangSmith</th>
+            <th>Langfuse</th>
+            <th>Helicone</th>
+            <th>Datadog</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Any framework support</td>
+            <td class="col-us check">✅</td>
+            <td class="cross">❌ LangChain only</td>
+            <td class="partial">⚠️</td>
+            <td class="cross">❌</td>
+            <td class="check">✅</td>
+          </tr>
+          <tr>
+            <td>3-line setup</td>
+            <td class="col-us check">✅</td>
+            <td class="cross">❌</td>
+            <td class="cross">❌</td>
+            <td class="check">✅</td>
+            <td class="cross">❌</td>
+          </tr>
+          <tr>
+            <td>PII scrubbing built-in</td>
+            <td class="col-us check">✅</td>
+            <td class="cross">❌</td>
+            <td class="cross">❌</td>
+            <td class="cross">❌</td>
+            <td class="cross">❌</td>
+          </tr>
+          <tr>
+            <td>Session replay</td>
+            <td class="col-us check">✅</td>
+            <td class="check">✅</td>
+            <td class="check">✅</td>
+            <td class="cross">❌</td>
+            <td class="cross">❌</td>
+          </tr>
+          <tr>
+            <td>Self-host option</td>
+            <td class="col-us check">✅</td>
+            <td class="cross">❌</td>
+            <td class="check">✅</td>
+            <td class="cross">❌</td>
+            <td class="check">✅</td>
+          </tr>
+          <tr>
+            <td>Starts at free</td>
+            <td class="col-us check">✅</td>
+            <td class="check">✅</td>
+            <td class="check">✅</td>
+            <td class="check">✅</td>
+            <td class="cross">❌</td>
+          </tr>
+          <tr>
+            <td>Price (paid)</td>
+            <td class="col-us" style="color:var(--accent2);font-weight:700">$19/mo</td>
+            <td class="money">$39/mo</td>
+            <td class="money">$49/mo</td>
+            <td class="money">$20/mo</td>
+            <td class="money">$$$</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ PRICING ═══ -->
+<section id="pricing" class="section">
+  <div class="container">
+    <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Simple pricing. No surprises.</h2>
+    </div>
+    <div class="pricing-grid">
+
+      <!-- Free -->
+      <div class="pricing-card fade-up">
+        <div class="pricing-plan">Free</div>
+        <div class="pricing-price">$0<span>/mo</span></div>
+        <div class="pricing-sub">Perfect for side projects</div>
+        <ul class="pricing-list">
+          <li>10k traces/month</li>
+          <li>3-day retention</li>
+          <li>1 project</li>
+          <li>Community support</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-ghost pricing-cta">Start Free</a>
+      </div>
+
+      <!-- Starter -->
+      <div class="pricing-card fade-up">
+        <div class="pricing-plan">Starter</div>
+        <div class="pricing-price">$19<span>/mo</span></div>
+        <div class="pricing-sub">For growing teams</div>
+        <ul class="pricing-list">
+          <li>100k traces/month</li>
+          <li>30-day retention</li>
+          <li>5 projects</li>
+          <li>Email alerts</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-ghost pricing-cta">Get Started</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="pricing-card popular fade-up">
+        <div class="popular-badge">Most Popular</div>
+        <div class="pricing-plan">Pro</div>
+        <div class="pricing-price">$79<span>/mo</span></div>
+        <div class="pricing-sub">For production AI systems</div>
+        <ul class="pricing-list">
+          <li>1M traces/month</li>
+          <li>90-day retention</li>
+          <li>Unlimited projects</li>
+          <li>PII scrub + Session replay</li>
+          <li>Slack alerts</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-primary pricing-cta">Get Started</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="pricing-card fade-up">
+        <div class="pricing-plan">Enterprise</div>
+        <div class="pricing-price" style="font-size:32px">Custom</div>
+        <div class="pricing-sub">For scale & compliance</div>
+        <ul class="pricing-list">
+          <li>Unlimited traces</li>
+          <li>Self-host option</li>
+          <li>SSO + SLA</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ WAITLIST ═══ -->
+<section id="waitlist" class="section">
+  <div class="container">
+    <div class="waitlist-inner fade-up">
+      <h2 class="waitlist-title">Start debugging your AI agents today.</h2>
+      <p class="waitlist-sub">Free forever for small projects. No credit card required.</p>
+      <form class="waitlist-form" id="waitlistForm">
+        <input
+          type="email"
+          class="waitlist-input"
+          id="waitlistEmail"
+          placeholder="you@company.com"
+          required
+          autocomplete="email"
+        />
+        <button type="submit" class="btn btn-primary">Create Free Account</button>
+      </form>
+      <div class="waitlist-msg" id="waitlistMsg"></div>
+      <div class="trust-badges">
+        🔒 SOC2 in progress &nbsp;·&nbsp; ✅ GDPR ready &nbsp;·&nbsp; 🚫 Data never sold
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">
+          <svg width="22" height="22" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--accent)">
+            <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5"/>
+            <ellipse cx="14" cy="14" rx="8" ry="5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="14" cy="14" r="3" fill="currentColor"/>
+          </svg>
+          AgentLens
+        </div>
+        <div class="footer-logo-sub">Full visibility into every AI decision.</div>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/farzanh/agentlens" target="_blank">GitHub</a>
+        <a href="https://twitter.com/agentlens_ai" target="_blank">Twitter</a>
+        <a href="mailto:hello@agentlens.ai">Email</a>
+      </div>
+      <div class="footer-right">
+        <div class="footer-by">Built by Farzan Hossan</div>
+        <div class="footer-copy">© 2025 AgentLens. All rights reserved.</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── highlight.js ──────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre code').forEach((block) => {
+      hljs.highlightElement(block);
+    });
+  });
+
+  // ── Nav scroll effect ─────────────────────────────────────────────────────
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // ── Intersection Observer — fade-up ───────────────────────────────────────
+  const fadeEls = document.querySelectorAll('.fade-up');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  fadeEls.forEach(el => observer.observe(el));
+
+  // Hero elements visible immediately (above fold)
+  document.querySelectorAll('#hero .fade-up').forEach(el => {
+    setTimeout(() => el.classList.add('in'), 50);
+  });
+
+  // ── Demo tabs ─────────────────────────────────────────────────────────────
+  const tabs   = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const idx = parseInt(tab.dataset.tab, 10);
+      tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+      panels.forEach((p, i) => p.classList.toggle('active', i === idx));
+    });
+  });
+
+  // ── Terminal typewriter ───────────────────────────────────────────────────
+  const termLines = [
+    { cls: 'cmd',    text: '$ npm install @agentlens/core @agentlens/openai' },
+    { cls: 'blank',  text: '' },
+    { cls: 'import', text: "import { AgentLens } from '@agentlens/core'" },
+    { cls: 'import', text: "import '@agentlens/openai'" },
+    { cls: 'blank',  text: '' },
+    { cls: 'method', text: "AgentLens.init({ apiKey: 'proj_xxx' })" },
+    { cls: 'blank',  text: '' },
+    { cls: 'success',text: '✓ Every LLM call is now traced' },
+  ];
+
+  function runTerminal() {
+    const container = document.getElementById('terminal');
+    container.innerHTML = '';
+    let delay = 400;
+
+    termLines.forEach((line, i) => {
+      setTimeout(() => {
+        const span = document.createElement('span');
+        span.className = `terminal-line ${line.cls}`;
+        if (line.cls === 'blank') {
+          container.appendChild(span);
+          return;
+        }
+
+        // Typewriter each character
+        let charIdx = 0;
+        span.textContent = '';
+        container.appendChild(span);
+
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        span.appendChild(cursor);
+
+        const interval = setInterval(() => {
+          if (charIdx < line.text.length) {
+            span.textContent = line.text.slice(0, charIdx + 1);
+            span.appendChild(cursor);
+            charIdx++;
+          } else {
+            clearInterval(interval);
+            span.textContent = line.text;
+            // Remove cursor unless last line
+            if (i === termLines.length - 1) {
+              span.appendChild(cursor);
+            }
+          }
+        }, 18);
+
+        span.classList.add('visible');
+      }, delay);
+
+      // Accumulate delay: typing time + gap
+      const typingMs = line.text.length * 18;
+      delay += (line.cls === 'blank') ? 120 : typingMs + 160;
+    });
+
+    // Loop after completion
+    const totalDelay = delay + 3000;
+    setTimeout(runTerminal, totalDelay);
+  }
+
+  // Start terminal after page load
+  setTimeout(runTerminal, 600);
+
+  // ── Waitlist form ─────────────────────────────────────────────────────────
+  const form    = document.getElementById('waitlistForm');
+  const emailEl = document.getElementById('waitlistEmail');
+  const msgEl   = document.getElementById('waitlistMsg');
+
+  const STORAGE_KEY = 'agentlens_waitlist_submitted';
+
+  // Pre-fill if already submitted
+  if (localStorage.getItem(STORAGE_KEY)) {
+    msgEl.textContent = '🎉 You\'re already on the list! We\'ll be in touch soon.';
+    msgEl.className = 'waitlist-msg success';
+    emailEl.value = localStorage.getItem(STORAGE_KEY + '_email') || '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = emailEl.value.trim();
+
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msgEl.textContent = 'Please enter a valid email address.';
+      msgEl.className = 'waitlist-msg error';
+      return;
+    }
+
+    // Duplicate check
+    if (localStorage.getItem(STORAGE_KEY)) {
+      msgEl.textContent = '🎉 You\'re already on the list!';
+      msgEl.className = 'waitlist-msg success';
+      return;
+    }
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.textContent = 'Joining...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok || res.status === 201 || res.status === 409) {
+        localStorage.setItem(STORAGE_KEY, '1');
+        localStorage.setItem(STORAGE_KEY + '_email', email);
+        msgEl.textContent = '🎉 You\'re on the list! We\'ll be in touch soon.';
+        msgEl.className = 'waitlist-msg success';
+        btn.textContent = '✓ Joined';
+      } else {
+        throw new Error('Server error');
+      }
+    } catch {
+      // Graceful degradation — still record locally if API is down
+      localStorage.setItem(STORAGE_KEY, '1');
+      localStorage.setItem(STORAGE_KEY + '_email', email);
+      msgEl.textContent = '🎉 You\'re on the list! We\'ll be in touch soon.';
+      msgEl.className = 'waitlist-msg success';
+      btn.textContent = '✓ Joined';
+    }
+  });
+</script>
+</body>
+</html>

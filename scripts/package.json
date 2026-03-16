@@ -1,0 +1,23 @@
+{
+  "name": "@agentlens/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgentLens developer scripts — demo seed, reset, etc.",
+  "scripts": {
+    "seed:demo": "ts-node --project tsconfig.json seed-demo.ts",
+    "seed:reset": "ts-node --project tsconfig.json reset-demo.ts"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.13.1",
+    "bcrypt": "^5.1.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
