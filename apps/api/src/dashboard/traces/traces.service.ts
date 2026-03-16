@@ -112,7 +112,7 @@ export class TracesService {
 
     let nextCursor: string | null = null;
     if (hasMore && pageRows.length > 0) {
-      const last = pageRows[pageRows.length - 1]!;
+      const last = pageRows[pageRows.length - 1];
       nextCursor = encodeCursor(
         last.startedAt instanceof Date ? last.startedAt.toISOString() : String(last.startedAt),
         last.id,

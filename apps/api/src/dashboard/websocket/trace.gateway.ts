@@ -37,7 +37,7 @@ export class TraceGateway
       lazyConnect: false,
     });
 
-    this.subscriber.psubscribe('agentlens:spans:*', (err) => {
+    void this.subscriber.psubscribe('agentlens:spans:*', (err) => {
       if (err) {
         this.logger.error(`Failed to subscribe to Redis pattern: ${String(err)}`);
       } else {

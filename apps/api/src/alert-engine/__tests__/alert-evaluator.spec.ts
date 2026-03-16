@@ -13,9 +13,9 @@ function makeDataSourceMock(rows: Array<{ project_id: string; value: string }>):
 } {
   const calls: Array<{ sql: string; params: unknown[] }> = [];
   const ds = {
-    query: jest.fn(async (sql: string, params: unknown[]) => {
+    query: jest.fn((sql: string, params: unknown[]) => {
       calls.push({ sql, params });
-      return rows;
+      return Promise.resolve(rows);
     }),
   } as unknown as DataSource;
   return { ds, calls };
@@ -43,14 +43,14 @@ const PROJECT_IDS = [
 describe('AlertEvaluatorService.fetchErrorRateMetrics', () => {
   it('returns a map of projectId → parsed error-rate percentage', async () => {
     const { ds } = makeDataSourceMock([
-      { project_id: PROJECT_IDS[0]!, value: '12.5' },
-      { project_id: PROJECT_IDS[1]!, value: '0' },
+      { project_id: PROJECT_IDS[0], value: '12.5' },
+      { project_id: PROJECT_IDS[1], value: '0' },
     ]);
 
     const result = await service.fetchErrorRateMetrics(PROJECT_IDS, ds);
 
-    expect(result.get(PROJECT_IDS[0]!)).toBeCloseTo(12.5);
-    expect(result.get(PROJECT_IDS[1]!)).toBeCloseTo(0);
+    expect(result.get(PROJECT_IDS[0])).toBeCloseTo(12.5);
+    expect(result.get(PROJECT_IDS[1])).toBeCloseTo(0);
   });
 
   it('passes project IDs as the first query parameter', async () => {
@@ -81,12 +81,12 @@ describe('AlertEvaluatorService.fetchErrorRateMetrics', () => {
 describe('AlertEvaluatorService.fetchCostSpikeMetrics', () => {
   it('returns total cost per project', async () => {
     const { ds } = makeDataSourceMock([
-      { project_id: PROJECT_IDS[0]!, value: '0.125' },
+      { project_id: PROJECT_IDS[0], value: '0.125' },
     ]);
 
     const result = await service.fetchCostSpikeMetrics(PROJECT_IDS, ds);
 
-    expect(result.get(PROJECT_IDS[0]!)).toBeCloseTo(0.125, 6);
+    expect(result.get(PROJECT_IDS[0])).toBeCloseTo(0.125, 6);
   });
 
   it('queries cost_usd SUM from spans', async () => {
@@ -106,12 +106,12 @@ describe('AlertEvaluatorService.fetchCostSpikeMetrics', () => {
 describe('AlertEvaluatorService.fetchLatencyP95Metrics', () => {
   it('returns P95 latency per project', async () => {
     const { ds } = makeDataSourceMock([
-      { project_id: PROJECT_IDS[0]!, value: '850' },
+      { project_id: PROJECT_IDS[0], value: '850' },
     ]);
 
     const result = await service.fetchLatencyP95Metrics(PROJECT_IDS, ds);
 
-    expect(result.get(PROJECT_IDS[0]!)).toBeCloseTo(850);
+    expect(result.get(PROJECT_IDS[0])).toBeCloseTo(850);
   });
 
   it('uses PERCENTILE_CONT(0.95) in the query', async () => {
@@ -137,12 +137,12 @@ describe('AlertEvaluatorService.fetchLatencyP95Metrics', () => {
 describe('AlertEvaluatorService.fetchFailureMetrics', () => {
   it('returns failure count per project', async () => {
     const { ds } = makeDataSourceMock([
-      { project_id: PROJECT_IDS[0]!, value: '7' },
+      { project_id: PROJECT_IDS[0], value: '7' },
     ]);
 
     const result = await service.fetchFailureMetrics(PROJECT_IDS, ds);
 
-    expect(result.get(PROJECT_IDS[0]!)).toBe(7);
+    expect(result.get(PROJECT_IDS[0])).toBe(7);
   });
 
   it('queries the traces table for error status', async () => {

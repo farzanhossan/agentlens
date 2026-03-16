@@ -6,7 +6,7 @@ RUN npm install -g pnpm@9 --silent
 WORKDIR /build
 
 # Copy workspace manifests first for layer-cache efficiency
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/ packages/
 COPY apps/api/ apps/api/
 

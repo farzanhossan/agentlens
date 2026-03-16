@@ -15,7 +15,7 @@ const RULES: RedactionRule[] = [
   {
     label: 'EMAIL',
     // RFC 5321-ish — intentionally broad for PII detection
-    pattern: /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,
+    pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
   },
   {
     label: 'PHONE',

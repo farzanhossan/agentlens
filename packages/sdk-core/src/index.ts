@@ -3,7 +3,7 @@ import { Tracer } from './tracer.js';
 import { Transport } from './transport.js';
 import { maybeRedact } from './redactor.js';
 import type { AgentLensConfig, SpanData } from './types.js';
-import { Span } from './span.js';
+import type { Span } from './span.js';
 
 const DEFAULT_ENDPOINT = 'https://ingest.agentlens.dev';
 

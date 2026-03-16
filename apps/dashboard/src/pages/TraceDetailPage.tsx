@@ -13,7 +13,7 @@ function mergeSpanIntoTree(spans: SpanNode[], newSpan: SpanNode): SpanNode[] {
   // Try to find parent and append as child
   function insertInto(nodes: SpanNode[]): { nodes: SpanNode[]; inserted: boolean } {
     for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i]!;
+      const node = nodes[i];
       if (node.spanId === newSpan.parentSpanId) {
         const updated = { ...node, children: [...node.children, newSpan] };
         const newNodes = [...nodes];

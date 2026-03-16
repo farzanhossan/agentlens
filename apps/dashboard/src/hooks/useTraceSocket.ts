@@ -21,7 +21,7 @@ export function useTraceSocket(traceId: string, enabled: boolean): { liveSpans: 
       setLiveSpans((prev) => [...prev, span]);
     });
 
-    return () => {
+    return (): void => {
       socket.emit('unsubscribe-trace', { traceId });
       socket.disconnect();
     };

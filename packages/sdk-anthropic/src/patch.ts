@@ -84,7 +84,7 @@ export function patchAnthropic(client: Anthropic, options: AnthropicPatchOptions
   const { traceId: fixedTraceId } = options;
   const original = client.messages.create.bind(client.messages) as AnyFn;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
   (client.messages as any).create = async function (
     params: Anthropic.MessageCreateParamsNonStreaming,
     requestOptions?: Anthropic.RequestOptions,

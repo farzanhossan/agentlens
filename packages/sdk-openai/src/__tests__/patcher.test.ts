@@ -58,7 +58,7 @@ describe('chat.completions.create — non-streaming', () => {
       system_fingerprint: null,
     };
 
-    patches[0]!.original = vi.fn().mockResolvedValue(mockCompletion);
+    patches[0].original = vi.fn().mockResolvedValue(mockCompletion);
 
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -83,7 +83,7 @@ describe('chat.completions.create — non-streaming', () => {
   });
 
   it('sets status=error and captures errorMessage when the call throws', async () => {
-    patches[0]!.original = vi.fn().mockRejectedValue(new Error('rate limit exceeded'));
+    patches[0].original = vi.fn().mockRejectedValue(new Error('rate limit exceeded'));
 
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
 
@@ -108,7 +108,7 @@ describe('chat.completions.create — streaming', () => {
       makeChunk('world!'),
     ];
 
-    patches[0]!.original = vi.fn().mockResolvedValue(asyncIterableFrom(chunks));
+    patches[0].original = vi.fn().mockResolvedValue(asyncIterableFrom(chunks));
 
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
 
@@ -134,7 +134,7 @@ describe('chat.completions.create — streaming', () => {
   });
 
   it('sets status=error if the stream throws mid-iteration', async () => {
-    patches[0]!.original = vi.fn().mockResolvedValue(throwingIterable());
+    patches[0].original = vi.fn().mockResolvedValue(throwingIterable());
 
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
 
@@ -145,8 +145,8 @@ describe('chat.completions.create — streaming', () => {
     });
 
     await expect(async () => {
-      for await (const _chunk of stream as unknown as AsyncIterable<unknown>) {
-        // consume
+      for await (const _ of stream as unknown as AsyncIterable<unknown>) {
+        void _;
       }
     }).rejects.toThrow('stream error');
 
@@ -169,7 +169,7 @@ describe('embeddings.create', () => {
     };
 
     // patches[0]=chat, patches[1]=legacy-completions, patches[2]=embeddings
-    patches[2]!.original = vi.fn().mockResolvedValue(mockResponse);
+    patches[2].original = vi.fn().mockResolvedValue(mockResponse);
 
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
 
@@ -210,7 +210,7 @@ describe('uninitialised SDK', () => {
       system_fingerprint: null,
     };
 
-    patches[0]!.original = vi.fn().mockResolvedValue(mockResult);
+    patches[0].original = vi.fn().mockResolvedValue(mockResult);
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const client = new OpenAI({ apiKey: 'sk-test', maxRetries: 0 });
@@ -248,11 +248,11 @@ function makeChunk(content: string): OpenAI.Chat.ChatCompletionChunk {
   };
 }
 
-async function* asyncIterableFrom<T>(items: T[]): AsyncIterable<T> {
+function* asyncIterableFrom<T>(items: T[]): Iterable<T> {
   for (const item of items) yield item;
 }
 
-async function* throwingIterable(): AsyncIterable<never> {
+function* throwingIterable(): Iterable<never> {
   throw new Error('stream error');
   // unreachable — satisfies TypeScript
   yield undefined as never;

@@ -32,7 +32,7 @@ export function TracesPage(): React.JSX.Element {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedAgent(agentName), 300);
-    return () => {
+    return (): void => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [agentName]);
@@ -49,7 +49,7 @@ export function TracesPage(): React.JSX.Element {
     queryKey: ['traces', statusFilter, debouncedAgent, dateFrom, dateTo],
     queryFn: ({ pageParam }) =>
       fetchTraces({
-        cursor: pageParam as string | undefined,
+        cursor: pageParam,
         status: statusFilter || undefined,
         agentName: debouncedAgent || undefined,
         from: dateFrom || undefined,

@@ -312,7 +312,7 @@ export function patch(OpenAIClass?: typeof OpenAI): void {
   try {
     const Ctor =
       OpenAIClass ??
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
       (require('openai') as { default: typeof OpenAI }).default;
     client = new Ctor({ apiKey: '__agentlens_probe__' });
   } catch {

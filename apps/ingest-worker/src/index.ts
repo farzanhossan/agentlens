@@ -44,6 +44,7 @@ app.notFound((c) => c.json({ error: 'Not found' }, 404));
 // Workers must never crash on bad input — all uncaught errors surface here.
 
 app.onError((err, c) => {
+  // eslint-disable-next-line no-console
   console.error('[ingest-worker] Unhandled error:', err);
   return c.json({ error: 'Internal server error' }, 500);
 });

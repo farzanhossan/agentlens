@@ -5,7 +5,7 @@ import { CostLineChart, CostBarChart } from '../components/CostChart';
 import { SkeletonCard, SkeletonText } from '../components/Skeleton';
 
 function formatDate(d: Date): string {
-  return d.toISOString().split('T')[0]!;
+  return (d.toISOString().split('T')[0] ?? '');
 }
 
 function getPresetRange(days: number): { from: string; to: string } {

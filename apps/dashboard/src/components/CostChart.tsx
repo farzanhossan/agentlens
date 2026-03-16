@@ -68,7 +68,7 @@ interface CostBarChartProps {
 export function CostBarChart({ data, labelKey, valueKey }: CostBarChartProps): React.JSX.Element {
   const chartData = data.map((d) => ({
     ...d,
-    [valueKey]: typeof d[valueKey] === 'string' ? parseFloat(d[valueKey] as string) : d[valueKey],
+    [valueKey]: typeof d[valueKey] === 'string' ? parseFloat(d[valueKey]) : d[valueKey],
   }));
 
   return (

@@ -9,9 +9,9 @@ function makeEntityManagerMock(): {
 } {
   const calls: Array<{ sql: string; params: unknown[] }> = [];
   const em = {
-    query: jest.fn(async (sql: string, params: unknown[]) => {
+    query: jest.fn((sql: string, params: unknown[]) => {
       calls.push({ sql, params });
-      return [];
+      return Promise.resolve([]);
     }),
   } as unknown as EntityManager;
   return { em, calls };

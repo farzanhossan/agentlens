@@ -6,7 +6,7 @@ RUN npm install -g pnpm@9 --silent
 WORKDIR /build
 
 # Workspace manifests for layer caching
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/dashboard/ apps/dashboard/
 
 # Install only the dashboard's deps
