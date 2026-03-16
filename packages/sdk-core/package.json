@@ -1,22 +1,50 @@
 {
   "name": "@agentlens/core",
   "version": "0.1.0",
-  "description": "AgentLens core TypeScript SDK — span creation, context propagation, and export",
+  "description": "Core tracer SDK for AgentLens — AI agent observability",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint src --ext .ts --max-warnings 0",
-    "test": "jest --passWithNoTests",
+    "test": "vitest run --passWithNoTests",
+    "prepublishOnly": "pnpm build && pnpm test",
     "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "observability",
+    "llm",
+    "tracing",
+    "openai",
+    "anthropic",
+    "langchain",
+    "monitoring"
+  ],
+  "author": "Farzan Hossan <farzanhossans@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://agentlens.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/farzanhossan/agentlens",
+    "directory": "packages/sdk-core"
+  },
+  "bugs": {
+    "url": "https://github.com/farzanhossan/agentlens/issues"
   },
   "dependencies": {
     "pako": "^2.1.0",
@@ -28,11 +56,15 @@
     "@types/pako": "^2.0.3",
     "@types/uuid": "^9.0.8",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.4"
+    "ts-jest": "^29.1.4",
+    "tsup": "^8.5.1",
+    "vitest": "^1.6.0"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/__tests__/**/*.test.ts"]
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ]
   }
 }

@@ -5,27 +5,39 @@ build-backend = "hatchling.build"
 [project]
 name = "agentlens"
 version = "0.1.0"
-description = "AgentLens Python SDK — AI agent observability"
+description = "AI Agent Observability SDK for Python"
 readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Farzan Hossan", email = "farzanhossans@gmail.com" }]
+keywords = ["ai", "agent", "observability", "llm", "openai", "anthropic"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
 requires-python = ">=3.9"
-license = { text = "MIT" }
-keywords = ["observability", "llm", "tracing", "agents"]
 dependencies = [
-    "httpx>=0.27.0",
-    "pydantic>=2.0.0",
-    "typing-extensions>=4.11.0",
-    "eval_type_backport>=0.2.0; python_version < '3.10'",
+  "httpx>=0.27.0",
+  "pydantic>=2.0.0",
+  "typing-extensions>=4.11.0",
+  "eval_type_backport>=0.2.0; python_version < '3.10'",
 ]
 
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
 anthropic = ["anthropic>=0.24.0"]
+all = ["openai>=1.0.0", "anthropic>=0.24.0"]
 dev = [
-    "pytest>=8.1.0",
-    "pytest-asyncio>=0.23.0",
-    "mypy>=1.9.0",
-    "ruff>=0.4.0",
+  "pytest>=8.1.0",
+  "pytest-asyncio>=0.23.0",
+  "mypy>=1.9.0",
+  "ruff>=0.4.0",
 ]
+
+[project.urls]
+Homepage = "https://agentlens.dev"
+Repository = "https://github.com/farzanhossan/agentlens"
+Issues = "https://github.com/farzanhossan/agentlens/issues"
 
 [tool.ruff]
 line-length = 100
