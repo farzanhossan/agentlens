@@ -11,10 +11,10 @@
 
 **AI Agent Observability Platform**
 
-[![npm](https://img.shields.io/npm/v/@agentlens/core?color=6366f1&label=npm)](https://www.npmjs.com/package/@agentlens/core)
-[![npm](https://img.shields.io/npm/v/@agentlens/core?label=%40agentlens%2Fcore)](https://www.npmjs.com/package/@agentlens/core)
-[![npm](https://img.shields.io/npm/v/@agentlens/openai?label=%40agentlens%2Fopenai)](https://www.npmjs.com/package/@agentlens/openai)
-[![npm downloads](https://img.shields.io/npm/dm/@agentlens/core)](https://www.npmjs.com/package/@agentlens/core)
+[![npm](https://img.shields.io/npm/v/@farzanhossan/agentlens-core?color=6366f1&label=npm)](https://www.npmjs.com/package/@farzanhossan/agentlens-core)
+[![npm](https://img.shields.io/npm/v/@farzanhossan/agentlens-core?label=%40agentlens%2Fcore)](https://www.npmjs.com/package/@farzanhossan/agentlens-core)
+[![npm](https://img.shields.io/npm/v/@farzanhossan/agentlens-openai?label=%40agentlens%2Fopenai)](https://www.npmjs.com/package/@farzanhossan/agentlens-openai)
+[![npm downloads](https://img.shields.io/npm/dm/@farzanhossan/agentlens-core)](https://www.npmjs.com/package/@farzanhossan/agentlens-core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-22c55e.svg)](#)
 [![Tests](https://img.shields.io/badge/tests-47%2F47-22c55e.svg)](#)
@@ -45,12 +45,12 @@ AgentLens gives you full visibility into every LLM call your AI agent makes — 
 ### TypeScript / Node.js
 
 ```bash
-npm install @agentlens/core @agentlens/openai
+npm install @farzanhossan/agentlens-core @farzanhossan/agentlens-openai
 ```
 
 ```typescript
-import { AgentLens } from '@agentlens/core'
-import '@agentlens/openai'
+import { AgentLens } from '@farzanhossan/agentlens-core'
+import '@farzanhossan/agentlens-openai'
 
 AgentLens.init({ apiKey: 'proj_xxx', projectId: 'your-project-uuid' })
 
@@ -102,10 +102,10 @@ Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 
 | Package | Description | Install |
 |---------|-------------|---------|
-| [`@agentlens/core`](./packages/sdk-core) | Core tracer — framework agnostic | `npm i @agentlens/core` |
-| [`@agentlens/openai`](./packages/sdk-openai) | OpenAI auto-instrumentation | `npm i @agentlens/openai` |
-| [`@agentlens/anthropic`](./packages/sdk-anthropic) | Anthropic auto-instrumentation | `npm i @agentlens/anthropic` |
-| `@agentlens/langchain` | LangChain callback handler | `npm i @agentlens/langchain` |
+| [`@farzanhossan/agentlens-core`](./packages/sdk-core) | Core tracer — framework agnostic | `npm i @farzanhossan/agentlens-core` |
+| [`@farzanhossan/agentlens-openai`](./packages/sdk-openai) | OpenAI auto-instrumentation | `npm i @farzanhossan/agentlens-openai` |
+| [`@farzanhossan/agentlens-anthropic`](./packages/sdk-anthropic) | Anthropic auto-instrumentation | `npm i @farzanhossan/agentlens-anthropic` |
+| `@farzanhossan/agentlens-langchain` | LangChain callback handler | `npm i @farzanhossan/agentlens-langchain` |
 | [`agentlens`](./packages/sdk-python) | Python SDK | `pip install agentlens` |
 
 ---

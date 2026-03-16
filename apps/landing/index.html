@@ -619,10 +619,10 @@
       </div>
       <div class="tab-panels">
         <div class="tab-panel active">
-          <pre><code class="language-bash">npm install @agentlens/core @agentlens/openai</code></pre>
+          <pre><code class="language-bash">npm install @farzanhossan/agentlens-core @farzanhossan/agentlens-openai</code></pre>
         </div>
         <div class="tab-panel">
-          <pre><code class="language-typescript">import { AgentLens } from '@agentlens/core'
+          <pre><code class="language-typescript">import { AgentLens } from '@farzanhossan/agentlens-core'
 
 AgentLens.init({
   apiKey: 'proj_xxx',
@@ -630,11 +630,11 @@ AgentLens.init({
 })</code></pre>
         </div>
         <div class="tab-panel">
-          <pre><code class="language-typescript">import '@agentlens/openai'
+          <pre><code class="language-typescript">import '@farzanhossan/agentlens-openai'
 // done. every OpenAI call is now traced.
 
 // Works with Anthropic too:
-import '@agentlens/anthropic'</code></pre>
+import '@farzanhossan/agentlens-anthropic'</code></pre>
         </div>
       </div>
       <p class="demo-caption">
@@ -894,10 +894,10 @@ import '@agentlens/anthropic'</code></pre>
 
   // ── Terminal typewriter ───────────────────────────────────────────────────
   const termLines = [
-    { cls: 'cmd',    text: '$ npm install @agentlens/core @agentlens/openai' },
+    { cls: 'cmd',    text: '$ npm install @farzanhossan/agentlens-core @farzanhossan/agentlens-openai' },
     { cls: 'blank',  text: '' },
-    { cls: 'import', text: "import { AgentLens } from '@agentlens/core'" },
-    { cls: 'import', text: "import '@agentlens/openai'" },
+    { cls: 'import', text: "import { AgentLens } from '@farzanhossan/agentlens-core'" },
+    { cls: 'import', text: "import '@farzanhossan/agentlens-openai'" },
     { cls: 'blank',  text: '' },
     { cls: 'method', text: "AgentLens.init({ apiKey: 'proj_xxx' })" },
     { cls: 'blank',  text: '' },

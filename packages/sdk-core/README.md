@@ -1,22 +1,22 @@
-# @agentlens/core
+# @farzanhossan/agentlens-core
 
-[![npm](https://img.shields.io/npm/v/@agentlens/core?color=6366f1)](https://www.npmjs.com/package/@agentlens/core)
+[![npm](https://img.shields.io/npm/v/@farzanhossan/agentlens-core?color=6366f1)](https://www.npmjs.com/package/@farzanhossan/agentlens-core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](../../LICENSE)
 
 The framework-agnostic core tracer for AgentLens. Handles span lifecycle, batching, gzip transport, PII scrubbing, and async context propagation.
 
-> **Looking for auto-instrumentation?** See [`@agentlens/openai`](../sdk-openai) or [`@agentlens/anthropic`](../sdk-anthropic) to trace without changing your LLM call sites.
+> **Looking for auto-instrumentation?** See [`@farzanhossan/agentlens-openai`](../sdk-openai) or [`@farzanhossan/agentlens-anthropic`](../sdk-anthropic) to trace without changing your LLM call sites.
 
 ---
 
 ## Install
 
 ```bash
-npm install @agentlens/core
+npm install @farzanhossan/agentlens-core
 # or
-pnpm add @agentlens/core
+pnpm add @farzanhossan/agentlens-core
 # or
-yarn add @agentlens/core
+yarn add @farzanhossan/agentlens-core
 ```
 
 ---
@@ -24,7 +24,7 @@ yarn add @agentlens/core
 ## Quick Start
 
 ```typescript
-import { AgentLens } from '@agentlens/core'
+import { AgentLens } from '@farzanhossan/agentlens-core'
 
 AgentLens.init({
   apiKey: 'proj_live_abc123',

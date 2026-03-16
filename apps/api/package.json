@@ -1,5 +1,5 @@
 {
-  "name": "@agentlens/api",
+  "name": "@farzanhossan/agentlens-api",
   "version": "0.1.0",
   "private": true,
   "description": "AgentLens NestJS API — span processor, dashboard API, alert engine",

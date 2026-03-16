@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@agentlens/core", "@agentlens/openai", "@agentlens/anthropic"]],
+  "linked": [["@farzanhossan/agentlens-core", "@farzanhossan/agentlens-openai", "@farzanhossan/agentlens-anthropic"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

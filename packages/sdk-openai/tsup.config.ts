@@ -9,5 +9,5 @@ export default defineConfig({
   minify: false,
   splitting: false,
   treeshake: true,
-  external: ['openai', '@agentlens/core'],
+  external: ['openai', '@farzanhossan/agentlens-core'],
 })

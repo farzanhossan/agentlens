@@ -79,10 +79,10 @@ curl http://localhost:9200/_cluster/health?pretty
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm turbo run build --filter=@agentlens/api
+pnpm turbo run build --filter=@farzanhossan/agentlens-api
 
 # Run migrations
-pnpm --filter @agentlens/api run migration:run
+pnpm --filter @farzanhossan/agentlens-api run migration:run
 
 # Start the API with PM2
 npm install -g pm2

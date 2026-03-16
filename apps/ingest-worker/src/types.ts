@@ -1,5 +1,5 @@
 /**
- * Matches @agentlens/core SpanData — the canonical wire format sent by SDKs.
+ * Matches @farzanhossan/agentlens-core SpanData — the canonical wire format sent by SDKs.
  */
 export interface SpanPayload {
   spanId: string;

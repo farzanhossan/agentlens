@@ -1,6 +1,6 @@
-# @agentlens/openai
+# @farzanhossan/agentlens-openai
 
-[![npm](https://img.shields.io/npm/v/@agentlens/openai?color=6366f1)](https://www.npmjs.com/package/@agentlens/openai)
+[![npm](https://img.shields.io/npm/v/@farzanhossan/agentlens-openai?color=6366f1)](https://www.npmjs.com/package/@farzanhossan/agentlens-openai)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](../../LICENSE)
 
 Auto-instrumentation for the [OpenAI Node.js SDK](https://github.com/openai/openai-node). Monkey-patches the OpenAI prototype so every API call is traced — without changing a single line of your existing code.
@@ -10,7 +10,7 @@ Auto-instrumentation for the [OpenAI Node.js SDK](https://github.com/openai/open
 ## Install
 
 ```bash
-npm install @agentlens/core @agentlens/openai
+npm install @farzanhossan/agentlens-core @farzanhossan/agentlens-openai
 ```
 
 ---
@@ -18,8 +18,8 @@ npm install @agentlens/core @agentlens/openai
 ## Setup
 
 ```typescript
-import { AgentLens } from '@agentlens/core'
-import '@agentlens/openai'          // ← auto-patches on import
+import { AgentLens } from '@farzanhossan/agentlens-core'
+import '@farzanhossan/agentlens-openai'          // ← auto-patches on import
 
 AgentLens.init({
   apiKey: 'proj_live_abc123',
@@ -31,7 +31,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const res = await openai.chat.completions.create({ model: 'gpt-4o', messages })
 ```
 
-Import order matters: `@agentlens/openai` must be imported before creating any `OpenAI` client instances.
+Import order matters: `@farzanhossan/agentlens-openai` must be imported before creating any `OpenAI` client instances.
 
 ---
 
@@ -104,7 +104,7 @@ If a model isn't in the table, `costUsd` is recorded as `undefined`. Versioned m
 The patcher exposes `unpatch()` to restore the original OpenAI methods. Use this in test teardown:
 
 ```typescript
-import { patch, unpatch, patches } from '@agentlens/openai/patcher'
+import { patch, unpatch, patches } from '@farzanhossan/agentlens-openai/patcher'
 import OpenAI from 'openai'
 
 beforeEach(() => {
@@ -119,7 +119,7 @@ afterEach(() => {
 To mock the underlying OpenAI call in unit tests, replace `patches[N].original` after calling `patch()`:
 
 ```typescript
-import { patches } from '@agentlens/openai/patcher'
+import { patches } from '@farzanhossan/agentlens-openai/patcher'
 import { vi } from 'vitest'
 
 // patches[0] = chat completions, patches[1] = legacy completions, patches[2] = embeddings

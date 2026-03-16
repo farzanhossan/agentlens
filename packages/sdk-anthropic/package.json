@@ -1,5 +1,5 @@
 {
-  "name": "@agentlens/anthropic",
+  "name": "@farzanhossan/agentlens-anthropic",
   "version": "0.1.0",
   "description": "Anthropic auto-instrumentation for AgentLens",
   "main": "./dist/index.js",
@@ -47,11 +47,11 @@
     "url": "https://github.com/farzanhossan/agentlens/issues"
   },
   "peerDependencies": {
-    "@agentlens/core": ">=0.1.0",
+    "@farzanhossan/agentlens-core": ">=0.1.0",
     "@anthropic-ai/sdk": ">=0.20.0"
   },
   "dependencies": {
-    "@agentlens/core": "workspace:*"
+    "@farzanhossan/agentlens-core": "workspace:*"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.24.3",

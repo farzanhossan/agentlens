@@ -107,7 +107,7 @@ export class AgentLens {
 
   // ── Internal helpers for auto-instrumentation packages ─────────────────────
   // These are prefixed with `_` to signal they are not part of the public API.
-  // Auto-patchers (`@agentlens/openai`, `@agentlens/anthropic`, etc.) use them
+  // Auto-patchers (`@farzanhossan/agentlens-openai`, `@farzanhossan/agentlens-anthropic`, etc.) use them
   // to push manually-managed spans (e.g. streaming responses whose lifetime
   // cannot be tied to a single Promise resolution).
 

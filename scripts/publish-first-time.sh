@@ -8,26 +8,26 @@ npm whoami || (echo "Not logged in to npm. Run: npm login" && exit 1)
 
 # Build all
 echo "Building packages..."
-pnpm --filter "@agentlens/*" build
+pnpm --filter "@farzanhossan/agentlens-*" build
 
 # Test all
 echo "Running tests..."
-pnpm --filter "@agentlens/*" test
+pnpm --filter "@farzanhossan/agentlens-*" test
 
 # Publish in order (core first, then dependents)
-echo "Publishing @agentlens/core..."
-pnpm --filter @agentlens/core publish --access public
+echo "Publishing @farzanhossan/agentlens-core..."
+pnpm --filter @farzanhossan/agentlens-core publish --access public
 
-echo "Publishing @agentlens/openai..."
-pnpm --filter @agentlens/openai publish --access public
+echo "Publishing @farzanhossan/agentlens-openai..."
+pnpm --filter @farzanhossan/agentlens-openai publish --access public
 
-echo "Publishing @agentlens/anthropic..."
-pnpm --filter @agentlens/anthropic publish --access public
+echo "Publishing @farzanhossan/agentlens-anthropic..."
+pnpm --filter @farzanhossan/agentlens-anthropic publish --access public
 
 echo ""
 echo "All packages published!"
 echo ""
 echo "Verify at:"
-echo "  https://www.npmjs.com/package/@agentlens/core"
-echo "  https://www.npmjs.com/package/@agentlens/openai"
-echo "  https://www.npmjs.com/package/@agentlens/anthropic"
+echo "  https://www.npmjs.com/package/@farzanhossan/agentlens-core"
+echo "  https://www.npmjs.com/package/@farzanhossan/agentlens-openai"
+echo "  https://www.npmjs.com/package/@farzanhossan/agentlens-anthropic"

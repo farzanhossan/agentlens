@@ -1,5 +1,5 @@
 /**
- * @agentlens/openai
+ * @farzanhossan/agentlens-openai
  *
  * Importing this module automatically patches the OpenAI SDK so every
  * `chat.completions.create`, `completions.create`, and `embeddings.create`
@@ -8,7 +8,7 @@
  * @example
  * ```ts
  * // Add this import ONCE in your app entry point, after AgentLens.init():
- * import '@agentlens/openai';
+ * import '@farzanhossan/agentlens-openai';
  * ```
  *
  * No other code changes are needed.

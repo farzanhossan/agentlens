@@ -33,23 +33,23 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build all SDK packages
-        run: pnpm --filter "@agentlens/*" build
+        run: pnpm --filter "@farzanhossan/agentlens-*" build
 
       - name: Run tests
-        run: pnpm --filter "@agentlens/*" test
+        run: pnpm --filter "@farzanhossan/agentlens-*" test
 
-      - name: Publish @agentlens/core
-        run: pnpm --filter @agentlens/core publish --access public --no-git-checks
+      - name: Publish @farzanhossan/agentlens-core
+        run: pnpm --filter @farzanhossan/agentlens-core publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @agentlens/openai
-        run: pnpm --filter @agentlens/openai publish --access public --no-git-checks
+      - name: Publish @farzanhossan/agentlens-openai
+        run: pnpm --filter @farzanhossan/agentlens-openai publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @agentlens/anthropic
-        run: pnpm --filter @agentlens/anthropic publish --access public --no-git-checks
+      - name: Publish @farzanhossan/agentlens-anthropic
+        run: pnpm --filter @farzanhossan/agentlens-anthropic publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

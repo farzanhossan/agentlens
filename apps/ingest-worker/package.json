@@ -1,5 +1,5 @@
 {
-  "name": "@agentlens/ingest-worker",
+  "name": "@farzanhossan/agentlens-ingest-worker",
   "version": "0.1.0",
   "private": true,
   "description": "AgentLens edge ingestion worker — Cloudflare Worker + Hono.js",

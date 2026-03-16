@@ -251,7 +251,7 @@ importers:
 
   packages/sdk-anthropic:
     dependencies:
-      '@agentlens/core':
+      '@farzanhossan/agentlens-core':
         specifier: workspace:*
         version: link:../sdk-core
     devDependencies:
@@ -310,7 +310,7 @@ importers:
 
   packages/sdk-openai:
     dependencies:
-      '@agentlens/core':
+      '@farzanhossan/agentlens-core':
         specifier: workspace:*
         version: link:../sdk-core
       uuid:
