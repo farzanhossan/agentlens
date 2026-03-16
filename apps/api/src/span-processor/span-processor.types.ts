@@ -1,6 +1,6 @@
 /**
  * Raw span data as it arrives in the BullMQ job payload from the ingest worker.
- * Field names mirror @farzanhossan/agentlens-core SpanData and the CF Worker SpanPayload.
+ * Field names mirror @farzanhossans/agentlens-core SpanData and the CF Worker SpanPayload.
  */
 export interface RawSpanData {
   spanId: string;

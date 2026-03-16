@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import OpenAI from 'openai';
-import { AgentLens } from '@farzanhossan/agentlens-core';
+import { AgentLens } from '@farzanhossans/agentlens-core';
 import { patch, patches, unpatch } from '../patcher.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

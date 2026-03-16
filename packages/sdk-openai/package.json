@@ -1,5 +1,5 @@
 {
-  "name": "@farzanhossan/agentlens-openai",
+  "name": "@farzanhossans/agentlens-openai",
   "version": "0.1.0",
   "description": "OpenAI auto-instrumentation for AgentLens",
   "main": "./dist/index.js",
@@ -48,11 +48,11 @@
     "url": "https://github.com/farzanhossan/agentlens/issues"
   },
   "peerDependencies": {
-    "@farzanhossan/agentlens-core": ">=0.1.0",
+    "@farzanhossans/agentlens-core": ">=0.1.0",
     "openai": ">=4.0.0"
   },
   "dependencies": {
-    "@farzanhossan/agentlens-core": "workspace:*",
+    "@farzanhossans/agentlens-core": "workspace:*",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

@@ -9,5 +9,5 @@ export default defineConfig({
   minify: false,
   splitting: false,
   treeshake: true,
-  external: ['@anthropic-ai/sdk', '@farzanhossan/agentlens-core'],
+  external: ['@anthropic-ai/sdk', '@farzanhossans/agentlens-core'],
 })

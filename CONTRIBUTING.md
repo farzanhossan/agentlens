@@ -14,9 +14,9 @@ agentlens/
 │   ├── ingest-worker/    # Cloudflare Worker (Hono.js) — edge ingestion
 │   └── landing/          # Static marketing landing page
 ├── packages/
-│   ├── sdk-core/         # @farzanhossan/agentlens-core — framework-agnostic tracer
-│   ├── sdk-openai/       # @farzanhossan/agentlens-openai — OpenAI auto-instrumentation
-│   ├── sdk-anthropic/    # @farzanhossan/agentlens-anthropic — Anthropic auto-instrumentation
+│   ├── sdk-core/         # @farzanhossans/agentlens-core — framework-agnostic tracer
+│   ├── sdk-openai/       # @farzanhossans/agentlens-openai — OpenAI auto-instrumentation
+│   ├── sdk-anthropic/    # @farzanhossans/agentlens-anthropic — Anthropic auto-instrumentation
 │   └── sdk-python/       # agentlens — Python SDK
 ├── scripts/              # Developer utilities (seed-demo, reset-demo)
 ├── infra/                # Docker Compose, init SQL, nginx config
@@ -90,8 +90,8 @@ pnpm turbo run test
 cd packages/sdk-python && pytest -v
 
 # Single package
-pnpm --filter @farzanhossan/agentlens-api test
-pnpm --filter @farzanhossan/agentlens-openai test
+pnpm --filter @farzanhossans/agentlens-api test
+pnpm --filter @farzanhossans/agentlens-openai test
 ```
 
 All tests must pass before opening a PR. CI runs `pnpm turbo run build test lint` on every push.
@@ -113,11 +113,11 @@ cd packages/sdk-myprovider
 `package.json` minimum:
 ```json
 {
-  "name": "@farzanhossan/agentlens-myprovider",
+  "name": "@farzanhossans/agentlens-myprovider",
   "version": "0.1.0",
   "main": "dist/index.js",
   "dependencies": {
-    "@farzanhossan/agentlens-core": "workspace:*"
+    "@farzanhossans/agentlens-core": "workspace:*"
   },
   "peerDependencies": {
     "myprovider-sdk": ">=1.0.0"
@@ -129,7 +129,7 @@ cd packages/sdk-myprovider
 
 ```typescript
 // src/patcher.ts
-import { AgentLens, Span, getCurrentTraceId, getCurrentSpanId } from '@farzanhossan/agentlens-core'
+import { AgentLens, Span, getCurrentTraceId, getCurrentSpanId } from '@farzanhossans/agentlens-core'
 import { v4 as uuidv4 } from 'uuid'
 
 type AnyFn = (...args: unknown[]) => unknown

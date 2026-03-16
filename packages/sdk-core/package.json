@@ -1,5 +1,5 @@
 {
-  "name": "@farzanhossan/agentlens-core",
+  "name": "@farzanhossans/agentlens-core",
   "version": "0.1.0",
   "description": "Core tracer SDK for AgentLens — AI agent observability",
   "main": "./dist/index.js",

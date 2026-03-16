@@ -10,7 +10,7 @@ import type { Completion, CompletionCreateParamsNonStreaming } from 'openai/reso
 import type { CreateEmbeddingResponse, EmbeddingCreateParams } from 'openai/resources/embeddings';
 import type { Stream } from 'openai/streaming';
 import { v4 as uuidv4 } from 'uuid';
-import { AgentLens, Span, getCurrentSpanId, getCurrentTraceId } from '@farzanhossan/agentlens-core';
+import { AgentLens, Span, getCurrentSpanId, getCurrentTraceId } from '@farzanhossans/agentlens-core';
 import { calculateCost } from './pricing.js';
 
 // ── Patch bookkeeping ─────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ function isReady(): boolean {
   if (AgentLens._isInitialized()) return true;
   // eslint-disable-next-line no-console
   console.warn(
-    '[AgentLens] @farzanhossan/agentlens-openai is loaded but AgentLens.init() has not been called. ' +
+    '[AgentLens] @farzanhossans/agentlens-openai is loaded but AgentLens.init() has not been called. ' +
       'OpenAI calls will not be traced.',
   );
   return false;
@@ -300,7 +300,7 @@ let patched = false;
  *   guarantee the same module instance is patched (useful in ESM test
  *   environments where `require()` and `import` resolve differently).
  *
- * Called automatically when `@farzanhossan/agentlens-openai` is imported.
+ * Called automatically when `@farzanhossans/agentlens-openai` is imported.
  */
 export function patch(OpenAIClass?: typeof OpenAI): void {
   if (patched) return;

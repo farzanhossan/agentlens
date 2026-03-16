@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { AgentLens, Span, getCurrentSpanId, getCurrentTraceId } from '@farzanhossan/agentlens-core';
+import { AgentLens, Span, getCurrentSpanId, getCurrentTraceId } from '@farzanhossans/agentlens-core';
 import { generateTraceId } from './id.js';
 
 export interface AnthropicPatchOptions {
@@ -44,7 +44,7 @@ function isReady(): boolean {
   if (AgentLens._isInitialized()) return true;
   // eslint-disable-next-line no-console
   console.warn(
-    '[AgentLens] @farzanhossan/agentlens-anthropic is loaded but AgentLens.init() has not been called. ' +
+    '[AgentLens] @farzanhossans/agentlens-anthropic is loaded but AgentLens.init() has not been called. ' +
       'Anthropic calls will not be traced.',
   );
   return false;
@@ -75,7 +75,7 @@ function finishSpan(span: Span): void {
  * @example
  * ```ts
  * import Anthropic from '@anthropic-ai/sdk';
- * import { patchAnthropic } from '@farzanhossan/agentlens-anthropic';
+ * import { patchAnthropic } from '@farzanhossans/agentlens-anthropic';
  *
  * const anthropic = patchAnthropic(new Anthropic());
  * ```
