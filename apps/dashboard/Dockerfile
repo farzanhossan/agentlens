@@ -10,7 +10,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/dashboard/ apps/dashboard/
 
 # Install only the dashboard's deps
-RUN pnpm install --frozen-lockfile --filter @agentlens/dashboard
+RUN pnpm install --frozen-lockfile --filter @farzanhossans/agentlens-dashboard
 
 # Build arguments for runtime config injected at build time
 ARG VITE_API_URL=""
@@ -21,7 +21,7 @@ ENV VITE_API_URL=$VITE_API_URL \
     VITE_WS_URL=$VITE_WS_URL \
     VITE_PROJECT_ID=$VITE_PROJECT_ID
 
-RUN pnpm --filter @agentlens/dashboard run build
+RUN pnpm --filter @farzanhossans/agentlens-dashboard run build
 
 # ── Stage 2: runner ───────────────────────────────────────────────────────────
 FROM nginx:alpine AS runner

@@ -14,11 +14,11 @@ COPY apps/api/ apps/api/
 RUN pnpm install --frozen-lockfile
 
 # Compile TypeScript
-RUN pnpm --filter @agentlens/api run build
+RUN pnpm --filter @farzanhossans/agentlens-api run build
 
 # Create a production-only deployment bundle in /deploy/api
 # pnpm deploy copies only runtime deps + dist, no dev packages
-RUN pnpm --filter @agentlens/api deploy --prod /deploy/api
+RUN pnpm --filter @farzanhossans/agentlens-api deploy --prod /deploy/api
 
 # ── Stage 2: runner ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
