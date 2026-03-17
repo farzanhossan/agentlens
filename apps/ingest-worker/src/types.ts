@@ -32,8 +32,6 @@ export interface SpanPayload {
  * Declared in wrangler.toml and injected at runtime.
  */
 export interface Env {
-  /** Cloudflare KV namespace for rate-limit counters. */
-  RATE_LIMIT_KV: KVNamespace;
   /**
    * Shared HMAC-SHA256 secret used to verify API keys at the edge.
    * Set via `wrangler secret put HMAC_SECRET`.
