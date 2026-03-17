@@ -32,15 +32,19 @@ export interface SpanPayload {
  * Declared in wrangler.toml and injected at runtime.
  */
 export interface Env {
+  /** NestJS API base URL — spans are forwarded here directly. */
+  API_URL: string;
   /**
    * Shared HMAC-SHA256 secret used to verify API keys at the edge.
    * Set via `wrangler secret put HMAC_SECRET`.
    */
   HMAC_SECRET: string;
-  /** Upstash Redis REST endpoint URL. */
-  UPSTASH_REDIS_REST_URL: string;
-  /** Upstash Redis REST auth token. */
-  UPSTASH_REDIS_REST_TOKEN: string;
+  /**
+   * Shared secret between CF Worker and NestJS API.
+   * Worker sends this in X-Worker-Secret; API validates it.
+   * Set via `wrangler secret put WORKER_SECRET`.
+   */
+  WORKER_SECRET: string;
   ENVIRONMENT: string;
 }
 

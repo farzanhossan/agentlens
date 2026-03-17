@@ -1,66 +1,41 @@
-import { Redis } from '@upstash/redis/cloudflare';
 import type { Context, Next } from 'hono';
 import type { ContextVars, Env } from '../types.js';
 
-const RATE_LIMIT = 1_000;        // requests per window
-const WINDOW_SECONDS = 60;       // 1-minute fixed window
-const WINDOW_MS = WINDOW_SECONDS * 1_000;
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
 
-/**
- * Fixed-window rate limiter backed by Upstash Redis.
- *
- * Each project gets 1,000 requests per 60-second window. The window key is
- * derived from the current UTC minute, so it resets on the clock boundary.
- *
- * Headers set on every response:
- * - `X-RateLimit-Limit`     — max requests per window
- * - `X-RateLimit-Remaining` — requests left in current window
- * - `X-RateLimit-Reset`     — Unix timestamp (s) when window resets
- *
- * A 429 response additionally includes:
- * - `Retry-After` — seconds until the window resets
- */
+// In-memory store — resets on worker restart
+// Good enough for MVP; replace with Durable Objects when scale requires it
+const store = new Map<string, RateLimitRecord>();
+
+const WINDOW_MS = 60 * 1_000; // 1 minute
+const MAX_REQUESTS = 1_000;   // per API key per window
+
 export async function rateLimitMiddleware(
   c: Context<{ Bindings: Env; Variables: ContextVars }>,
   next: Next,
 ): Promise<Response | void> {
-  const projectId = c.get('projectId');
+  const key = c.req.header('X-API-Key') ?? 'unknown';
+  const now = Date.now();
 
-  const redis = new Redis({
-    url: c.env.UPSTASH_REDIS_REST_URL,
-    token: c.env.UPSTASH_REDIS_REST_TOKEN,
-  });
+  const record = store.get(key);
 
-  const nowMs = Date.now();
-  const window = Math.floor(nowMs / WINDOW_MS);
-  const windowResetSec = (window + 1) * WINDOW_SECONDS;
-  const secondsUntilReset = windowResetSec - Math.floor(nowMs / 1_000);
+  if (!record || now > record.resetAt) {
+    store.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    return next();
+  }
 
-  const key = `rl:${projectId}:${window}`;
-
-  // Atomic increment + expiry in a single pipeline round-trip
-  const [count] = await redis
-    .pipeline()
-    .incr(key)
-    .expire(key, WINDOW_SECONDS * 2)  // 2× window so the key outlives the window
-    .exec<[number, number]>();
-
-  const remaining = Math.max(0, RATE_LIMIT - count);
-
-  c.header('X-RateLimit-Limit', String(RATE_LIMIT));
-  c.header('X-RateLimit-Remaining', String(remaining));
-  c.header('X-RateLimit-Reset', String(windowResetSec));
-
-  if (count > RATE_LIMIT) {
-    c.header('Retry-After', String(secondsUntilReset));
+  if (record.count >= MAX_REQUESTS) {
+    const retryAfter = Math.ceil((record.resetAt - now) / 1_000);
     return c.json(
-      {
-        error: 'Rate limit exceeded',
-        retryAfterSeconds: secondsUntilReset,
-      },
+      { error: 'Rate limit exceeded', retryAfter },
       429,
+      { 'Retry-After': String(retryAfter) },
     );
   }
 
-  await next();
+  record.count++;
+  return next();
 }

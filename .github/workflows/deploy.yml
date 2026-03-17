@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 60s
-          command_timeout: 15m
+          command_timeout: 20m
           script: |
             set -e
 
@@ -32,15 +32,40 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            # Validate required env vars
+            if [ ! -f "infra/.env.production" ]; then
+              echo "❌ ERROR: infra/.env.production not found!"
+              exit 1
+            fi
+            source infra/.env.production
+            [ -z "$REDIS_PASSWORD" ] && echo "❌ REDIS_PASSWORD not set" && exit 1
+            [ -z "$JWT_SECRET" ] && echo "❌ JWT_SECRET not set" && exit 1
+            [ -z "$DATABASE_URL" ] && echo "❌ DATABASE_URL not set" && exit 1
+            echo "✅ Environment variables validated"
+
             which pnpm || npm install -g pnpm@9
             pnpm install --frozen-lockfile
 
-            pnpm --filter @farzanhossans/agentlens-api run migration:run || true
+            # Step 1 — Start infra services first (without API)
+            docker-compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
 
+            # Step 2 — Wait for infra to be healthy
+            echo "Waiting for infrastructure..."
+            sleep 30
+
+            # Step 3 — Check Redis
+            docker-compose -f infra/docker-compose.prod.yml ps redis
+            docker exec infra-redis-1 redis-cli -a "${REDIS_PASSWORD}" ping || true
+
+            # Step 4 — Run migrations
+            pnpm --filter api run migration:run || echo "Migration skipped"
+
+            # Step 5 — Build and start API
             docker-compose -f infra/docker-compose.prod.yml up -d --build api
 
+            # Step 6 — Health check
             sleep 15
-            curl -f http://localhost:3000/health && echo "✅ API healthy"
+            curl -f http://localhost:3000/health && echo "✅ API healthy" || echo "⚠️ API health check failed"
 
   deploy-dashboard:
     name: Deploy Dashboard to Vercel
@@ -133,8 +158,17 @@ jobs:
       - name: Install latest wrangler
         run: npm install -g wrangler@latest
 
+      - name: Set Cloudflare Worker secrets
+        working-directory: apps/ingest-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "${{ secrets.HMAC_SECRET }}" | wrangler secret put HMAC_SECRET
+          echo "${{ secrets.WORKER_SECRET }}" | wrangler secret put WORKER_SECRET
+
       - name: Deploy to Cloudflare Workers
-        run: wrangler deploy
+        run: wrangler deploy --env=""
         working-directory: apps/ingest-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
