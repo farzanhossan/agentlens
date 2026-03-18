@@ -24,7 +24,7 @@ services:
       FRONTEND_URL: https://app.agentlens.dev
       PORT: 3000
     ports:
-      - "3000:3000"
+      - "4020:3000"
     networks:
       - agentlens-prod
 
