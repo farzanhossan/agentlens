@@ -43,6 +43,13 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger docs available at /docs', 'Bootstrap');
   }
 
+  // Health check — used by Docker healthcheck and deploy scripts
+  // Registered before Fastify adapter finalizes routes
+  const fastify = app.getHttpAdapter().getInstance();
+  fastify.get('/health', (_req: unknown, reply: { send: (v: unknown) => void }) => {
+    reply.send({ status: 'ok', ts: Date.now() });
+  });
+
   // Graceful shutdown — flush queues and close DB connections on SIGTERM
   app.enableShutdownHooks();
 
