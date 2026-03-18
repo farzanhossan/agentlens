@@ -19,13 +19,17 @@ import { ProjectsModule } from './projects/projects.module.js';
 
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.getOrThrow<string>('REDIS_HOST'),
-          port: config.getOrThrow<number>('REDIS_PORT'),
-          password: config.get<string>('REDIS_PASSWORD'),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.getOrThrow<string>('REDIS_URL');
+        const url = new URL(redisUrl);
+        return {
+          connection: {
+            host: url.hostname,
+            port: Number(url.port) || 6379,
+            password: url.password || undefined,
+          },
+        };
+      },
     }),
 
     IngestModule,
