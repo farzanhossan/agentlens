@@ -59,14 +59,6 @@ export class ElasticsearchService implements OnModuleInit {
   constructor(config: ConfigService) {
     this.client = new Client({
       node: config.getOrThrow<string>('ELASTICSEARCH_URL'),
-      auth: {
-        username: config.get<string>('ELASTICSEARCH_USERNAME', 'elastic'),
-        password: config.getOrThrow<string>('ELASTICSEARCH_PASSWORD'),
-      },
-      tls: {
-        // Accept self-signed certs in development; enforce in production via env flag
-        rejectUnauthorized: config.get('NODE_ENV') === 'production',
-      },
       requestTimeout: 10_000,
     });
   }
