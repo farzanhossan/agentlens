@@ -117,12 +117,14 @@ export async function ingestHandler(
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
+    // eslint-disable-next-line no-console
     console.error('[ingest-worker] Failed to reach API:', err.message);
     return c.json({ error: 'Failed to reach processing API — please retry' }, 503);
   }
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
+    // eslint-disable-next-line no-console
     console.error('[ingest-worker] API error:', response.status, errorText);
     return c.json({ error: 'Processing failed' }, 502);
   }
