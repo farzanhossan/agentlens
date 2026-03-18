@@ -2,6 +2,7 @@ name = "agentlens-ingest"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+account_id = "1ec13aaf34ba464c2a5b65be80ee57f5"
 
 [vars]
 ENVIRONMENT = "production"
