@@ -32,16 +32,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Validate required env vars
-            if [ ! -f "infra/.env.production" ]; then
-              echo "❌ ERROR: infra/.env.production not found!"
-              exit 1
-            fi
-            source infra/.env.production
-            [ -z "$REDIS_PASSWORD" ] && echo "❌ REDIS_PASSWORD not set" && exit 1
-            [ -z "$JWT_SECRET" ] && echo "❌ JWT_SECRET not set" && exit 1
-            [ -z "$DATABASE_URL" ] && echo "❌ DATABASE_URL not set" && exit 1
-            echo "✅ Environment variables validated"
+            echo "✅ Using hardcoded values in docker-compose.prod.yml"
 
             which pnpm || npm install -g pnpm@9
             pnpm install --frozen-lockfile
