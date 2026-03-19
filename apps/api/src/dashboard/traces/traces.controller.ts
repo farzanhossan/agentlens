@@ -71,8 +71,8 @@ export class TracesController {
     @Param('projectId') projectId: string,
     @Query() query: StatsQueryDto,
   ): Promise<TraceStatsDto> {
-    const dateTo = query.dateTo ?? new Date().toISOString().split('T')[0]!;
-    const dateFrom = query.dateFrom ?? new Date(Date.now() - 30 * 86400_000).toISOString().split('T')[0]!;
+    const dateTo = query.dateTo ?? new Date().toISOString().split('T')[0];
+    const dateFrom = query.dateFrom ?? new Date(Date.now() - 30 * 86400_000).toISOString().split('T')[0];
     return this.tracesService.getStats(projectId, dateFrom, dateTo);
   }
 
