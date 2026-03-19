@@ -31,6 +31,15 @@ function AlertsIcon(): React.JSX.Element {
   );
 }
 
+function ProjectsIcon(): React.JSX.Element {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+    </svg>
+  );
+}
+
 function LogoutIcon(): React.JSX.Element {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -43,12 +52,14 @@ const navItems: NavItem[] = [
   { to: '/traces', label: 'Traces', icon: <TracesIcon /> },
   { to: '/cost', label: 'Cost', icon: <CostIcon /> },
   { to: '/alerts', label: 'Alerts', icon: <AlertsIcon /> },
+  { to: '/projects', label: 'Projects', icon: <ProjectsIcon /> },
 ];
 
 const pageTitles: Record<string, string> = {
   '/traces': 'Traces',
   '/cost': 'Cost',
   '/alerts': 'Alerts',
+  '/projects': 'Projects',
 };
 
 function usePageTitle(): string {

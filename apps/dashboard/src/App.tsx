@@ -9,6 +9,7 @@ import { TracesPage } from './pages/TracesPage';
 import { TraceDetailPage } from './pages/TraceDetailPage';
 import { CostPage } from './pages/CostPage';
 import { AlertsPage } from './pages/AlertsPage';
+import { ProjectsPage } from './pages/ProjectsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ export function App(): React.JSX.Element {
               <Route path="traces/:traceId" element={<TraceDetailPage />} />
               <Route path="cost" element={<CostPage />} />
               <Route path="alerts" element={<AlertsPage />} />
+              <Route path="projects" element={<ProjectsPage />} />
             </Route>
           </Route>
         </Routes>

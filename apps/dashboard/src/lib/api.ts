@@ -170,6 +170,15 @@ export async function createProject(name: string): Promise<ProjectWithKey> {
   return res.data;
 }
 
+export async function deleteProject(projectId: string): Promise<void> {
+  await api.delete(`/projects/${projectId}`);
+}
+
+export async function rotateProjectKey(projectId: string): Promise<ProjectWithKey> {
+  const res = await api.post<ProjectWithKey>(`/projects/${projectId}/rotate-key`);
+  return res.data;
+}
+
 // ── Traces ────────────────────────────────────────────────────────────────────
 
 export interface TraceListParams {
