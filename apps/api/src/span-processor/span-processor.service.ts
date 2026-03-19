@@ -137,22 +137,26 @@ export class SpanProcessorService {
     const costUsd = span.costUsd ?? 0;
     const latencyMs = span.latencyMs ?? 0;
 
-    // Derive trace-level status from this span
+    // Root span (no parent) → use its name as the agent name
+    const agentName = span.parentSpanId == null ? span.name : null;
+
+    // Derive initial trace status from this span
     const traceStatus =
       span.status === 'error' ? TraceStatus.ERROR : TraceStatus.RUNNING;
 
     await em.query(
       `
       INSERT INTO traces (
-        id, project_id, status,
+        id, project_id, agent_name, status,
         total_spans, total_tokens, total_cost_usd, total_latency_ms,
         started_at, ended_at, metadata
       ) VALUES (
-        $1, $2, $3,
-        1, $4, $5, $6,
-        $7, $8, $9
+        $1, $2, $3, $4,
+        1, $5, $6, $7,
+        $8, $9, $10
       )
       ON CONFLICT (id) DO UPDATE SET
+        agent_name      = COALESCE(traces.agent_name, EXCLUDED.agent_name),
         total_spans     = traces.total_spans + 1,
         total_tokens    = traces.total_tokens + EXCLUDED.total_tokens,
         total_cost_usd  = traces.total_cost_usd + EXCLUDED.total_cost_usd,
@@ -162,6 +166,7 @@ export class SpanProcessorService {
           WHEN traces.status   = 'error'   THEN 'error'::trace_status
           WHEN EXCLUDED.status = 'timeout' THEN 'timeout'::trace_status
           WHEN traces.status   = 'timeout' THEN 'timeout'::trace_status
+          WHEN EXCLUDED.status = 'success' THEN 'success'::trace_status
           ELSE traces.status
         END,
         ended_at = CASE
@@ -172,6 +177,7 @@ export class SpanProcessorService {
       [
         span.traceId,
         span.projectId,
+        agentName,
         traceStatus,
         totalTokens,
         costUsd,

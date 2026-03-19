@@ -159,7 +159,8 @@ export class TracesService {
         SUM(total_cost_usd::float) AS total_cost_usd
        FROM traces
        WHERE project_id = $1
-         AND started_at BETWEEN $2 AND $3`,
+         AND started_at >= $2
+         AND started_at < ($3::date + INTERVAL '1 day')`,
       [projectId, dateFrom, dateTo],
     );
 
