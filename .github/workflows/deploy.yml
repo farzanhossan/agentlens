@@ -33,10 +33,10 @@ jobs:
             git reset --hard origin/main
 
             # Start infra services if not already running
-            docker compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
+            docker-compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
 
             # Build and restart API (migrations run automatically on startup)
-            docker compose -f infra/docker-compose.prod.yml up -d --build api
+            docker-compose -f infra/docker-compose.prod.yml up -d --build api
 
             # Health check
             sleep 20
