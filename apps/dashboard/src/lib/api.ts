@@ -14,14 +14,19 @@ import type {
 } from './types';
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
-const PROJECT_ID = (import.meta.env['VITE_PROJECT_ID'] as string | undefined) ?? '';
+const ENV_PROJECT_ID = (import.meta.env['VITE_PROJECT_ID'] as string | undefined) ?? '';
+
+function getProjectId(): string {
+  return localStorage.getItem('agentlens_project_id') ?? ENV_PROJECT_ID;
+}
 
 export const api = axios.create({ baseURL: BASE_URL });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('agentlens_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
-  if (PROJECT_ID) config.headers['x-project-id'] = PROJECT_ID;
+  const pid = getProjectId();
+  if (pid) config.headers['x-project-id'] = pid;
   return config;
 });
 
@@ -30,6 +35,7 @@ api.interceptors.response.use(
   (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       localStorage.removeItem('agentlens_token');
+      localStorage.removeItem('agentlens_project_id');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -117,6 +123,18 @@ interface ApiCostTimeseriesDto {
   dates: Array<{ date: string; costUsd: number }>;
 }
 
+export interface ProjectResponse {
+  id: string;
+  name: string;
+  organizationId: string;
+  retentionDays: number;
+  createdAt: string;
+}
+
+export interface ProjectWithKey extends ProjectResponse {
+  apiKey: string;
+}
+
 // ── Span node mapper ─────────────────────────────────────────────────────────
 
 function mapSpanNode(node: ApiSpanNode): SpanNode {
@@ -140,6 +158,18 @@ function mapSpanNode(node: ApiSpanNode): SpanNode {
   };
 }
 
+// ── Projects ──────────────────────────────────────────────────────────────────
+
+export async function listProjects(): Promise<ProjectResponse[]> {
+  const res = await api.get<ProjectResponse[]>('/projects');
+  return res.data;
+}
+
+export async function createProject(name: string): Promise<ProjectWithKey> {
+  const res = await api.post<ProjectWithKey>('/projects', { name });
+  return res.data;
+}
+
 // ── Traces ────────────────────────────────────────────────────────────────────
 
 export interface TraceListParams {
@@ -154,7 +184,7 @@ export interface TraceListParams {
 export async function fetchTraces(params: TraceListParams): Promise<Paginated<TraceSummary>> {
   const limit = params.limit ?? 20;
   const res = await api.get<ApiPaginatedDto<ApiTraceSummary>>(
-    `/projects/${PROJECT_ID}/traces`,
+    `/projects/${getProjectId()}/traces`,
     {
       params: {
         cursor: params.cursor,
@@ -184,7 +214,7 @@ export async function fetchTraces(params: TraceListParams): Promise<Paginated<Tr
 
 export async function fetchTraceStats(): Promise<TraceStats> {
   const res = await api.get<ApiTraceStats>(
-    `/projects/${PROJECT_ID}/traces/stats`,
+    `/projects/${getProjectId()}/traces/stats`,
     {
       params: {
         dateFrom: isoDateDaysAgo(30),
@@ -206,7 +236,7 @@ export async function fetchTraceStats(): Promise<TraceStats> {
 }
 
 export async function fetchTraceDetail(traceId: string): Promise<TraceDetail> {
-  const res = await api.get<ApiTraceDetail>(`/projects/${PROJECT_ID}/traces/${traceId}`);
+  const res = await api.get<ApiTraceDetail>(`/projects/${getProjectId()}/traces/${traceId}`);
   const t = res.data;
   return {
     id: t.id,
@@ -228,7 +258,7 @@ export interface CostRangeParams {
 }
 
 export async function fetchCostSummary(params: CostRangeParams): Promise<CostSummary> {
-  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${getProjectId()}/cost/summary`, {
     params: { dateFrom: params.from, dateTo: params.to },
   });
   const d = res.data;
@@ -243,14 +273,14 @@ export async function fetchCostSummary(params: CostRangeParams): Promise<CostSum
 }
 
 export async function fetchCostTimeseries(params: CostRangeParams): Promise<CostTimeseries[]> {
-  const res = await api.get<ApiCostTimeseriesDto>(`/projects/${PROJECT_ID}/cost/timeseries`, {
+  const res = await api.get<ApiCostTimeseriesDto>(`/projects/${getProjectId()}/cost/timeseries`, {
     params: { dateFrom: params.from, dateTo: params.to },
   });
   return res.data.dates.map((d) => ({ date: d.date, costUsd: String(d.costUsd) }));
 }
 
 export async function fetchCostByModel(params: CostRangeParams): Promise<CostByModel[]> {
-  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${getProjectId()}/cost/summary`, {
     params: { dateFrom: params.from, dateTo: params.to },
   });
   return res.data.byModel.map((m) => ({
@@ -261,7 +291,7 @@ export async function fetchCostByModel(params: CostRangeParams): Promise<CostByM
 }
 
 export async function fetchCostByAgent(params: CostRangeParams): Promise<CostByAgent[]> {
-  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${getProjectId()}/cost/summary`, {
     params: { dateFrom: params.from, dateTo: params.to },
   });
   return res.data.byAgent.map((a) => ({
@@ -274,20 +304,20 @@ export async function fetchCostByAgent(params: CostRangeParams): Promise<CostByA
 // ── Alerts ────────────────────────────────────────────────────────────────────
 
 export async function fetchAlerts(): Promise<AlertResponse[]> {
-  const res = await api.get<AlertResponse[]>(`/projects/${PROJECT_ID}/alerts`);
+  const res = await api.get<AlertResponse[]>(`/projects/${getProjectId()}/alerts`);
   return res.data;
 }
 
 export async function createAlert(payload: CreateAlertPayload): Promise<AlertResponse> {
-  const res = await api.post<AlertResponse>(`/projects/${PROJECT_ID}/alerts`, payload);
+  const res = await api.post<AlertResponse>(`/projects/${getProjectId()}/alerts`, payload);
   return res.data;
 }
 
 export async function updateAlert(id: string, payload: Partial<CreateAlertPayload & { isActive: boolean }>): Promise<AlertResponse> {
-  const res = await api.patch<AlertResponse>(`/projects/${PROJECT_ID}/alerts/${id}`, payload);
+  const res = await api.patch<AlertResponse>(`/projects/${getProjectId()}/alerts/${id}`, payload);
   return res.data;
 }
 
 export async function deleteAlert(id: string): Promise<void> {
-  await api.delete(`/projects/${PROJECT_ID}/alerts/${id}`);
+  await api.delete(`/projects/${getProjectId()}/alerts/${id}`);
 }

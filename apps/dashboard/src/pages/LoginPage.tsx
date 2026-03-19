@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { api } from '../lib/api';
+import { api, listProjects } from '../lib/api';
 
 interface AuthResponse {
   token: string;
@@ -22,6 +22,10 @@ export function LoginPage(): React.JSX.Element {
     try {
       const res = await api.post<AuthResponse>('/auth/login', { email, password });
       localStorage.setItem('agentlens_token', res.data.token);
+      const projects = await listProjects();
+      if (projects.length > 0) {
+        localStorage.setItem('agentlens_project_id', projects[0].id);
+      }
       navigate('/traces', { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {

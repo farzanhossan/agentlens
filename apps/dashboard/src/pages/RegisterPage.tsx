@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { api } from '../lib/api';
+import { api, createProject } from '../lib/api';
 
 interface AuthResponse {
   token: string;
@@ -48,6 +48,8 @@ export function RegisterPage(): React.JSX.Element {
         password,
       });
       localStorage.setItem('agentlens_token', res.data.token);
+      const project = await createProject(orgName);
+      localStorage.setItem('agentlens_project_id', project.id);
       navigate('/traces', { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
