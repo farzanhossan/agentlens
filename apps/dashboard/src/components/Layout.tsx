@@ -1,7 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-
-const PROJECT_ID = (import.meta.env['VITE_PROJECT_ID'] as string | undefined) ?? '';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 interface NavItem {
   to: string;
@@ -33,6 +31,14 @@ function AlertsIcon(): React.JSX.Element {
   );
 }
 
+function LogoutIcon(): React.JSX.Element {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+  );
+}
+
 const navItems: NavItem[] = [
   { to: '/traces', label: 'Traces', icon: <TracesIcon /> },
   { to: '/cost', label: 'Cost', icon: <CostIcon /> },
@@ -55,6 +61,17 @@ function usePageTitle(): string {
 
 export function Layout(): React.JSX.Element {
   const pageTitle = usePageTitle();
+  const navigate = useNavigate();
+
+  // Read from localStorage at render time (not build-time env var)
+  const projectId = localStorage.getItem('agentlens_project_id') ?? '';
+  const shortId = projectId ? projectId.slice(0, 8) + '...' : '(not set)';
+
+  function handleLogout(): void {
+    localStorage.removeItem('agentlens_token');
+    localStorage.removeItem('agentlens_project_id');
+    navigate('/login', { replace: true });
+  }
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
@@ -85,10 +102,19 @@ export function Layout(): React.JSX.Element {
           ))}
         </nav>
 
-        {/* Project ID */}
-        <div className="px-4 py-3 border-t border-gray-800">
-          <p className="text-xs text-gray-600 mb-0.5">Project</p>
-          <p className="text-xs text-gray-400 font-mono truncate">{PROJECT_ID || '(not set)'}</p>
+        {/* Project ID + Logout */}
+        <div className="px-4 py-3 border-t border-gray-800 space-y-2">
+          <div>
+            <p className="text-xs text-gray-600 mb-0.5">Project</p>
+            <p className="text-xs text-gray-400 font-mono truncate" title={projectId}>{shortId}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors"
+          >
+            <LogoutIcon />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -99,7 +125,7 @@ export function Layout(): React.JSX.Element {
           <span className="text-sm font-semibold text-gray-200 flex-1">{pageTitle}</span>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Project:</span>
-            <span className="text-xs text-gray-400 font-mono">{PROJECT_ID || '—'}</span>
+            <span className="text-xs text-gray-400 font-mono" title={projectId}>{shortId}</span>
           </div>
         </header>
 
