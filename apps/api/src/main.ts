@@ -8,6 +8,7 @@ import {
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { gunzip } from 'zlib';
 import { promisify } from 'util';
+import type { FastifyRequest } from 'fastify';
 import { AppModule } from './app.module.js';
 
 const gunzipAsync = promisify(gunzip);
@@ -50,8 +51,8 @@ async function bootstrap(): Promise<void> {
   fastify.addContentTypeParser(
     'application/json',
     { parseAs: 'buffer' },
-    async (_req: { headers: Record<string, string> }, body: Buffer) => {
-      const raw = _req.headers['content-encoding'] === 'gzip'
+    async (req: FastifyRequest, body: Buffer) => {
+      const raw = req.headers['content-encoding'] === 'gzip'
         ? await gunzipAsync(body)
         : body;
       return JSON.parse(raw.toString('utf8')) as unknown;
