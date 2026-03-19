@@ -52,8 +52,9 @@ export interface AgentLensConfig {
   /** AgentLens project ID (UUID). Attached to every span. */
   projectId: string;
   /**
-   * Base URL of the ingest endpoint.
-   * @default "https://ingest.agentlens.dev"
+   * Base URL of your AgentLens API.
+   * - Cloud:       omit (defaults to https://api-agentlens.techmatbd.com)
+   * - Self-hosted: set to your own API URL, e.g. "https://api.example.com"
    */
   endpoint?: string;
   /**

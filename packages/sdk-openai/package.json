@@ -1,6 +1,6 @@
 {
   "name": "@farzanhossans/agentlens-openai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "OpenAI auto-instrumentation for AgentLens",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
