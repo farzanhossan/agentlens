@@ -6,7 +6,11 @@ import {
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { gunzip } from 'zlib';
+import { promisify } from 'util';
 import { AppModule } from './app.module.js';
+
+const gunzipAsync = promisify(gunzip);
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -39,9 +43,20 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger docs available at /docs', 'Bootstrap');
   }
 
-  // Health check — used by Docker healthcheck and deploy scripts
-  // Registered before Fastify adapter finalizes routes
+  // Register a content-type parser that decompresses gzip-encoded JSON bodies.
+  // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
   const fastify = app.getHttpAdapter().getInstance();
+
+  fastify.addContentTypeParser(
+    'application/json',
+    { parseAs: 'buffer' },
+    async (_req: { headers: Record<string, string> }, body: Buffer) => {
+      const raw = _req.headers['content-encoding'] === 'gzip'
+        ? await gunzipAsync(body)
+        : body;
+      return JSON.parse(raw.toString('utf8')) as unknown;
+    },
+  );
   fastify.get('/health', (_req: unknown, reply: { send: (v: unknown) => void }) => {
     reply.send({ status: 'ok', ts: Date.now() });
   });
