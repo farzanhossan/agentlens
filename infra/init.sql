@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS projects (
 -- traces
 -- ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS traces (
-    id                UUID            PRIMARY KEY,      -- = traceId emitted by SDK (no auto-gen)
+    id                VARCHAR(128)    PRIMARY KEY,      -- = traceId emitted by SDK (any string, e.g. OTel hex)
     project_id        UUID            NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     session_id        VARCHAR(128),
     agent_name        VARCHAR(256),
@@ -106,10 +106,10 @@ CREATE TABLE IF NOT EXISTS traces (
 -- NOTE: LLM input/output text is stored in Elasticsearch only, not here.
 -- ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS spans (
-    id              UUID            PRIMARY KEY,    -- = spanId emitted by SDK
-    trace_id        UUID            NOT NULL REFERENCES traces(id) ON DELETE CASCADE,
+    id              VARCHAR(128)    PRIMARY KEY,    -- = spanId emitted by SDK (any string, e.g. OTel hex)
+    trace_id        VARCHAR(128)    NOT NULL REFERENCES traces(id) ON DELETE CASCADE,
     project_id      UUID            NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    parent_span_id  UUID            REFERENCES spans(id) ON DELETE SET NULL,
+    parent_span_id  VARCHAR(128)    REFERENCES spans(id) ON DELETE SET NULL,
     name            VARCHAR(512)    NOT NULL,
     model           VARCHAR(128),
     provider        VARCHAR(64),

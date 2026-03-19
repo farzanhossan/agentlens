@@ -21,8 +21,8 @@ export enum TraceStatus {
 @Index('idx_traces_project_created', ['projectId', 'startedAt'])
 @Index('idx_traces_session', ['sessionId'])
 export class TraceEntity {
-  /** PK is the traceId emitted by the SDK — not auto-generated. */
-  @PrimaryColumn({ type: 'uuid' })
+  /** PK is the traceId emitted by the SDK — not auto-generated. Accepts any string (e.g. OTel hex IDs). */
+  @PrimaryColumn({ type: 'varchar', length: 128 })
   id!: string;
 
   @Column({ type: 'uuid', name: 'project_id' })

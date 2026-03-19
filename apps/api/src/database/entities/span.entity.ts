@@ -22,11 +22,11 @@ export enum SpanStatus {
   where: `"status" = 'error'`,
 })
 export class SpanEntity {
-  /** PK is the spanId emitted by the SDK — not auto-generated. */
-  @PrimaryColumn({ type: 'uuid' })
+  /** PK is the spanId emitted by the SDK — not auto-generated. Accepts any string (e.g. OTel hex IDs). */
+  @PrimaryColumn({ type: 'varchar', length: 128 })
   id!: string;
 
-  @Column({ type: 'uuid', name: 'trace_id' })
+  @Column({ type: 'varchar', length: 128, name: 'trace_id' })
   traceId!: string;
 
   @ManyToOne(() => TraceEntity, (trace) => trace.spans, { onDelete: 'CASCADE' })
@@ -44,7 +44,7 @@ export class SpanEntity {
    * Self-referencing FK. Null for root spans.
    * NOTE: LLM input/output text is stored in Elasticsearch only, not in this table.
    */
-  @Column({ type: 'uuid', nullable: true, name: 'parent_span_id' })
+  @Column({ type: 'varchar', length: 128, nullable: true, name: 'parent_span_id' })
   parentSpanId?: string;
 
   @ManyToOne(() => SpanEntity, { nullable: true, onDelete: 'SET NULL' })
