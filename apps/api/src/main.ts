@@ -26,18 +26,7 @@ async function bootstrap(): Promise<void> {
   const corsOrigin = config.get<string>('CORS_ORIGIN', 'http://localhost:5173');
   const corsOrigins = corsOrigin.split(',').map((s) => s.trim()).filter(Boolean);
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (curl, mobile apps, etc.)
-      if (!origin) return callback(null, true);
-      // Allow any Vercel preview/production deployment of this project
-      if (/^https:\/\/(agentlens-dashboard.*|project-crqpe)\.vercel\.app$/.test(origin)) return callback(null, true);
-      // Allow explicitly configured origins
-      if (corsOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
-    credentials: true,
-  });
+  app.enableCors({ origin: true, credentials: true });
 
   // Swagger only in non-production environments
   if (process.env['NODE_ENV'] !== 'production') {
