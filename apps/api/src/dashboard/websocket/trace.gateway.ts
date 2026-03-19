@@ -26,14 +26,13 @@ export class TraceGateway
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit(): void {
-    const host = this.configService.get<string>('REDIS_HOST', 'localhost');
-    const port = this.configService.get<number>('REDIS_PORT', 6379);
-    const password = this.configService.get<string>('REDIS_PASSWORD');
+    const redisUrl = this.configService.getOrThrow<string>('REDIS_URL');
+    const url = new URL(redisUrl);
 
     this.subscriber = new Redis({
-      host,
-      port,
-      password: password ?? undefined,
+      host: url.hostname,
+      port: Number(url.port) || 6379,
+      password: url.password || undefined,
       lazyConnect: false,
     });
 
