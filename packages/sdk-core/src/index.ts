@@ -5,7 +5,7 @@ import { maybeRedact } from './redactor.js';
 import type { AgentLensConfig, SpanData } from './types.js';
 import type { Span } from './span.js';
 
-const DEFAULT_ENDPOINT = 'https://ingest.agentlens.dev';
+const DEFAULT_ENDPOINT = 'https://api-agentlens.techmatbd.com';
 
 /**
  * AgentLens singleton — the primary entry point for the SDK.
