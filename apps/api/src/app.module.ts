@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { AlertEngineModule } from './alert-engine/alert-engine.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
 import { IngestModule } from './ingest/ingest.module.js';
 import { SpanProcessorModule } from './span-processor/span-processor.module.js';
 import { SpansModule } from './spans/spans.module.js';
@@ -35,6 +36,7 @@ import { WaitlistModule } from './waitlist/waitlist.module.js';
 
     IngestModule,
     SpanProcessorModule,
+    DashboardModule,
     SpansModule,
     AlertsModule,
     ProjectsModule,

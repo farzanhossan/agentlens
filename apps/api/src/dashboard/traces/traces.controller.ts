@@ -5,6 +5,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { IsISO8601, IsOptional } from 'class-validator';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -24,8 +25,13 @@ import {
 import { TracesService } from './traces.service.js';
 
 class StatsQueryDto {
-  dateFrom!: string;
-  dateTo!: string;
+  @IsOptional()
+  @IsISO8601()
+  dateFrom?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  dateTo?: string;
 }
 
 @ApiTags('traces')
@@ -65,7 +71,9 @@ export class TracesController {
     @Param('projectId') projectId: string,
     @Query() query: StatsQueryDto,
   ): Promise<TraceStatsDto> {
-    return this.tracesService.getStats(projectId, query.dateFrom, query.dateTo);
+    const dateTo = query.dateTo ?? new Date().toISOString().split('T')[0]!;
+    const dateFrom = query.dateFrom ?? new Date(Date.now() - 30 * 86400_000).toISOString().split('T')[0]!;
+    return this.tracesService.getStats(projectId, dateFrom, dateTo);
   }
 
   @Get(':traceId')

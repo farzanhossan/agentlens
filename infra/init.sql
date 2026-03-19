@@ -47,6 +47,25 @@ CREATE TABLE IF NOT EXISTS organizations (
 );
 
 -- ──────────────────────────────────────────────────────────
+-- users
+-- ──────────────────────────────────────────────────────────
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS users (
+    id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id         UUID         NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    email          VARCHAR(320) NOT NULL,
+    password_hash  VARCHAR(72)  NOT NULL,
+    role           user_role    NOT NULL DEFAULT 'member',
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_users_email UNIQUE (email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_org ON users (org_id);
+
+-- ──────────────────────────────────────────────────────────
 -- projects
 -- ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS projects (
