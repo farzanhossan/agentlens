@@ -9,6 +9,7 @@ import { SpanProcessorModule } from './span-processor/span-processor.module.js';
 import { SpansModule } from './spans/spans.module.js';
 import { AlertsModule } from './alerts/alerts.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
+import { WaitlistModule } from './waitlist/waitlist.module.js';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProjectsModule } from './projects/projects.module.js';
     AlertsModule,
     ProjectsModule,
     AlertEngineModule,
+    WaitlistModule,
   ],
 })
 export class AppModule {}

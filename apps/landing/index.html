@@ -486,8 +486,8 @@
       <ul class="nav-links">
         <li><a href="#features">Features</a></li>
         <li><a href="#pricing">Pricing</a></li>
-        <li><a href="#demo">Docs</a></li>
-        <li><a href="https://github.com/farzanh/agentlens" target="_blank">GitHub</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a></li>
       </ul>
       <a href="#waitlist" class="btn btn-primary btn-sm nav-cta">Start Free</a>
     </div>
@@ -838,7 +838,7 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
         <div class="footer-logo-sub">Full visibility into every AI decision.</div>
       </div>
       <div class="footer-links">
-        <a href="https://github.com/farzanh/agentlens" target="_blank">GitHub</a>
+        <a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a>
         <a href="https://twitter.com/agentlens_ai" target="_blank">Twitter</a>
         <a href="mailto:hello@agentlens.ai">Email</a>
       </div>
@@ -959,6 +959,7 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
   setTimeout(runTerminal, 600);
 
   // ── Waitlist form ─────────────────────────────────────────────────────────
+  const API_URL = 'VITE_API_URL_PLACEHOLDER';
   const form    = document.getElementById('waitlistForm');
   const emailEl = document.getElementById('waitlistEmail');
   const msgEl   = document.getElementById('waitlistMsg');
@@ -995,13 +996,13 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
     btn.disabled = true;
 
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch(`${API_URL}/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
 
-      if (res.ok || res.status === 201 || res.status === 409) {
+      if (res.status === 201 || res.status === 409) {
         localStorage.setItem(STORAGE_KEY, '1');
         localStorage.setItem(STORAGE_KEY + '_email', email);
         msgEl.textContent = '🎉 You\'re on the list! We\'ll be in touch soon.';

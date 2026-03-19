@@ -46,5 +46,5 @@ ssh $SSH_USER@$DROPLET_IP << 'ENDSSH'
 ENDSSH
 
 echo -e "${GREEN}Deploy complete!${NC}"
-echo -e "API: https://api.agentlens.dev"
+echo -e "API: https://api-agentlens.techmatbd.com"
 echo -e "Dashboard: https://app.agentlens.dev"

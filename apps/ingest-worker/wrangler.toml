@@ -6,7 +6,7 @@ account_id = "1ec13aaf34ba464c2a5b65be80ee57f5"
 
 [vars]
 ENVIRONMENT = "production"
-API_URL = "https://api.agentlens.dev"
+API_URL = "https://api-agentlens.techmatbd.com"
 
 # Secrets (set via wrangler secret put or CF dashboard):
 # HMAC_SECRET
