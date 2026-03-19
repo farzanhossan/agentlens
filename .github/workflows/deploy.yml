@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 30m
           script: |
             set -e
 
@@ -32,30 +32,14 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            echo "✅ Using hardcoded values in docker-compose.prod.yml"
+            # Start infra services if not already running
+            docker compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
 
-            which pnpm || npm install -g pnpm@9
-            pnpm install --frozen-lockfile
+            # Build and restart API (migrations run automatically on startup)
+            docker compose -f infra/docker-compose.prod.yml up -d --build api
 
-            # Step 1 — Start infra services first (without API)
-            docker-compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
-
-            # Step 2 — Wait for infra to be healthy
-            echo "Waiting for infrastructure..."
-            sleep 30
-
-            # Step 3 — Check Redis
-            docker-compose -f infra/docker-compose.prod.yml ps redis
-            docker exec infra-redis-1 redis-cli -a "${REDIS_PASSWORD}" ping || true
-
-            # Step 4 — Run migrations
-            pnpm --filter api run migration:run || echo "Migration skipped"
-
-            # Step 5 — Build and start API
-            docker-compose -f infra/docker-compose.prod.yml up -d --build api
-
-            # Step 6 — Health check
-            sleep 15
+            # Health check
+            sleep 20
             curl -f http://localhost:4020/health && echo "✅ API healthy" || echo "⚠️ API health check failed"
 
   deploy-dashboard:
