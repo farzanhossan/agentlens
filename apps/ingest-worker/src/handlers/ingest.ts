@@ -101,7 +101,7 @@ export async function ingestHandler(
   }
 
   // ── Forward to NestJS API ───────────────────────────────────────────────────
-  const apiUrl = c.env.API_URL || 'https://api.agentlens.dev';
+  const apiUrl = c.env.API_URL || 'https://api-agentlens.techmatbd.com';
 
   let response: Response;
   try {

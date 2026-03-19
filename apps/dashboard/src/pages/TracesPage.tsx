@@ -82,7 +82,14 @@ export function TracesPage(): React.JSX.Element {
             <StatCard label="Avg Cost" value={`$${parseFloat(statsQuery.data.avgCostUsd).toFixed(4)}`} />
             <StatCard label="Avg Latency" value={`${statsQuery.data.avgLatencyMs}ms`} />
           </>
-        ) : null}
+        ) : (
+          <>
+            <StatCard label="Total Traces" value="—" />
+            <StatCard label="Error Rate" value="—" />
+            <StatCard label="Avg Cost" value="—" />
+            <StatCard label="Avg Latency" value="—" />
+          </>
+        )}
       </div>
 
       {/* Filter bar */}

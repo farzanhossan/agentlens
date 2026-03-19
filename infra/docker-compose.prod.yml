@@ -21,7 +21,8 @@ services:
       JWT_SECRET: agentlens
       HMAC_SECRET: agentlens
       RESEND_API_KEY: re_skip
-      FRONTEND_URL: https://app.agentlens.dev
+      FRONTEND_URL: https://agentlens-dashboard-q173l3b07-farzanhossans-projects.vercel.app
+      CORS_ORIGIN: https://agentlens-dashboard-q173l3b07-farzanhossans-projects.vercel.app,http://localhost:5173
       PORT: 3000
     ports:
       - "4020:3000"
