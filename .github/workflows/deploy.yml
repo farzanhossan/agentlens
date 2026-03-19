@@ -36,7 +36,8 @@ jobs:
             docker-compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
 
             # Build and restart API (migrations run automatically on startup)
-            docker-compose -f infra/docker-compose.prod.yml up -d --build api
+            docker-compose -f infra/docker-compose.prod.yml rm -f api || true
+            docker-compose -f infra/docker-compose.prod.yml up -d --build --force-recreate api
 
             # Health check
             sleep 20
