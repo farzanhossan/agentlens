@@ -6,12 +6,10 @@ import {
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { gunzip } from 'zlib';
-import { promisify } from 'util';
-import type { FastifyRequest } from 'fastify';
+import { createGunzip } from 'zlib';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { Readable } from 'stream';
 import { AppModule } from './app.module.js';
-
-const gunzipAsync = promisify(gunzip);
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -44,23 +42,22 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger docs available at /docs', 'Bootstrap');
   }
 
-  // Register a content-type parser that decompresses gzip-encoded JSON bodies.
-  // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
   const fastify = app.getHttpAdapter().getInstance();
 
-  // Replace the default application/json parser to support gzip-encoded bodies.
-  // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
-  fastify.removeContentTypeParser('application/json');
-  fastify.addContentTypeParser(
-    'application/json',
-    { parseAs: 'buffer' },
-    async (req: FastifyRequest, body: Buffer) => {
-      const raw = req.headers['content-encoding'] === 'gzip'
-        ? await gunzipAsync(body)
-        : body;
-      return JSON.parse(raw.toString('utf8')) as unknown;
+  // Decompress gzip request bodies before the JSON parser sees them.
+  // The SDK sends spans with Content-Encoding: gzip; this hook transparently
+  // decompresses the stream so the default JSON parser works as normal.
+  fastify.addHook(
+    'preParsing',
+    async (req: FastifyRequest, _reply: FastifyReply, payload: Readable): Promise<Readable> => {
+      if (req.headers['content-encoding'] === 'gzip') {
+        delete req.headers['content-encoding'];
+        return payload.pipe(createGunzip()) as unknown as Readable;
+      }
+      return payload;
     },
   );
+
   fastify.get('/health', (_req: unknown, reply: { send: (v: unknown) => void }) => {
     reply.send({ status: 'ok', ts: Date.now() });
   });
