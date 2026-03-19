@@ -48,6 +48,9 @@ async function bootstrap(): Promise<void> {
   // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
   const fastify = app.getHttpAdapter().getInstance();
 
+  // Replace the default application/json parser to support gzip-encoded bodies.
+  // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
+  fastify.removeContentTypeParser('application/json');
   fastify.addContentTypeParser(
     'application/json',
     { parseAs: 'buffer' },
