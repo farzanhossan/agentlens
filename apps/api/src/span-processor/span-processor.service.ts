@@ -142,7 +142,10 @@ export class SpanProcessorService {
 
     // Derive initial trace status from this span
     const traceStatus =
-      span.status === 'error' ? TraceStatus.ERROR : TraceStatus.RUNNING;
+      span.status === 'error'   ? TraceStatus.ERROR   :
+      span.status === 'timeout' ? TraceStatus.TIMEOUT :
+      span.status === 'success' ? TraceStatus.SUCCESS :
+      TraceStatus.RUNNING;
 
     await em.query(
       `

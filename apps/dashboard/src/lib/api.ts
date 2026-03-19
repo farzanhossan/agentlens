@@ -239,7 +239,7 @@ export async function fetchTraceStats(): Promise<TraceStats> {
     totalTraces: s.totalTraces,
     errorRate: 1 - s.successRate,
     avgCostUsd,
-    avgLatencyMs: s.avgLatencyMs,
+    avgLatencyMs: Math.round(s.avgLatencyMs),
     p95LatencyMs: 0,
   };
 }
