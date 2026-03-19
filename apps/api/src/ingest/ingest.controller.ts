@@ -8,6 +8,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Public } from '../auth/decorators/public.decorator.js';
 import { IngestService } from './ingest.service.js';
 
 @ApiTags('Ingest')
@@ -15,6 +16,7 @@ import { IngestService } from './ingest.service.js';
 export class IngestController {
   constructor(private readonly ingestService: IngestService) {}
 
+  @Public()
   @Post('ingest')
   @HttpCode(202)
   @ApiOperation({ summary: 'Receive span batch from CF Worker' })
