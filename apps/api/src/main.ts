@@ -6,10 +6,12 @@ import {
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { createGunzip } from 'zlib';
-import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Readable } from 'stream';
+import { gunzip } from 'zlib';
+import { promisify } from 'util';
+import type { FastifyRequest } from 'fastify';
 import { AppModule } from './app.module.js';
+
+const gunzipAsync = promisify(gunzip);
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -42,28 +44,33 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger docs available at /docs', 'Bootstrap');
   }
 
+  // Graceful shutdown — flush queues and close DB connections on SIGTERM
+  app.enableShutdownHooks();
+
+  // Explicitly initialise so NestJS registers its default application/json parser.
+  // After init(), isInitialized=true so app.listen() won't call init() again,
+  // allowing us to safely swap the parser for a gzip-aware version.
+  await app.init();
+
   const fastify = app.getHttpAdapter().getInstance();
 
-  // Decompress gzip request bodies before the JSON parser sees them.
-  // The SDK sends spans with Content-Encoding: gzip; this hook transparently
-  // decompresses the stream so the default JSON parser works as normal.
-  fastify.addHook(
-    'preParsing',
-    async (req: FastifyRequest, _reply: FastifyReply, payload: Readable): Promise<Readable> => {
-      if (req.headers['content-encoding'] === 'gzip') {
-        delete req.headers['content-encoding'];
-        return payload.pipe(createGunzip()) as unknown as Readable;
-      }
-      return payload;
+  // Replace the default JSON parser with a gzip-aware version.
+  // The SDK sends spans with Content-Encoding: gzip + Content-Type: application/json.
+  fastify.removeContentTypeParser('application/json');
+  fastify.addContentTypeParser(
+    'application/json',
+    { parseAs: 'buffer' },
+    async (req: FastifyRequest, body: Buffer) => {
+      const raw = req.headers['content-encoding'] === 'gzip'
+        ? await gunzipAsync(body)
+        : body;
+      return JSON.parse(raw.toString('utf8')) as unknown;
     },
   );
 
   fastify.get('/health', (_req: unknown, reply: { send: (v: unknown) => void }) => {
     reply.send({ status: 'ok', ts: Date.now() });
   });
-
-  // Graceful shutdown — flush queues and close DB connections on SIGTERM
-  app.enableShutdownHooks();
 
   const port = config.get<number>('PORT', 3001);
   const host = config.get<string>('HOST', '0.0.0.0');
