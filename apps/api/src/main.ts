@@ -31,7 +31,7 @@ async function bootstrap(): Promise<void> {
       // Allow requests with no origin (curl, mobile apps, etc.)
       if (!origin) return callback(null, true);
       // Allow any Vercel preview/production deployment of this project
-      if (/^https:\/\/agentlens-dashboard.*\.vercel\.app$/.test(origin)) return callback(null, true);
+      if (/^https:\/\/(agentlens-dashboard.*|project-crqpe)\.vercel\.app$/.test(origin)) return callback(null, true);
       // Allow explicitly configured origins
       if (corsOrigins.includes(origin)) return callback(null, true);
       callback(new Error(`CORS: origin ${origin} not allowed`));
