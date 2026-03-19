@@ -27,7 +27,15 @@ async function bootstrap(): Promise<void> {
   const corsOrigins = corsOrigin.split(',').map((s) => s.trim()).filter(Boolean);
 
   app.enableCors({
-    origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, mobile apps, etc.)
+      if (!origin) return callback(null, true);
+      // Allow any Vercel preview/production deployment of this project
+      if (/^https:\/\/agentlens-dashboard.*\.vercel\.app$/.test(origin)) return callback(null, true);
+      // Allow explicitly configured origins
+      if (corsOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   });
 
