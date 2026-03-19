@@ -4,6 +4,7 @@ import type {
   TraceSummary,
   TraceStats,
   TraceDetail,
+  SpanNode,
   CostSummary,
   CostTimeseries,
   CostByModel,
@@ -35,7 +36,112 @@ api.interceptors.response.use(
   },
 );
 
-// Traces
+function isoDateDaysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().split('T')[0] ?? '';
+}
+
+function isoToday(): string {
+  return new Date().toISOString().split('T')[0] ?? '';
+}
+
+// ── Internal API shapes ───────────────────────────────────────────────────────
+
+interface ApiPaginatedDto<T> {
+  data: T[];
+  nextCursor: string | null;
+  total: number;
+}
+
+interface ApiTraceSummary {
+  id: string;
+  projectId: string;
+  status: string;
+  agentName?: string;
+  totalSpans: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  totalLatencyMs?: number;
+  startedAt: string;
+  endedAt?: string;
+}
+
+interface ApiTraceStats {
+  totalTraces: number;
+  successCount: number;
+  errorCount: number;
+  successRate: number;
+  avgLatencyMs: number;
+  totalCostUsd: number;
+  dateFrom: string;
+  dateTo: string;
+}
+
+interface ApiSpanNode {
+  id: string;
+  traceId: string;
+  parentSpanId?: string;
+  name: string;
+  model?: string;
+  provider?: string;
+  status: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  costUsd?: number;
+  latencyMs?: number;
+  startedAt: string;
+  endedAt?: string;
+  errorMessage?: string;
+  metadata: Record<string, unknown>;
+  input?: string;
+  output?: string;
+  children: ApiSpanNode[];
+}
+
+interface ApiTraceDetail extends ApiTraceSummary {
+  metadata: Record<string, unknown>;
+  spans: ApiSpanNode[];
+}
+
+interface ApiCostSummaryDto {
+  totalCostUsd: number;
+  byModel: Array<{ model: string; provider: string; costUsd: number; spanCount: number }>;
+  byDate: Array<{ date: string; costUsd: number }>;
+  byAgent: Array<{ agentName: string; costUsd: number }>;
+  dateFrom: string;
+  dateTo: string;
+}
+
+interface ApiCostTimeseriesDto {
+  dates: Array<{ date: string; costUsd: number }>;
+}
+
+// ── Span node mapper ─────────────────────────────────────────────────────────
+
+function mapSpanNode(node: ApiSpanNode): SpanNode {
+  return {
+    spanId: node.id,
+    parentSpanId: node.parentSpanId ?? null,
+    name: node.name,
+    model: node.model ?? null,
+    provider: node.provider ?? null,
+    inputTokens: node.inputTokens ?? null,
+    outputTokens: node.outputTokens ?? null,
+    costUsd: node.costUsd !== undefined ? String(node.costUsd) : null,
+    latencyMs: node.latencyMs ?? null,
+    status: node.status as SpanNode['status'],
+    startedAt: node.startedAt,
+    endedAt: node.endedAt ?? null,
+    metadata: node.metadata,
+    input: node.input ?? null,
+    output: node.output ?? null,
+    children: node.children.map(mapSpanNode),
+  };
+}
+
+// ── Traces ────────────────────────────────────────────────────────────────────
+
 export interface TraceListParams {
   cursor?: string;
   status?: string;
@@ -46,62 +152,142 @@ export interface TraceListParams {
 }
 
 export async function fetchTraces(params: TraceListParams): Promise<Paginated<TraceSummary>> {
-  const res = await api.get<Paginated<TraceSummary>>('/dashboard/traces', { params });
-  return res.data;
+  const limit = params.limit ?? 20;
+  const res = await api.get<ApiPaginatedDto<ApiTraceSummary>>(
+    `/projects/${PROJECT_ID}/traces`,
+    {
+      params: {
+        cursor: params.cursor,
+        status: params.status,
+        agentName: params.agentName,
+        dateFrom: params.from,
+        dateTo: params.to,
+        limit,
+      },
+    },
+  );
+  const { data, nextCursor } = res.data;
+  return {
+    items: data.map((t) => ({
+      id: t.id,
+      agentName: t.agentName ?? null,
+      status: t.status as TraceSummary['status'],
+      totalSpans: t.totalSpans,
+      totalCostUsd: String(t.totalCostUsd),
+      totalLatencyMs: t.totalLatencyMs ?? null,
+      startedAt: t.startedAt,
+    })),
+    nextCursor,
+    hasMore: data.length >= limit,
+  };
 }
 
 export async function fetchTraceStats(): Promise<TraceStats> {
-  const res = await api.get<TraceStats>('/dashboard/traces/stats');
-  return res.data;
+  const res = await api.get<ApiTraceStats>(
+    `/projects/${PROJECT_ID}/traces/stats`,
+    {
+      params: {
+        dateFrom: isoDateDaysAgo(30),
+        dateTo: isoToday(),
+      },
+    },
+  );
+  const s = res.data;
+  const avgCostUsd = s.totalTraces > 0
+    ? (s.totalCostUsd / s.totalTraces).toFixed(6)
+    : '0.000000';
+  return {
+    totalTraces: s.totalTraces,
+    errorRate: 1 - s.successRate,
+    avgCostUsd,
+    avgLatencyMs: s.avgLatencyMs,
+    p95LatencyMs: 0,
+  };
 }
 
 export async function fetchTraceDetail(traceId: string): Promise<TraceDetail> {
-  const res = await api.get<TraceDetail>(`/dashboard/traces/${traceId}`);
-  return res.data;
+  const res = await api.get<ApiTraceDetail>(`/projects/${PROJECT_ID}/traces/${traceId}`);
+  const t = res.data;
+  return {
+    id: t.id,
+    agentName: t.agentName ?? null,
+    status: t.status as TraceSummary['status'],
+    totalSpans: t.totalSpans,
+    totalCostUsd: String(t.totalCostUsd),
+    totalLatencyMs: t.totalLatencyMs ?? null,
+    startedAt: t.startedAt,
+    spans: t.spans.map(mapSpanNode),
+  };
 }
 
-// Cost
+// ── Cost ──────────────────────────────────────────────────────────────────────
+
 export interface CostRangeParams {
   from: string;
   to: string;
 }
 
 export async function fetchCostSummary(params: CostRangeParams): Promise<CostSummary> {
-  const res = await api.get<CostSummary>('/dashboard/cost/summary', { params });
-  return res.data;
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+    params: { dateFrom: params.from, dateTo: params.to },
+  });
+  const d = res.data;
+  const topModel = [...d.byModel].sort((a, b) => b.costUsd - a.costUsd)[0];
+  const topAgent = [...d.byAgent].sort((a, b) => b.costUsd - a.costUsd)[0];
+  return {
+    totalCostUsd: String(d.totalCostUsd),
+    avgCostPerTrace: '0',
+    mostExpensiveModel: topModel?.model ?? null,
+    mostExpensiveAgent: topAgent?.agentName ?? null,
+  };
 }
 
 export async function fetchCostTimeseries(params: CostRangeParams): Promise<CostTimeseries[]> {
-  const res = await api.get<{ data: CostTimeseries[] }>('/dashboard/cost/timeseries', { params });
-  return res.data.data;
+  const res = await api.get<ApiCostTimeseriesDto>(`/projects/${PROJECT_ID}/cost/timeseries`, {
+    params: { dateFrom: params.from, dateTo: params.to },
+  });
+  return res.data.dates.map((d) => ({ date: d.date, costUsd: String(d.costUsd) }));
 }
 
 export async function fetchCostByModel(params: CostRangeParams): Promise<CostByModel[]> {
-  const res = await api.get<{ data: CostByModel[] }>('/dashboard/cost/by-model', { params });
-  return res.data.data;
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+    params: { dateFrom: params.from, dateTo: params.to },
+  });
+  return res.data.byModel.map((m) => ({
+    model: m.model,
+    costUsd: String(m.costUsd),
+    spanCount: m.spanCount,
+  }));
 }
 
 export async function fetchCostByAgent(params: CostRangeParams): Promise<CostByAgent[]> {
-  const res = await api.get<{ data: CostByAgent[] }>('/dashboard/cost/by-agent', { params });
-  return res.data.data;
+  const res = await api.get<ApiCostSummaryDto>(`/projects/${PROJECT_ID}/cost/summary`, {
+    params: { dateFrom: params.from, dateTo: params.to },
+  });
+  return res.data.byAgent.map((a) => ({
+    agentName: a.agentName,
+    costUsd: String(a.costUsd),
+    traceCount: 0,
+  }));
 }
 
-// Alerts
+// ── Alerts ────────────────────────────────────────────────────────────────────
+
 export async function fetchAlerts(): Promise<AlertResponse[]> {
-  const res = await api.get<AlertResponse[]>('/dashboard/alerts');
+  const res = await api.get<AlertResponse[]>(`/projects/${PROJECT_ID}/alerts`);
   return res.data;
 }
 
 export async function createAlert(payload: CreateAlertPayload): Promise<AlertResponse> {
-  const res = await api.post<AlertResponse>('/dashboard/alerts', payload);
+  const res = await api.post<AlertResponse>(`/projects/${PROJECT_ID}/alerts`, payload);
   return res.data;
 }
 
 export async function updateAlert(id: string, payload: Partial<CreateAlertPayload & { isActive: boolean }>): Promise<AlertResponse> {
-  const res = await api.patch<AlertResponse>(`/dashboard/alerts/${id}`, payload);
+  const res = await api.patch<AlertResponse>(`/projects/${PROJECT_ID}/alerts/${id}`, payload);
   return res.data;
 }
 
 export async function deleteAlert(id: string): Promise<void> {
-  await api.delete(`/dashboard/alerts/${id}`);
+  await api.delete(`/projects/${PROJECT_ID}/alerts/${id}`);
 }
