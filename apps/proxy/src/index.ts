@@ -12,7 +12,7 @@ import { ProjectCache } from './project-cache';
 import { PROVIDER_UPSTREAMS } from './parsers';
 
 const config = loadConfig();
-const emitter = new SpanEmitter(config.ingestUrl);
+const emitter = new SpanEmitter(config.ingestUrl, config.ingestApiKey);
 const projectCache = new ProjectCache(config.projectValidationUrl, config.projectCacheTtlMs);
 
 const app = new Hono();
@@ -45,12 +45,15 @@ app.all('/v1/p/*', async (c) => {
     }
   }
 
-  // Read request body
-  let requestBody: unknown;
-  try {
-    requestBody = await c.req.json();
-  } catch {
-    return c.json({ error: 'Invalid JSON body' }, 400);
+  // Read request body (only for methods that have a body)
+  const method = c.req.method;
+  let requestBody: unknown = null;
+  if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
+    try {
+      requestBody = await c.req.json();
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
   }
 
   // Extract headers to forward
@@ -60,6 +63,7 @@ app.all('/v1/p/*', async (c) => {
   });
 
   const response = await handleProxyRequest({
+    method,
     provider: route.provider,
     projectId: route.projectId,
     upstreamPath: route.upstreamPath,

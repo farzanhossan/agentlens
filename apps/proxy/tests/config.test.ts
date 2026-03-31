@@ -26,6 +26,7 @@ describe('loadConfig', () => {
     expect(config.maxBodySize).toBe(10 * 1024 * 1024);
     expect(config.bufferMaxSize).toBe(10 * 1024 * 1024);
     expect(config.logLevel).toBe('info');
+    expect(config.ingestApiKey).toBe('proxy-internal');
   });
 
   it('overrides defaults from env', () => {

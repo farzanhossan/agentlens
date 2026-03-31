@@ -9,6 +9,7 @@ export interface SpanPayload {
   parentSpanId?: string;
   projectId: string;
   name: string;
+  agentName?: string;
   model?: string;
   provider?: string;
   input?: string;
@@ -25,7 +26,10 @@ export interface SpanPayload {
 }
 
 export class SpanEmitter {
-  constructor(private readonly ingestUrl: string) {}
+  constructor(
+    private readonly ingestUrl: string,
+    private readonly apiKey: string,
+  ) {}
 
   async emit(span: SpanPayload): Promise<void> {
     try {
@@ -37,7 +41,7 @@ export class SpanEmitter {
         headers: {
           'Content-Type': 'application/json',
           'Content-Encoding': 'gzip',
-          'X-API-Key': 'proxy-internal',
+          'X-API-Key': this.apiKey,
         },
         body: compressed,
       });

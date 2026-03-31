@@ -8,7 +8,7 @@ describe('SpanEmitter', () => {
   beforeEach(() => {
     fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 202 });
     global.fetch = fetchSpy as unknown as typeof fetch;
-    emitter = new SpanEmitter('http://localhost:3001/v1/spans');
+    emitter = new SpanEmitter('http://localhost:3001/v1/spans', 'test-api-key');
   });
 
   afterEach(() => {
@@ -41,7 +41,7 @@ describe('SpanEmitter', () => {
     expect(options.method).toBe('POST');
     expect(options.headers['Content-Type']).toBe('application/json');
     expect(options.headers['Content-Encoding']).toBe('gzip');
-    expect(options.headers['X-API-Key']).toBe('proxy-internal');
+    expect(options.headers['X-API-Key']).toBe('test-api-key');
   });
 
   it('does not throw on fetch failure (fire-and-forget)', async () => {

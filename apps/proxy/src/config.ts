@@ -1,5 +1,6 @@
 export interface ProxyConfig {
   ingestUrl: string;
+  ingestApiKey: string;
   port: number;
   projectValidationUrl?: string;
   projectCacheTtlMs: number;
@@ -16,6 +17,7 @@ export function loadConfig(): ProxyConfig {
 
   return {
     ingestUrl,
+    ingestApiKey: process.env.AGENTLENS_INGEST_API_KEY || 'proxy-internal',
     port: parseInt(process.env.PORT || '8080', 10),
     projectValidationUrl: process.env.PROJECT_VALIDATION_URL,
     projectCacheTtlMs: parseInt(process.env.PROJECT_CACHE_TTL_MS || '60000', 10),

@@ -3,6 +3,7 @@ import { getParser } from './parsers';
 import type { SpanEmitter, SpanPayload } from './span-emitter';
 
 export interface ProxyRequestParams {
+  method: string;
   provider: string;
   projectId: string;
   upstreamPath: string;
@@ -27,10 +28,24 @@ function filterHeaders(headers: Record<string, string>): Record<string, string> 
   return filtered;
 }
 
+const RESPONSE_HEADER_BLOCKLIST = new Set([
+  'transfer-encoding', 'connection', 'keep-alive',
+]);
+
+function forwardResponseHeaders(upstreamHeaders: Headers): Record<string, string> {
+  const headers: Record<string, string> = {};
+  upstreamHeaders.forEach((value, key) => {
+    if (!RESPONSE_HEADER_BLOCKLIST.has(key.toLowerCase())) {
+      headers[key] = value;
+    }
+  });
+  return headers;
+}
+
 export async function handleProxyRequest(params: ProxyRequestParams): Promise<Response> {
-  const { provider, projectId, upstreamPath, upstreamBaseUrl, requestBody, requestHeaders, emitter, bufferMaxSize } = params;
+  const { method, provider, projectId, upstreamPath, upstreamBaseUrl, requestBody, requestHeaders, emitter, bufferMaxSize } = params;
   const parser = getParser(provider);
-  const parsed = parser.parseRequest(requestBody);
+  const parsed = requestBody ? parser.parseRequest(requestBody) : { model: 'unknown', input: '', isStreaming: false };
   const startedAt = new Date().toISOString();
   const spanId = randomUUID();
   const traceId = randomUUID();
@@ -43,19 +58,20 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
   }
 
   // Non-streaming flow
+  const hasBody = requestBody && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase());
   let upstreamResponse: Response;
   try {
     upstreamResponse = await fetch(upstreamUrl, {
-      method: 'POST',
-      headers: { ...forwardHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
+      method: method.toUpperCase(),
+      headers: hasBody ? { ...forwardHeaders, 'Content-Type': 'application/json' } : forwardHeaders,
+      ...(hasBody ? { body: JSON.stringify(requestBody) } : {}),
     });
   } catch (err) {
     const endedAt = new Date().toISOString();
     const errorMsg = (err as Error).message;
     emitter.emit({
       spanId, traceId, projectId,
-      name: `${provider}.proxy`,
+      name: `${provider}.proxy`, agentName: 'proxy',
       model: parsed.model, provider,
       input: parsed.input,
       status: 'error', errorMessage: errorMsg,
@@ -82,7 +98,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
         : undefined;
       span = {
         spanId, traceId, projectId,
-        name: `${provider}.proxy`,
+        name: `${provider}.proxy`, agentName: 'proxy',
         model: parsed.model, provider,
         input: parsed.input,
         output: parsedResponse.output,
@@ -95,7 +111,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
     } catch {
       span = {
         spanId, traceId, projectId,
-        name: `${provider}.proxy`,
+        name: `${provider}.proxy`, agentName: 'proxy',
         model: parsed.model, provider,
         input: parsed.input, output: responseBody,
         latencyMs, status: 'success',
@@ -105,7 +121,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
   } else {
     span = {
       spanId, traceId, projectId,
-      name: `${provider}.proxy`,
+      name: `${provider}.proxy`, agentName: 'proxy',
       model: parsed.model, provider,
       input: parsed.input,
       output: responseBody,
@@ -119,9 +135,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
 
   return new Response(responseBody, {
     status: upstreamResponse.status,
-    headers: {
-      'Content-Type': upstreamResponse.headers.get('Content-Type') || 'application/json',
-    },
+    headers: forwardResponseHeaders(upstreamResponse.headers),
   });
 }
 
@@ -140,7 +154,7 @@ async function handleStreamingRequest(
   let upstreamResponse: Response;
   try {
     upstreamResponse = await fetch(upstreamUrl, {
-      method: 'POST',
+      method: params.method.toUpperCase(),
       headers: { ...forwardHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(params.requestBody),
     });
@@ -148,7 +162,7 @@ async function handleStreamingRequest(
     const endedAt = new Date().toISOString();
     emitter.emit({
       spanId, traceId, projectId,
-      name: `${provider}.proxy`,
+      name: `${provider}.proxy`, agentName: 'proxy',
       model: parsed.model, provider,
       input: parsed.input,
       status: 'error', errorMessage: (err as Error).message,
@@ -214,7 +228,7 @@ async function handleStreamingRequest(
         : undefined;
       emitter.emit({
         spanId, traceId, projectId,
-        name: `${provider}.proxy`,
+        name: `${provider}.proxy`, agentName: 'proxy',
         model: parsed.model, provider,
         input: parsed.input,
         output: parsedResponse.output,
@@ -229,12 +243,14 @@ async function handleStreamingRequest(
     }
   })();
 
+  const responseHeaders = forwardResponseHeaders(upstreamResponse.headers);
+  if (!responseHeaders['content-type']) {
+    responseHeaders['content-type'] = 'text/event-stream';
+  }
+  responseHeaders['cache-control'] = 'no-cache';
+
   return new Response(readable, {
     status: upstreamResponse.status,
-    headers: {
-      'Content-Type': upstreamResponse.headers.get('Content-Type') || 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
+    headers: responseHeaders,
   });
 }

@@ -38,6 +38,7 @@ describe('handleProxyRequest (non-streaming)', () => {
     };
 
     const result = await handleProxyRequest({
+      method: 'POST',
       provider: 'openai',
       projectId: 'proj-1',
       upstreamPath: '/v1/chat/completions',
@@ -81,6 +82,7 @@ describe('handleProxyRequest (non-streaming)', () => {
     ));
 
     const result = await handleProxyRequest({
+      method: 'POST',
       provider: 'openai',
       projectId: 'proj-1',
       upstreamPath: '/v1/chat/completions',
@@ -100,6 +102,7 @@ describe('handleProxyRequest (non-streaming)', () => {
     upstreamFetch.mockRejectedValue(new Error('ECONNREFUSED'));
 
     const result = await handleProxyRequest({
+      method: 'POST',
       provider: 'openai',
       projectId: 'proj-1',
       upstreamPath: '/v1/chat/completions',
@@ -153,6 +156,7 @@ describe('handleProxyRequest (streaming)', () => {
     }));
 
     const result = await handleProxyRequest({
+      method: 'POST',
       provider: 'openai',
       projectId: 'proj-1',
       upstreamPath: '/v1/chat/completions',

@@ -118,7 +118,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      AGENTLENS_INGEST_URL: http://api:3001/v1/spans
+      AGENTLENS_INGEST_URL: ${AGENTLENS_INGEST_URL:-http://host.docker.internal:3001/v1/spans}
       PORT: "8080"
       LOG_LEVEL: info
     networks:

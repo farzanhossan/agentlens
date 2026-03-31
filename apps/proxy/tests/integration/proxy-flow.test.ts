@@ -47,9 +47,10 @@ describe('Proxy integration flow', () => {
     const { handleProxyRequest } = await import('../../src/proxy');
     const { SpanEmitter } = await import('../../src/span-emitter');
 
-    const emitter = new SpanEmitter('http://localhost:19002/v1/spans');
+    const emitter = new SpanEmitter('http://localhost:19002/v1/spans', 'test-key');
 
     const response = await handleProxyRequest({
+      method: 'POST',
       provider: 'openai',
       projectId: 'test-project',
       upstreamPath: '/v1/chat/completions',
