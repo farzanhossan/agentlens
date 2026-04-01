@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { TraceEntity } from '../../database/entities/index.js';
+import { TraceStatus } from '../../database/entities/trace.entity.js';
 import {
   HourlyVolumeDto,
   ModelUsageDto,
@@ -23,153 +24,158 @@ export class OverviewService {
     const now = new Date();
     const windowStart = new Date(now.getTime() - hours * 3600_000).toISOString();
     const prevWindowStart = new Date(now.getTime() - 2 * hours * 3600_000).toISOString();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
     const nowIso = now.toISOString();
 
-    // 1. Current-period summary
-    const summaryResult = await this.dataSource.query<
-      Array<{
-        total_requests: string;
-        error_count: string;
-        total_cost: string;
-        avg_latency_ms: string | null;
-        p95_latency_ms: string | null;
-      }>
-    >(
-      `SELECT
-         COUNT(*) AS total_requests,
-         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count,
-         COALESCE(SUM(total_cost_usd::float), 0) AS total_cost,
-         AVG(total_latency_ms) AS avg_latency_ms,
-         PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_latency_ms) AS p95_latency_ms
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at <= $3`,
-      [projectId, windowStart, nowIso],
-    );
+    const [
+      summaryResult,
+      prevResult,
+      monthResult,
+      hourlyResult,
+      modelResult,
+      agentResult,
+      errorsResult,
+      activeTraces,
+    ] = await Promise.all([
+      // 1. Current-period summary
+      this.dataSource.query<
+        Array<{
+          total_requests: string;
+          error_count: string;
+          total_cost: string;
+          avg_latency_ms: string | null;
+          p95_latency_ms: string | null;
+        }>
+      >(
+        `SELECT
+           COUNT(*) AS total_requests,
+           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count,
+           COALESCE(SUM(total_cost_usd::float), 0) AS total_cost,
+           AVG(total_latency_ms) AS avg_latency_ms,
+           PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_latency_ms) AS p95_latency_ms
+         FROM traces
+         WHERE project_id = $1
+           AND started_at >= $2
+           AND started_at <= $3`,
+        [projectId, windowStart, nowIso],
+      ),
 
-    // 2. Previous-period summary (for deltas)
-    const prevResult = await this.dataSource.query<
-      Array<{ total_requests: string; error_count: string }>
-    >(
-      `SELECT
-         COUNT(*) AS total_requests,
-         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at < $3`,
-      [projectId, prevWindowStart, windowStart],
-    );
+      // 2. Previous-period summary (for deltas)
+      this.dataSource.query<Array<{ total_requests: string; error_count: string }>>(
+        `SELECT
+           COUNT(*) AS total_requests,
+           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count
+         FROM traces
+         WHERE project_id = $1
+           AND started_at >= $2
+           AND started_at < $3`,
+        [projectId, prevWindowStart, windowStart],
+      ),
 
-    // 3. Month-to-date cost
-    const monthResult = await this.dataSource.query<Array<{ month_cost: string }>>(
-      `SELECT COALESCE(SUM(total_cost_usd::float), 0) AS month_cost
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2`,
-      [projectId, monthStart],
-    );
+      // 3. Month-to-date cost
+      this.dataSource.query<Array<{ month_cost: string }>>(
+        `SELECT COALESCE(SUM(total_cost_usd::float), 0) AS month_cost
+         FROM traces
+         WHERE project_id = $1
+           AND started_at >= $2`,
+        [projectId, monthStart],
+      ),
 
-    // 4. Hourly volume
-    const hourlyResult = await this.dataSource.query<
-      Array<{ hour: string; total: string; errors: string }>
-    >(
-      `SELECT
-         date_trunc('hour', started_at) AS hour,
-         COUNT(*) AS total,
-         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at <= $3
-       GROUP BY date_trunc('hour', started_at)
-       ORDER BY hour ASC`,
-      [projectId, windowStart, nowIso],
-    );
+      // 4. Hourly volume
+      this.dataSource.query<Array<{ hour: string; total: string; errors: string }>>(
+        `SELECT
+           date_trunc('hour', started_at) AS hour,
+           COUNT(*) AS total,
+           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
+         FROM traces
+         WHERE project_id = $1
+           AND started_at >= $2
+           AND started_at <= $3
+         GROUP BY date_trunc('hour', started_at)
+         ORDER BY hour ASC`,
+        [projectId, windowStart, nowIso],
+      ),
 
-    // 5. Model usage
-    const modelResult = await this.dataSource.query<
-      Array<{ model: string | null; calls: string; cost: string }>
-    >(
-      `SELECT
-         model,
-         COUNT(*) AS calls,
-         COALESCE(SUM(cost_usd::float), 0) AS cost
-       FROM spans
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at <= $3
-         AND model IS NOT NULL
-       GROUP BY model
-       ORDER BY calls DESC`,
-      [projectId, windowStart, nowIso],
-    );
-
-    // 6. Top agents
-    const agentResult = await this.dataSource.query<
-      Array<{
-        agent_name: string | null;
-        calls: string;
-        errors: string;
-        avg_latency_ms: string | null;
-        cost: string;
-      }>
-    >(
-      `SELECT
-         agent_name,
-         COUNT(*) AS calls,
-         SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors,
-         AVG(total_latency_ms) AS avg_latency_ms,
-         COALESCE(SUM(total_cost_usd::float), 0) AS cost
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at <= $3
-       GROUP BY agent_name
-       ORDER BY calls DESC
-       LIMIT 5`,
-      [projectId, windowStart, nowIso],
-    );
-
-    // 7. Recent errors
-    const errorsResult = await this.dataSource.query<
-      Array<{
-        trace_id: string;
-        error_message: string | null;
-        agent_name: string | null;
-        model: string | null;
-        started_at: string;
-      }>
-    >(
-      `SELECT
-         t.id AS trace_id,
-         s.error_message,
-         t.agent_name,
-         s.model,
-         t.started_at
-       FROM traces t
-       LEFT JOIN LATERAL (
-         SELECT error_message, model
+      // 5. Model usage
+      this.dataSource.query<Array<{ model: string | null; calls: string; cost: string }>>(
+        `SELECT
+           model,
+           COUNT(*) AS calls,
+           COALESCE(SUM(cost_usd::float), 0) AS cost
          FROM spans
-         WHERE trace_id = t.id AND status = 'error'
-         ORDER BY started_at DESC
-         LIMIT 1
-       ) s ON true
-       WHERE t.project_id = $1
-         AND t.status = 'error'
-         AND t.started_at >= $2
-         AND t.started_at <= $3
-       ORDER BY t.started_at DESC
-       LIMIT 5`,
-      [projectId, windowStart, nowIso],
-    );
+         WHERE project_id = $1
+           AND started_at >= $2
+           AND started_at <= $3
+           AND model IS NOT NULL
+         GROUP BY model
+         ORDER BY calls DESC`,
+        [projectId, windowStart, nowIso],
+      ),
 
-    // 8. Active traces count
-    const activeTraces = await this.traceRepo.count({
-      where: { projectId, status: 'running' as never },
-    });
+      // 6. Top agents
+      this.dataSource.query<
+        Array<{
+          agent_name: string | null;
+          calls: string;
+          errors: string;
+          avg_latency_ms: string | null;
+          cost: string;
+        }>
+      >(
+        `SELECT
+           agent_name,
+           COUNT(*) AS calls,
+           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors,
+           AVG(total_latency_ms) AS avg_latency_ms,
+           COALESCE(SUM(total_cost_usd::float), 0) AS cost
+         FROM traces
+         WHERE project_id = $1
+           AND started_at >= $2
+           AND started_at <= $3
+         GROUP BY agent_name
+         ORDER BY calls DESC
+         LIMIT 5`,
+        [projectId, windowStart, nowIso],
+      ),
+
+      // 7. Recent errors
+      this.dataSource.query<
+        Array<{
+          trace_id: string;
+          error_message: string | null;
+          agent_name: string | null;
+          model: string | null;
+          started_at: string;
+        }>
+      >(
+        `SELECT
+           t.id AS trace_id,
+           s.error_message,
+           t.agent_name,
+           s.model,
+           t.started_at
+         FROM traces t
+         LEFT JOIN LATERAL (
+           SELECT error_message, model
+           FROM spans
+           WHERE trace_id = t.id AND status = 'error'
+           ORDER BY started_at DESC
+           LIMIT 1
+         ) s ON true
+         WHERE t.project_id = $1
+           AND t.status = 'error'
+           AND t.started_at >= $2
+           AND t.started_at <= $3
+         ORDER BY t.started_at DESC
+         LIMIT 5`,
+        [projectId, windowStart, nowIso],
+      ),
+
+      // 8. Active traces count
+      this.traceRepo.count({
+        where: { projectId, status: TraceStatus.RUNNING },
+      }),
+    ]);
 
     // Assemble DTO
     const s = summaryResult[0] ?? {
