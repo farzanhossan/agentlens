@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsISO8601,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -78,12 +79,14 @@ export class ListTracesQueryDto {
   @ApiPropertyOptional({ description: 'Minimum cost in USD' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   minCostUsd?: number;
 
   @ApiPropertyOptional({ description: 'Maximum cost in USD' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   maxCostUsd?: number;
 }

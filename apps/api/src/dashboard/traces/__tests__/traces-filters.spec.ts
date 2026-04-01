@@ -80,4 +80,28 @@ describe('TracesService — enhanced filters', () => {
     );
     expect(minCost).toBeDefined();
   });
+
+  it('populates inputPreview from root span input', async () => {
+    const traceRow = {
+      id: 'trace-1',
+      projectId: 'proj-1',
+      agentName: 'test',
+      status: 'success',
+      totalSpans: 1,
+      totalCostUsd: '0.01',
+      totalLatencyMs: 500,
+      startedAt: new Date('2026-04-01'),
+      endedAt: new Date('2026-04-01'),
+    };
+    const qb = makeQueryBuilder([traceRow]);
+    const traceRepo = makeTraceRepo(qb);
+    const ds = {
+      query: jest.fn().mockResolvedValue([{ trace_id: 'trace-1', input_preview: 'Hello world' }]),
+    } as unknown as DataSource;
+    const service = new TracesService(traceRepo, makeSpanRepo(), ds);
+
+    const result = await service.listTraces('proj-1', {});
+
+    expect(result.data[0].inputPreview).toBe('Hello world');
+  });
 });
