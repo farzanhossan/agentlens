@@ -64,6 +64,24 @@ export class TracesService {
     if (query.dateTo) {
       countQb.andWhere('t.startedAt <= :dateTo', { dateTo: query.dateTo });
     }
+    if (query.model) {
+      countQb.andWhere(
+        `t.id IN (SELECT trace_id FROM spans WHERE model ILIKE :model AND project_id = :projectId)`,
+        { model: `%${query.model}%` },
+      );
+    }
+    if (query.minLatencyMs !== undefined) {
+      countQb.andWhere('t.total_latency_ms >= :minLatencyMs', { minLatencyMs: query.minLatencyMs });
+    }
+    if (query.maxLatencyMs !== undefined) {
+      countQb.andWhere('t.total_latency_ms <= :maxLatencyMs', { maxLatencyMs: query.maxLatencyMs });
+    }
+    if (query.minCostUsd !== undefined) {
+      countQb.andWhere('t.total_cost_usd::float >= :minCostUsd', { minCostUsd: query.minCostUsd });
+    }
+    if (query.maxCostUsd !== undefined) {
+      countQb.andWhere('t.total_cost_usd::float <= :maxCostUsd', { maxCostUsd: query.maxCostUsd });
+    }
 
     const total = await countQb.getCount();
 
@@ -90,6 +108,24 @@ export class TracesService {
     }
     if (query.dateTo) {
       dataQb.andWhere('t.startedAt <= :dateTo', { dateTo: query.dateTo });
+    }
+    if (query.model) {
+      dataQb.andWhere(
+        `t.id IN (SELECT trace_id FROM spans WHERE model ILIKE :model AND project_id = :projectId)`,
+        { model: `%${query.model}%` },
+      );
+    }
+    if (query.minLatencyMs !== undefined) {
+      dataQb.andWhere('t.total_latency_ms >= :minLatencyMs', { minLatencyMs: query.minLatencyMs });
+    }
+    if (query.maxLatencyMs !== undefined) {
+      dataQb.andWhere('t.total_latency_ms <= :maxLatencyMs', { maxLatencyMs: query.maxLatencyMs });
+    }
+    if (query.minCostUsd !== undefined) {
+      dataQb.andWhere('t.total_cost_usd::float >= :minCostUsd', { minCostUsd: query.minCostUsd });
+    }
+    if (query.maxCostUsd !== undefined) {
+      dataQb.andWhere('t.total_cost_usd::float <= :maxCostUsd', { maxCostUsd: query.maxCostUsd });
     }
 
     if (query.cursor) {
@@ -119,11 +155,29 @@ export class TracesService {
       );
     }
 
-    return {
-      data: pageRows.map((t) => TraceSummaryDto.fromEntity(t)),
-      nextCursor,
-      total,
-    };
+    // Populate inputPreview for each trace
+    const dtos = pageRows.map((t) => TraceSummaryDto.fromEntity(t));
+    if (dtos.length > 0) {
+      const traceIds = dtos.map((d) => d.id);
+      const previews = await this.dataSource.query<
+        Array<{ trace_id: string; input_preview: string }>
+      >(
+        `SELECT
+           s.trace_id,
+           LEFT(s.input, 100) AS input_preview
+         FROM spans s
+         WHERE s.trace_id = ANY($1)
+           AND s.parent_span_id IS NULL
+           AND s.input IS NOT NULL`,
+        [traceIds],
+      );
+      const previewMap = new Map(previews.map((p) => [p.trace_id, p.input_preview]));
+      for (const dto of dtos) {
+        dto.inputPreview = previewMap.get(dto.id);
+      }
+    }
+
+    return { data: dtos, nextCursor, total };
   }
 
   async getTrace(projectId: string, traceId: string): Promise<TraceDetailDto> {

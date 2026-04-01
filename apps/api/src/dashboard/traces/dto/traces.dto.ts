@@ -55,6 +55,37 @@ export class ListTracesQueryDto {
   @Min(1)
   @Max(100)
   limit?: number;
+
+  @ApiPropertyOptional({ description: 'Filter traces containing spans with this model' })
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ description: 'Minimum latency in ms' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minLatencyMs?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum latency in ms' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  maxLatencyMs?: number;
+
+  @ApiPropertyOptional({ description: 'Minimum cost in USD' })
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  minCostUsd?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum cost in USD' })
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  maxCostUsd?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +125,9 @@ export class TraceSummaryDto {
 
   @ApiPropertyOptional({ description: 'ISO 8601 timestamp' })
   endedAt?: string;
+
+  @ApiPropertyOptional({ description: 'First ~100 chars of root span input' })
+  inputPreview?: string;
 
   static fromEntity(entity: TraceEntity): TraceSummaryDto {
     const dto = new TraceSummaryDto();
