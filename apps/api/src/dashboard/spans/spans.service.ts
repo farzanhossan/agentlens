@@ -19,23 +19,26 @@ export class SpansService {
       throw new NotFoundException(`Span ${spanId} not found`);
     }
 
-    // Retrieve input/output from Elasticsearch using spanId as the search term
-    // searchSpans will match on the spanId keyword field via a multi-match query
-    let esInput: string | undefined;
-    let esOutput: string | undefined;
+    // Retrieve input/output from Elasticsearch, fall back to PostgreSQL
+    let inputText: string | undefined;
+    let outputText: string | undefined;
 
     try {
       const esResult = await this.elasticsearchService.searchSpans(projectId, spanId, 0, 1);
       const hit = esResult.hits.find((h) => h._source.spanId === spanId);
       if (hit) {
-        esInput = hit._source.input;
-        esOutput = hit._source.output;
+        inputText = hit._source.input;
+        outputText = hit._source.output;
       }
     } catch {
-      // Non-fatal: ES may be unavailable; return span without input/output
+      // ES unavailable — fall back to PostgreSQL columns
     }
 
-    return SpanDetailDto.fromEntity(span, { input: esInput, output: esOutput });
+    // Fall back to DB if ES didn't have the data
+    if (!inputText && span.input) inputText = span.input;
+    if (!outputText && span.output) outputText = span.output;
+
+    return SpanDetailDto.fromEntity(span, { input: inputText, output: outputText });
   }
 
   async searchSpans(

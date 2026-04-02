@@ -55,7 +55,7 @@ lint: ## Lint all packages
 clean: ## Remove all build artifacts and node_modules
 	pnpm turbo run clean --if-present
 	find . -name 'node_modules' -type d -prune -exec rm -rf {} +
-	find . -name 'dist' -type d -prune -exec rm -rf {} +
+	find . -name 'dist' -type d -prune -exec rm -rf {} + 
 
 install: ## Install all dependencies
 	pnpm install --frozen-lockfile
