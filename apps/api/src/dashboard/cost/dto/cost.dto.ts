@@ -17,6 +17,18 @@ export class CostByModelDto {
 
   @ApiProperty()
   spanCount!: number;
+
+  @ApiProperty()
+  avgTokensPerCall!: number;
+
+  @ApiProperty()
+  avgCostPerCall!: number;
+
+  @ApiProperty()
+  avgLatencyMs!: number;
+
+  @ApiProperty()
+  callCount!: number;
 }
 
 export class CostByDateDto {
@@ -38,6 +50,15 @@ export class CostByAgentDto {
 export class CostSummaryDto {
   @ApiProperty()
   totalCostUsd!: number;
+
+  @ApiProperty()
+  totalInputTokens!: number;
+
+  @ApiProperty()
+  totalOutputTokens!: number;
+
+  @ApiProperty()
+  prevPeriodCostUsd!: number;
 
   @ApiProperty({ type: () => [CostByModelDto] })
   byModel!: CostByModelDto[];

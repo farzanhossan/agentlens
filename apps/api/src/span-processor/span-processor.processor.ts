@@ -1,7 +1,10 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Job } from 'bullmq';
+import Redis from 'ioredis';
+import { TraceGateway } from '../dashboard/websocket/trace.gateway.js';
 import { SpanProcessorService } from './span-processor.service.js';
 import type { SpanJobData } from './span-processor.types.js';
 
@@ -23,12 +26,31 @@ const OTEL_TRACER = 'agentlens.span-processor';
  * (configured when the job was enqueued by the ingest worker).
  */
 @Processor(QUEUE_NAME, { concurrency: 20 })
-export class SpanProcessorProcessor extends WorkerHost {
+export class SpanProcessorProcessor extends WorkerHost implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SpanProcessorProcessor.name);
   private readonly tracer = trace.getTracer(OTEL_TRACER);
+  private publisher!: Redis;
 
-  constructor(private readonly service: SpanProcessorService) {
+  constructor(
+    private readonly service: SpanProcessorService,
+    private readonly configService: ConfigService,
+  ) {
     super();
+  }
+
+  onModuleInit(): void {
+    const redisUrl = this.configService.getOrThrow<string>('REDIS_URL');
+    const url = new URL(redisUrl);
+    this.publisher = new Redis({
+      host: url.hostname,
+      port: Number(url.port) || 6379,
+      password: url.password || undefined,
+      lazyConnect: false,
+    });
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.publisher.quit();
   }
 
   async process(job: Job<SpanJobData>): Promise<void> {
@@ -64,6 +86,14 @@ export class SpanProcessorProcessor extends WorkerHost {
 
       // 5. Elasticsearch (best-effort, errors are swallowed in the service)
       await this.service.indexToElasticsearch(enriched);
+
+      // 6. Publish to Redis for WebSocket live updates (best-effort)
+      await Promise.all([
+        TraceGateway.publishSpan(this.publisher, enriched),
+        TraceGateway.publishSpanCompleted(this.publisher, enriched),
+      ]).catch((err) => {
+        this.logger.warn(`Redis publish failed for span ${enriched.spanId}: ${String(err)}`);
+      });
 
       otelSpan.setStatus({ code: SpanStatusCode.OK });
       this.logger.debug(`Processed span ${enriched.spanId} (job ${job.id ?? '?'})`);

@@ -42,3 +42,6 @@ coverage/
 
 # Wrangler
 .wrangler/
+
+# Worktrees
+.worktrees/

@@ -10,6 +10,8 @@ import { TraceDetailPage } from './pages/TraceDetailPage';
 import { CostPage } from './pages/CostPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { OverviewPage } from './pages/OverviewPage';
+import { LiveFeedPage } from './pages/LiveFeedPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +24,7 @@ const queryClient = new QueryClient({
 
 function RootRedirect(): React.JSX.Element {
   const token = localStorage.getItem('agentlens_token');
-  return <Navigate to={token ? '/traces' : '/login'} replace />;
+  return <Navigate to={token ? '/overview' : '/login'} replace />;
 }
 
 export function App(): React.JSX.Element {
@@ -35,6 +37,8 @@ export function App(): React.JSX.Element {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<RootRedirect />} />
+              <Route path="overview" element={<OverviewPage />} />
+              <Route path="live" element={<LiveFeedPage />} />
               <Route path="traces" element={<TracesPage />} />
               <Route path="traces/:traceId" element={<TraceDetailPage />} />
               <Route path="cost" element={<CostPage />} />

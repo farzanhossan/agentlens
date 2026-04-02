@@ -36,20 +36,31 @@ export class TraceGateway
       lazyConnect: false,
     });
 
-    void this.subscriber.psubscribe('agentlens:spans:*', (err) => {
-      if (err) {
-        this.logger.error(`Failed to subscribe to Redis pattern: ${String(err)}`);
-      } else {
-        this.logger.log('Subscribed to Redis pattern agentlens:spans:*');
-      }
-    });
+    void this.subscriber.psubscribe(
+      'agentlens:spans:*',
+      'agentlens:spans-completed:*',
+      (err) => {
+        if (err) {
+          this.logger.error(`Failed to subscribe to Redis patterns: ${String(err)}`);
+        } else {
+          this.logger.log('Subscribed to Redis patterns agentlens:spans:* and agentlens:spans-completed:*');
+        }
+      },
+    );
 
     this.subscriber.on('pmessage', (_pattern: string, channel: string, message: string) => {
       try {
         const span = JSON.parse(message) as ProcessedSpan;
-        const traceId = channel.split(':')[2];
-        if (traceId) {
+        const parts = channel.split(':');
+        const channelType = parts[1]; // 'spans' or 'spans-completed'
+        const traceId = parts[2];
+        if (!traceId) return;
+
+        if (channelType === 'spans') {
           this.server.to(`trace:${traceId}`).emit('span-added', span);
+        } else if (channelType === 'spans-completed') {
+          // Broadcast to all connected clients in the live-feed room
+          this.server.to('live-feed').emit('span-completed', span);
         }
       } catch (err) {
         this.logger.warn(`Failed to parse Redis message on channel ${channel}: ${String(err)}`);
@@ -89,12 +100,33 @@ export class TraceGateway
     this.logger.debug(`Client ${client.id} left room ${room}`);
   }
 
+  @SubscribeMessage('subscribe-live-feed')
+  async handleSubscribeLiveFeed(client: Socket): Promise<void> {
+    await client.join('live-feed');
+    this.logger.debug(`Client ${client.id} joined live-feed room`);
+  }
+
+  @SubscribeMessage('unsubscribe-live-feed')
+  async handleUnsubscribeLiveFeed(client: Socket): Promise<void> {
+    await client.leave('live-feed');
+    this.logger.debug(`Client ${client.id} left live-feed room`);
+  }
+
   /**
    * Publishes a processed span to the Redis pub/sub channel for the given trace.
    * Other service instances will receive this and forward it to connected WebSocket clients.
    */
   static async publishSpan(redis: Redis, span: ProcessedSpan): Promise<void> {
     const channel = `agentlens:spans:${span.traceId}`;
+    await redis.publish(channel, JSON.stringify(span));
+  }
+
+  /**
+   * Publishes a completed span to the Redis pub/sub channel for the live feed.
+   * All clients subscribed to the live-feed room will receive a span-completed event.
+   */
+  static async publishSpanCompleted(redis: Redis, span: ProcessedSpan): Promise<void> {
+    const channel = `agentlens:spans-completed:${span.traceId}`;
     await redis.publish(channel, JSON.stringify(span));
   }
 }

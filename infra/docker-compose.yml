@@ -108,3 +108,19 @@ services:
       - debug
     networks:
       - agentlens-net
+
+  # ── Proxy ──────────────────────────────────────────────────────────────────────
+  proxy:
+    build:
+      context: ..
+      dockerfile: apps/proxy/Dockerfile
+    container_name: agentlens-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      AGENTLENS_INGEST_URL: ${AGENTLENS_INGEST_URL:-http://host.docker.internal:3001/v1/spans}
+      PORT: "8080"
+      LOG_LEVEL: info
+    networks:
+      - agentlens-net
+    restart: unless-stopped
