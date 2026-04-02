@@ -86,7 +86,7 @@ describe('TracesService — enhanced filters', () => {
       id: 'trace-1',
       projectId: 'proj-1',
       agentName: 'test',
-      status: 'success',
+      status: 'success' as const,
       totalSpans: 1,
       totalCostUsd: '0.01',
       totalLatencyMs: 500,
