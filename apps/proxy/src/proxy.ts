@@ -28,6 +28,15 @@ function filterHeaders(headers: Record<string, string>): Record<string, string> 
   return filtered;
 }
 
+/** Ensure content-type is set without creating a duplicate key. */
+function ensureContentType(headers: Record<string, string>): Record<string, string> {
+  const hasContentType = Object.keys(headers).some(
+    (k) => k.toLowerCase() === 'content-type',
+  );
+  if (hasContentType) return headers;
+  return { ...headers, 'content-type': 'application/json' };
+}
+
 const RESPONSE_HEADER_BLOCKLIST = new Set([
   'transfer-encoding', 'connection', 'keep-alive',
 ]);
@@ -59,11 +68,14 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
 
   // Non-streaming flow
   const hasBody = requestBody && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase());
+  const upstreamHeaders = hasBody
+    ? ensureContentType(forwardHeaders)
+    : forwardHeaders;
   let upstreamResponse: Response;
   try {
     upstreamResponse = await fetch(upstreamUrl, {
       method: method.toUpperCase(),
-      headers: hasBody ? { ...forwardHeaders, 'Content-Type': 'application/json' } : forwardHeaders,
+      headers: upstreamHeaders,
       ...(hasBody ? { body: JSON.stringify(requestBody) } : {}),
     });
   } catch (err) {
@@ -155,7 +167,7 @@ async function handleStreamingRequest(
   try {
     upstreamResponse = await fetch(upstreamUrl, {
       method: params.method.toUpperCase(),
-      headers: { ...forwardHeaders, 'Content-Type': 'application/json' },
+      headers: ensureContentType(forwardHeaders),
       body: JSON.stringify(params.requestBody),
     });
   } catch (err) {

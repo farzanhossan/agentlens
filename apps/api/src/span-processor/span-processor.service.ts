@@ -193,8 +193,7 @@ export class SpanProcessorService {
   }
 
   /**
-   * Inserts the span row into PostgreSQL.
-   * `input` and `output` are intentionally excluded — they live in Elasticsearch.
+   * Inserts the span row into PostgreSQL, including input/output text.
    */
   async insertSpan(span: ProcessedSpan, em: EntityManager): Promise<void> {
     const status = span.status as SpanStatus;
@@ -206,13 +205,15 @@ export class SpanProcessorService {
         name, model, provider,
         input_tokens, output_tokens, cost_usd, latency_ms,
         status, error_message,
+        input, output,
         started_at, ended_at, metadata
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7,
         $8, $9, $10, $11,
         $12, $13,
-        $14, $15, $16
+        $14, $15,
+        $16, $17, $18
       )
       ON CONFLICT (id) DO NOTHING
       `,
@@ -230,6 +231,8 @@ export class SpanProcessorService {
         span.latencyMs ?? null,
         status,
         span.errorMessage ?? null,
+        span.input ?? null,
+        span.output ?? null,
         new Date(span.startedAt),
         span.endedAt ? new Date(span.endedAt) : null,
         JSON.stringify(span.metadata),

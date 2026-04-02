@@ -85,6 +85,14 @@ export class SpanEntity {
   })
   status!: SpanStatus;
 
+  /** LLM prompt text. Also indexed in Elasticsearch for full-text search. */
+  @Column({ type: 'text', nullable: true })
+  input?: string;
+
+  /** LLM completion text. Also indexed in Elasticsearch for full-text search. */
+  @Column({ type: 'text', nullable: true })
+  output?: string;
+
   @Column({ type: 'text', nullable: true, name: 'error_message' })
   errorMessage?: string;
 
