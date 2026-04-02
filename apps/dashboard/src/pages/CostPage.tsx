@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { fetchCostSummary, fetchCostTimeseries, fetchCostByModel, fetchCostByAgent } from '../lib/api';
-import { CostLineChart, CostBarChart } from '../components/CostChart';
 import { SkeletonCard, SkeletonText } from '../components/Skeleton';
+import { ModelEfficiencyTable } from '../components/ModelEfficiencyTable';
 
 function formatDate(d: Date): string {
-  return (d.toISOString().split('T')[0] ?? '');
+  return d.toISOString().split('T')[0] ?? '';
 }
 
 function getPresetRange(days: number): { from: string; to: string } {
@@ -15,23 +24,45 @@ function getPresetRange(days: number): { from: string; to: string } {
   return { from: formatDate(from), to: formatDate(to) };
 }
 
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 const inputClass =
   'bg-gray-800 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-500';
 
-function SummaryCard({ label, value }: { label: string; value: string | null | undefined }): React.JSX.Element {
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-xl font-semibold text-gray-100 truncate">{value ?? '—'}</p>
-    </div>
-  );
-}
+const AGENT_BAR_COLORS = [
+  'bg-brand-600',
+  'bg-purple-500',
+  'bg-purple-400',
+  'bg-purple-300',
+  'bg-purple-200',
+];
 
 const presets = [
+  { label: '24h', days: 1 },
   { label: '7d', days: 7 },
   { label: '30d', days: 30 },
   { label: '90d', days: 90 },
 ];
+
+interface SummaryCardProps {
+  label: string;
+  value: React.ReactNode;
+  sub?: React.ReactNode;
+}
+
+function SummaryCard({ label, value, sub }: SummaryCardProps): React.JSX.Element {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-xl font-semibold text-gray-100 truncate">{value ?? '—'}</p>
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+    </div>
+  );
+}
 
 export function CostPage(): React.JSX.Element {
   const defaultRange = getPresetRange(30);
@@ -71,6 +102,23 @@ export function CostPage(): React.JSX.Element {
     queryFn: () => fetchCostByAgent(rangeParams),
     enabled: !!from && !!to,
   });
+
+  // Compute delta vs previous period
+  const summary = summaryQuery.data;
+  const totalCost = summary ? parseFloat(summary.totalCostUsd) : null;
+  const prevCost = summary?.prevPeriodCostUsd ?? 0;
+  const delta = totalCost != null && prevCost > 0 ? totalCost - prevCost : null;
+  const deltaPercent = delta != null && prevCost > 0 ? (delta / prevCost) * 100 : null;
+
+  // Agent progress bars
+  const agentData = byAgentQuery.data ?? [];
+  const totalAgentCost = agentData.reduce((sum, a) => sum + parseFloat(a.costUsd), 0);
+
+  // Timeseries chart data
+  const chartData = (timeseriesQuery.data ?? []).map((d) => ({
+    date: d.date,
+    cost: parseFloat(d.costUsd),
+  }));
 
   return (
     <div className="space-y-6">
@@ -112,23 +160,37 @@ export function CostPage(): React.JSX.Element {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {summaryQuery.isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : summaryQuery.data ? (
+        ) : summary ? (
           <>
+            {/* Total Cost with delta */}
             <SummaryCard
               label="Total Cost"
-              value={`$${parseFloat(summaryQuery.data.totalCostUsd).toFixed(4)}`}
+              value={`$${totalCost!.toFixed(4)}`}
+              sub={
+                deltaPercent != null ? (
+                  <span className={deltaPercent >= 0 ? 'text-red-400' : 'text-green-400'}>
+                    {deltaPercent >= 0 ? '+' : ''}{deltaPercent.toFixed(1)}% vs prev period
+                  </span>
+                ) : undefined
+              }
             />
+            {/* Total Tokens with in/out breakdown */}
             <SummaryCard
-              label="Avg per Trace"
-              value={`$${parseFloat(summaryQuery.data.avgCostPerTrace).toFixed(6)}`}
+              label="Total Tokens"
+              value={formatTokens(summary.totalInputTokens + summary.totalOutputTokens)}
+              sub={`${formatTokens(summary.totalInputTokens)} in / ${formatTokens(summary.totalOutputTokens)} out`}
             />
-            <SummaryCard
-              label="Top Model"
-              value={summaryQuery.data.mostExpensiveModel}
-            />
+            {/* Top Model */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Top Model</p>
+              <p className="text-xl font-semibold text-purple-400 font-mono truncate">
+                {summary.mostExpensiveModel ?? '—'}
+              </p>
+            </div>
+            {/* Top Agent */}
             <SummaryCard
               label="Top Agent"
-              value={summaryQuery.data.mostExpensiveAgent}
+              value={summary.mostExpensiveAgent ?? '—'}
             />
           </>
         ) : (
@@ -140,17 +202,42 @@ export function CostPage(): React.JSX.Element {
         )}
       </div>
 
-      {/* Line chart */}
+      {/* Daily Cost Trend bar chart */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-          Daily Cost
+          Daily Cost Trend
         </h2>
         {timeseriesQuery.isLoading ? (
           <div className="h-64 flex items-center justify-center">
             <SkeletonText lines={4} />
           </div>
-        ) : timeseriesQuery.data && timeseriesQuery.data.length > 0 ? (
-          <CostLineChart data={timeseriesQuery.data} />
+        ) : chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={256}>
+            <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: string) => v.slice(5)}
+              />
+              <YAxis
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `$${v.toFixed(2)}`}
+                width={64}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
+                labelStyle={{ color: '#9CA3AF' }}
+                itemStyle={{ color: '#E5E7EB' }}
+                formatter={(v: number) => [`$${v.toFixed(4)}`, 'Cost']}
+              />
+              <Bar dataKey="cost" fill="#4F46E5" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         ) : (
           <div className="h-64 flex items-center justify-center text-gray-600 text-sm">
             No data for this period
@@ -158,49 +245,63 @@ export function CostPage(): React.JSX.Element {
         )}
       </div>
 
-      {/* Bar charts row */}
+      {/* Bottom row: Model Efficiency Table + Cost by Agent */}
       <div className="grid md:grid-cols-2 gap-4">
-        {/* By model */}
+        {/* Model Efficiency Table */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Cost by Model
+            Model Efficiency
           </h2>
           {byModelQuery.isLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <SkeletonText lines={4} />
+            <div className="h-48 flex items-center justify-center">
+              <SkeletonText lines={5} />
             </div>
-          ) : byModelQuery.data && byModelQuery.data.length > 0 ? (
-            <CostBarChart
-              data={byModelQuery.data as unknown as Array<Record<string, unknown>>}
-              labelKey="model"
-              valueKey="costUsd"
-              title="Cost by Model"
-            />
+          ) : (byModelQuery.data && byModelQuery.data.length > 0) ? (
+            <ModelEfficiencyTable data={byModelQuery.data} />
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-600 text-sm">
+            <div className="h-48 flex items-center justify-center text-gray-600 text-sm">
               No data for this period
             </div>
           )}
         </div>
 
-        {/* By agent */}
+        {/* Cost by Agent */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Cost by Agent
           </h2>
           {byAgentQuery.isLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <SkeletonText lines={4} />
+            <div className="h-48 flex items-center justify-center">
+              <SkeletonText lines={5} />
             </div>
-          ) : byAgentQuery.data && byAgentQuery.data.length > 0 ? (
-            <CostBarChart
-              data={byAgentQuery.data as unknown as Array<Record<string, unknown>>}
-              labelKey="agentName"
-              valueKey="costUsd"
-              title="Cost by Agent"
-            />
+          ) : agentData.length > 0 ? (
+            <div className="space-y-3">
+              {agentData.map((agent, i) => {
+                const cost = parseFloat(agent.costUsd);
+                const pct = totalAgentCost > 0 ? (cost / totalAgentCost) * 100 : 0;
+                const barColor = AGENT_BAR_COLORS[i % AGENT_BAR_COLORS.length] ?? 'bg-brand-600';
+                return (
+                  <div key={agent.agentName}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-gray-300 truncate max-w-[60%]">
+                        {agent.agentName}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        ${cost.toFixed(4)} &middot; {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-2">
+                      <div
+                        className={`${barColor} h-2 rounded-full transition-all`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-600 text-sm">
+            <div className="h-48 flex items-center justify-center text-gray-600 text-sm">
               No data for this period
             </div>
           )}
