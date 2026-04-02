@@ -11,6 +11,7 @@ import type {
   CostByAgent,
   AlertResponse,
   CreateAlertPayload,
+  OverviewData,
 } from './types';
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
@@ -71,6 +72,7 @@ interface ApiTraceSummary {
   totalLatencyMs?: number;
   startedAt: string;
   endedAt?: string;
+  inputPreview?: string;
 }
 
 interface ApiTraceStats {
@@ -112,7 +114,19 @@ interface ApiTraceDetail extends ApiTraceSummary {
 
 interface ApiCostSummaryDto {
   totalCostUsd: number;
-  byModel: Array<{ model: string; provider: string; costUsd: number; spanCount: number }>;
+  totalInputTokens?: number;
+  totalOutputTokens?: number;
+  prevPeriodCostUsd?: number;
+  byModel: Array<{
+    model: string;
+    provider: string;
+    costUsd: number;
+    spanCount: number;
+    avgTokensPerCall?: number;
+    avgCostPerCall?: number;
+    avgLatencyMs?: number;
+    callCount?: number;
+  }>;
   byDate: Array<{ date: string; costUsd: number }>;
   byAgent: Array<{ agentName: string; costUsd: number }>;
   dateFrom: string;
@@ -179,6 +193,15 @@ export async function rotateProjectKey(projectId: string): Promise<ProjectWithKe
   return res.data;
 }
 
+// ── Overview ──────────────────────────────────────────────────────────────────
+
+export async function fetchOverview(hours = 24): Promise<OverviewData> {
+  const res = await api.get<OverviewData>(`/projects/${getProjectId()}/overview`, {
+    params: { hours },
+  });
+  return res.data;
+}
+
 // ── Traces ────────────────────────────────────────────────────────────────────
 
 export interface TraceListParams {
@@ -188,6 +211,11 @@ export interface TraceListParams {
   from?: string;
   to?: string;
   limit?: number;
+  model?: string;
+  minLatencyMs?: number;
+  maxLatencyMs?: number;
+  minCostUsd?: number;
+  maxCostUsd?: number;
 }
 
 export async function fetchTraces(params: TraceListParams): Promise<Paginated<TraceSummary>> {
@@ -202,6 +230,11 @@ export async function fetchTraces(params: TraceListParams): Promise<Paginated<Tr
         dateFrom: params.from,
         dateTo: params.to,
         limit,
+        model: params.model,
+        minLatencyMs: params.minLatencyMs,
+        maxLatencyMs: params.maxLatencyMs,
+        minCostUsd: params.minCostUsd,
+        maxCostUsd: params.maxCostUsd,
       },
     },
   );
@@ -215,6 +248,8 @@ export async function fetchTraces(params: TraceListParams): Promise<Paginated<Tr
       totalCostUsd: t.totalCostUsd != null ? String(t.totalCostUsd) : '0',
       totalLatencyMs: t.totalLatencyMs ?? null,
       startedAt: t.startedAt,
+      inputPreview: t.inputPreview,
+      totalTokens: t.totalTokens,
     })),
     nextCursor,
     hasMore: data.length >= limit,
@@ -278,6 +313,9 @@ export async function fetchCostSummary(params: CostRangeParams): Promise<CostSum
     avgCostPerTrace: '0',
     mostExpensiveModel: topModel?.model ?? null,
     mostExpensiveAgent: topAgent?.agentName ?? null,
+    totalInputTokens: d.totalInputTokens ?? 0,
+    totalOutputTokens: d.totalOutputTokens ?? 0,
+    prevPeriodCostUsd: d.prevPeriodCostUsd ?? 0,
   };
 }
 
@@ -296,6 +334,10 @@ export async function fetchCostByModel(params: CostRangeParams): Promise<CostByM
     model: m.model,
     costUsd: String(m.costUsd),
     spanCount: m.spanCount,
+    avgTokensPerCall: m.avgTokensPerCall ?? 0,
+    avgCostPerCall: m.avgCostPerCall ?? 0,
+    avgLatencyMs: m.avgLatencyMs ?? 0,
+    callCount: m.callCount ?? m.spanCount,
   }));
 }
 

@@ -9,6 +9,8 @@ export interface TraceSummary {
   totalCostUsd: string;
   totalLatencyMs: number | null;
   startedAt: string;
+  inputPreview?: string;
+  totalTokens?: number;
 }
 
 export interface SpanNode {
@@ -54,6 +56,9 @@ export interface CostSummary {
   avgCostPerTrace: string;
   mostExpensiveModel: string | null;
   mostExpensiveAgent: string | null;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  prevPeriodCostUsd: number;
 }
 
 export interface CostTimeseries {
@@ -65,6 +70,10 @@ export interface CostByModel {
   model: string;
   costUsd: string;
   spanCount: number;
+  avgTokensPerCall: number;
+  avgCostPerCall: number;
+  avgLatencyMs: number;
+  callCount: number;
 }
 
 export interface CostByAgent {
@@ -95,4 +104,66 @@ export interface CreateAlertPayload {
   threshold: number;
   channel: AlertChannel;
   channelConfig: Record<string, unknown>;
+}
+
+// Overview
+export interface HourlyVolume {
+  hour: string;
+  total: number;
+  errors: number;
+}
+
+export interface ModelUsage {
+  model: string;
+  calls: number;
+  costUsd: number;
+}
+
+export interface TopAgent {
+  agentName: string;
+  calls: number;
+  errors: number;
+  avgLatencyMs: number;
+  costUsd: number;
+}
+
+export interface RecentError {
+  traceId: string;
+  errorMessage: string;
+  agentName?: string;
+  model?: string;
+  startedAt: string;
+}
+
+export interface OverviewData {
+  totalRequests: number;
+  totalRequestsPrev: number;
+  errorCount: number;
+  errorCountPrev: number;
+  totalCostUsd: number;
+  monthCostUsd: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+  activeTraces: number;
+  hourlyVolume: HourlyVolume[];
+  modelUsage: ModelUsage[];
+  topAgents: TopAgent[];
+  recentErrors: RecentError[];
+}
+
+// Live Feed entry
+export interface LiveFeedEntry {
+  spanId: string;
+  traceId: string;
+  projectId: string;
+  name: string;
+  model?: string;
+  provider?: string;
+  status: string;
+  input?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  costUsd?: number;
+  latencyMs?: number;
+  startedAt: string;
 }
