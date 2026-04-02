@@ -155,25 +155,29 @@ export class TracesService {
       );
     }
 
-    // Populate inputPreview for each trace
+    // Populate inputPreview for each trace (gracefully skip if column doesn't exist yet)
     const dtos = pageRows.map((t) => TraceSummaryDto.fromEntity(t));
     if (dtos.length > 0) {
       const traceIds = dtos.map((d) => d.id);
-      const previews = await this.dataSource.query<
-        Array<{ trace_id: string; input_preview: string }>
-      >(
-        `SELECT
-           s.trace_id,
-           LEFT(s.input, 100) AS input_preview
-         FROM spans s
-         WHERE s.trace_id = ANY($1)
-           AND s.parent_span_id IS NULL
-           AND s.input IS NOT NULL`,
-        [traceIds],
-      );
-      const previewMap = new Map(previews.map((p) => [p.trace_id, p.input_preview]));
-      for (const dto of dtos) {
-        dto.inputPreview = previewMap.get(dto.id);
+      try {
+        const previews = await this.dataSource.query<
+          Array<{ trace_id: string; input_preview: string }>
+        >(
+          `SELECT
+             s.trace_id,
+             LEFT(s.input, 100) AS input_preview
+           FROM spans s
+           WHERE s.trace_id = ANY($1)
+             AND s.parent_span_id IS NULL
+             AND s.input IS NOT NULL`,
+          [traceIds],
+        );
+        const previewMap = new Map(previews.map((p) => [p.trace_id, p.input_preview]));
+        for (const dto of dtos) {
+          dto.inputPreview = previewMap.get(dto.id);
+        }
+      } catch {
+        // input column may not exist yet — skip inputPreview
       }
     }
 
