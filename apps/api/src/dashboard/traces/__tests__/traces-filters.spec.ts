@@ -2,6 +2,7 @@ import { TracesService } from '../traces.service';
 import type { Repository, SelectQueryBuilder, DataSource } from 'typeorm';
 import type { TraceEntity } from '../../../database/entities/index';
 import type { SpanEntity } from '../../../database/entities/index';
+import { TraceStatus } from '../../../database/entities/trace.entity';
 
 function makeQueryBuilder(rows: Partial<TraceEntity>[]): SelectQueryBuilder<TraceEntity> {
   const qb = {
@@ -86,7 +87,7 @@ describe('TracesService — enhanced filters', () => {
       id: 'trace-1',
       projectId: 'proj-1',
       agentName: 'test',
-      status: 'success' as const,
+      status: TraceStatus.SUCCESS,
       totalSpans: 1,
       totalCostUsd: '0.01',
       totalLatencyMs: 500,
