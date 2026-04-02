@@ -17,15 +17,16 @@ interface ChatMessage {
 
 function tryParseChatMessages(input: string): ChatMessage[] | null {
   try {
-    const parsed = JSON.parse(input);
+    const parsed: unknown = JSON.parse(input);
     if (
       Array.isArray(parsed) &&
       parsed.length > 0 &&
       parsed.every(
-        (item) =>
+        (item: unknown) =>
           typeof item === 'object' &&
           item !== null &&
-          typeof item.role === 'string' &&
+          'role' in item &&
+          typeof (item as Record<string, unknown>).role === 'string' &&
           ('content' in item)
       )
     ) {

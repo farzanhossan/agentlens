@@ -101,7 +101,7 @@ export function LiveFeedPage(): React.JSX.Element {
       handleEntry(entry);
     });
 
-    return () => {
+    return (): void => {
       socket.disconnect();
       socketRef.current = null;
     };
@@ -117,7 +117,7 @@ export function LiveFeedPage(): React.JSX.Element {
       setTick((t) => t + 1);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return (): void => { clearInterval(interval); };
   }, []);
 
   const handlePauseResume = useCallback(() => {

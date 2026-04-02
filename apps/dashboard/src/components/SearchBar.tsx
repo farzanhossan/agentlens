@@ -19,13 +19,13 @@ export function SearchBar({ value, onChange, placeholder }: SearchBarProps): Rea
       }
     }
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return (): void => { document.removeEventListener('keydown', handleKeyDown); };
   }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => onChange(localValue), 300);
-    return () => {
+    return (): void => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [localValue, onChange]);

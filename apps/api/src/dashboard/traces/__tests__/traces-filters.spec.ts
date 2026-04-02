@@ -42,9 +42,9 @@ describe('TracesService — enhanced filters', () => {
 
     await service.listTraces('proj-1', { model: 'gpt-4o' });
 
-    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls;
+    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls as unknown[][];
     const modelFilter = andWhereCalls.find(
-      (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('model'),
+      (call) => typeof call[0] === 'string' && call[0].includes('model'),
     );
     expect(modelFilter).toBeDefined();
   });
@@ -56,12 +56,12 @@ describe('TracesService — enhanced filters', () => {
 
     await service.listTraces('proj-1', { minLatencyMs: 1000, maxLatencyMs: 5000 });
 
-    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls;
+    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls as unknown[][];
     const minLatency = andWhereCalls.find(
-      (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('total_latency_ms >='),
+      (call) => typeof call[0] === 'string' && call[0].includes('total_latency_ms >='),
     );
     const maxLatency = andWhereCalls.find(
-      (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('total_latency_ms <='),
+      (call) => typeof call[0] === 'string' && call[0].includes('total_latency_ms <='),
     );
     expect(minLatency).toBeDefined();
     expect(maxLatency).toBeDefined();
@@ -74,9 +74,9 @@ describe('TracesService — enhanced filters', () => {
 
     await service.listTraces('proj-1', { minCostUsd: 0.01, maxCostUsd: 0.10 });
 
-    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls;
+    const andWhereCalls = (qb.andWhere as jest.Mock).mock.calls as unknown[][];
     const minCost = andWhereCalls.find(
-      (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('total_cost_usd'),
+      (call) => typeof call[0] === 'string' && call[0].includes('total_cost_usd'),
     );
     expect(minCost).toBeDefined();
   });
