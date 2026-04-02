@@ -7,6 +7,22 @@ interface NavItem {
   icon: React.JSX.Element;
 }
 
+function OverviewIcon(): React.JSX.Element {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+    </svg>
+  );
+}
+
+function LiveFeedIcon(): React.JSX.Element {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  );
+}
+
 function TracesIcon(): React.JSX.Element {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,15 +64,22 @@ function LogoutIcon(): React.JSX.Element {
   );
 }
 
-const navItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
+  { to: '/overview', label: 'Overview', icon: <OverviewIcon /> },
   { to: '/traces', label: 'Traces', icon: <TracesIcon /> },
+  { to: '/live', label: 'Live Feed', icon: <LiveFeedIcon /> },
   { to: '/cost', label: 'Cost', icon: <CostIcon /> },
   { to: '/alerts', label: 'Alerts', icon: <AlertsIcon /> },
+];
+
+const bottomNavItems: NavItem[] = [
   { to: '/projects', label: 'Projects', icon: <ProjectsIcon /> },
 ];
 
 const pageTitles: Record<string, string> = {
+  '/overview': 'Overview',
   '/traces': 'Traces',
+  '/live': 'Live Feed',
   '/cost': 'Cost',
   '/alerts': 'Alerts',
   '/projects': 'Projects',
@@ -94,23 +117,43 @@ export function Layout(): React.JSX.Element {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-brand-600/20 text-brand-500 border-l-2 border-brand-500 pl-[10px]'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
-                }`
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
+        <nav className="flex-1 px-3 py-3 flex flex-col">
+          <div className="space-y-0.5">
+            {mainNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-brand-600/20 text-brand-500 border-l-2 border-brand-500 pl-[10px]'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
+                  }`
+                }
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+          <div className="mt-auto pt-3 border-t border-gray-800 space-y-0.5">
+            {bottomNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-brand-600/20 text-brand-500 border-l-2 border-brand-500 pl-[10px]'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
+                  }`
+                }
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
         </nav>
 
         {/* Project ID + Logout */}
