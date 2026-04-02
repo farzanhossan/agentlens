@@ -32,8 +32,8 @@ const barColorClasses: Record<string, string> = {
 
 export interface SpanTimelineProps {
   spans: SpanNode[];
-  onSpanClick: (span: SpanNode) => void;
-  selectedSpanId: string | null;
+  onSpanClick?: (span: SpanNode) => void;
+  selectedSpanId?: string | null;
 }
 
 export function SpanTimeline({ spans, onSpanClick, selectedSpanId }: SpanTimelineProps): React.JSX.Element {
@@ -55,7 +55,7 @@ export function SpanTimeline({ spans, onSpanClick, selectedSpanId }: SpanTimelin
     <div className="space-y-1 font-mono text-xs select-none">
       {/* Header */}
       <div className="flex items-center gap-2 pb-2 border-b border-gray-800 text-gray-500">
-        <div className="w-64 shrink-0">Span</div>
+        <div className="w-72 shrink-0">Span</div>
         <div className="flex-1">Timeline</div>
         <div className="w-20 text-right shrink-0">Latency</div>
       </div>
@@ -77,18 +77,24 @@ export function SpanTimeline({ spans, onSpanClick, selectedSpanId }: SpanTimelin
                 ? 'bg-brand-600/20 ring-1 ring-brand-500'
                 : 'hover:bg-gray-800/60'
             }`}
-            onClick={() => onSpanClick(span)}
+            onClick={() => onSpanClick?.(span)}
           >
             {/* Name column */}
             <div
-              className="w-64 shrink-0 flex items-center gap-1.5 overflow-hidden"
+              className="w-72 shrink-0 flex flex-col overflow-hidden"
               style={{ paddingLeft: `${depth * 16}px` }}
             >
-              <StatusDot status={span.status} />
-              <span className="truncate text-gray-200">{span.name}</span>
-              {span.model && (
-                <span className="text-gray-500 truncate hidden sm:inline">({span.model})</span>
-              )}
+              <div className="flex items-center gap-1.5">
+                <StatusDot status={span.status} />
+                <span className="truncate text-gray-200">{span.name}</span>
+              </div>
+              <div className="flex gap-2 ml-4 text-[10px] text-gray-500">
+                {span.model && <span>{span.model}</span>}
+                {(span.inputTokens !== null || span.outputTokens !== null) && (
+                  <span>{(span.inputTokens ?? 0) + (span.outputTokens ?? 0)} tok</span>
+                )}
+                {span.costUsd && <span>${parseFloat(span.costUsd).toFixed(4)}</span>}
+              </div>
             </div>
 
             {/* Timeline bar */}
