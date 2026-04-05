@@ -93,6 +93,23 @@ services:
     networks:
       - agentlens-prod
 
+  proxy:
+    build:
+      context: ..
+      dockerfile: apps/proxy/Dockerfile
+    restart: always
+    environment:
+      AGENTLENS_INGEST_URL: http://api:3000/v1/spans
+      PORT: "8080"
+      LOG_LEVEL: info
+    ports:
+      - "8090:8080"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - agentlens-prod
+
 volumes:
   postgres_data:
   redis_data:
