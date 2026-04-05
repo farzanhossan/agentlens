@@ -39,14 +39,9 @@ jobs:
             docker-compose -f infra/docker-compose.prod.yml rm -f api || true
             docker-compose -f infra/docker-compose.prod.yml up -d --build --force-recreate api
 
-            # Build and restart Proxy
-            docker-compose -f infra/docker-compose.prod.yml rm -f proxy || true
-            docker-compose -f infra/docker-compose.prod.yml up -d --build --force-recreate proxy
-
-            # Health checks
+            # Health check
             sleep 20
             curl -f http://localhost:4020/health && echo "✅ API healthy" || echo "⚠️ API health check failed"
-            curl -f http://localhost:8080/health && echo "✅ Proxy healthy" || echo "⚠️ Proxy health check failed"
 
   deploy-dashboard:
     name: Deploy Dashboard to Vercel
