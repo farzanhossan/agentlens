@@ -157,6 +157,15 @@ function IOTab({ span }: { span: SpanNode }): React.JSX.Element {
         )}
       </div>
 
+      {span.errorMessage && (
+        <div>
+          <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Error</h3>
+          <div className="text-xs text-red-300 bg-red-950 border border-red-900 rounded-lg p-3 whitespace-pre-wrap">
+            {span.errorMessage}
+          </div>
+        </div>
+      )}
+
       <div>
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Output</h3>
         {span.output ? (

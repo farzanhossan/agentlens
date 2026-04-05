@@ -165,6 +165,7 @@ function mapSpanNode(node: ApiSpanNode): SpanNode {
     status: node.status as SpanNode['status'],
     startedAt: node.startedAt,
     endedAt: node.endedAt ?? null,
+    errorMessage: node.errorMessage ?? null,
     metadata: node.metadata,
     input: node.input ?? null,
     output: node.output ?? null,

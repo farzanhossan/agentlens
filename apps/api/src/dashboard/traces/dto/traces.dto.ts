@@ -199,6 +199,12 @@ export class SpanNodeDto {
   @ApiPropertyOptional({ type: Object })
   metadata!: Record<string, unknown>;
 
+  @ApiPropertyOptional({ description: 'LLM prompt text' })
+  input?: string;
+
+  @ApiPropertyOptional({ description: 'LLM completion text' })
+  output?: string;
+
   @ApiProperty({ type: () => [SpanNodeDto] })
   children: SpanNodeDto[] = [];
 
@@ -223,6 +229,8 @@ export class SpanNodeDto {
       : entity.endedAt !== undefined ? String(entity.endedAt) : undefined;
     dto.errorMessage = entity.errorMessage;
     dto.metadata = entity.metadata;
+    dto.input = entity.input;
+    dto.output = entity.output;
     dto.children = [];
     return dto;
   }

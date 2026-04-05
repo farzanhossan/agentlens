@@ -26,6 +26,7 @@ export interface SpanNode {
   status: 'success' | 'error' | 'timeout';
   startedAt: string;
   endedAt: string | null;
+  errorMessage: string | null;
   metadata: Record<string, unknown>;
   input: string | null;
   output: string | null;
