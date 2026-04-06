@@ -8,6 +8,7 @@ import {
   type ProjectResponse,
   type ProjectWithKey,
 } from '../lib/api';
+import { IntegrationGuide } from '../components/IntegrationGuide';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -135,17 +136,20 @@ function NewKeyBanner({ apiKey, onDismiss }: { apiKey: string; onDismiss: () => 
 function ProjectRow({
   project,
   isActive,
+  showGuide: showGuideInitial,
   onSwitch,
   onRotate,
   onDelete,
 }: {
   project: ProjectResponse;
   isActive: boolean;
+  showGuide?: boolean;
   onSwitch: () => void;
   onRotate: () => void;
   onDelete: () => void;
 }): React.JSX.Element {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(showGuideInitial ?? false);
 
   return (
     <div className={`bg-gray-900 border rounded-xl p-5 transition-colors ${
@@ -168,6 +172,14 @@ function ProjectRow({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => setGuideOpen(!guideOpen)}
+            className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+              guideOpen
+                ? 'bg-brand-600/20 text-brand-400 border border-brand-500/30'
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+            }`}>
+            {guideOpen ? 'Hide Guide' : 'Setup Guide'}
+          </button>
           {!isActive && (
             <button onClick={onSwitch}
               className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md transition-colors">
@@ -198,6 +210,8 @@ function ProjectRow({
           )}
         </div>
       </div>
+
+      {guideOpen && <IntegrationGuide projectId={project.id} />}
     </div>
   );
 }
@@ -208,6 +222,7 @@ export function ProjectsPage(): React.JSX.Element {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [newProjectId, setNewProjectId] = useState<string | null>(null);
   const [activeProjectId, setActiveProjectId] = useState(
     () => localStorage.getItem('agentlens_project_id') ?? '',
   );
@@ -247,6 +262,7 @@ export function ProjectsPage(): React.JSX.Element {
     localStorage.setItem('agentlens_project_id', p.id);
     setActiveProjectId(p.id);
     setNewKey(p.apiKey);
+    setNewProjectId(p.id);
     setShowCreate(false);
   }
 
@@ -296,6 +312,7 @@ export function ProjectsPage(): React.JSX.Element {
             key={p.id}
             project={p}
             isActive={p.id === activeProjectId}
+            showGuide={p.id === newProjectId}
             onSwitch={() => switchProject(p.id)}
             onRotate={() => rotateMutation.mutate(p.id)}
             onDelete={() => deleteMutation.mutate(p.id)}
