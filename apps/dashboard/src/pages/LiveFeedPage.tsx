@@ -4,8 +4,14 @@ import { io, type Socket } from 'socket.io-client';
 import type { LiveFeedEntry } from '../lib/types';
 import { timeAgo } from '../lib/timeago';
 
-const WS_URL = (import.meta.env['VITE_WS_URL'] as string | undefined) ?? '';
+const WS_URL = (import.meta.env['VITE_WS_URL'] as string | undefined) ??
+  (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
 const MAX_ENTRIES = 200;
+
+function getProjectId(): string {
+  return localStorage.getItem('agentlens_project_id') ??
+    (import.meta.env['VITE_PROJECT_ID'] as string | undefined) ?? '';
+}
 
 const selectClass =
   'bg-gray-800 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-500';
@@ -94,7 +100,7 @@ export function LiveFeedPage(): React.JSX.Element {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      socket.emit('subscribe-live-feed');
+      socket.emit('subscribe-live-feed', { projectId: getProjectId() });
     });
 
     socket.on('span-completed', (entry: LiveFeedEntry) => {

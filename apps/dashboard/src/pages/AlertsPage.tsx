@@ -34,12 +34,14 @@ const channelIconColors: Record<AlertChannel, string> = {
 function AlertCard({
   alert,
   onToggle,
+  onEdit,
   onDelete,
   isTogglingId,
   isDeletingId,
 }: {
   alert: AlertResponse;
   onToggle: (id: string, current: boolean) => void;
+  onEdit: (alert: AlertResponse) => void;
   onDelete: (id: string) => void;
   isTogglingId: string | null;
   isDeletingId: string | null;
@@ -88,6 +90,17 @@ function AlertCard({
           />
         </button>
 
+        {/* Edit */}
+        <button
+          onClick={() => onEdit(alert)}
+          aria-label="Edit alert"
+          className="text-gray-600 hover:text-brand-400 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </button>
+
         {/* Delete */}
         <button
           onClick={() => onDelete(alert.id)}
@@ -107,6 +120,7 @@ function AlertCard({
 export function AlertsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<AlertResponse | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -120,6 +134,15 @@ export function AlertsPage(): React.JSX.Element {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
       setShowForm(false);
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: CreateAlertPayload }) =>
+      updateAlert(id, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      setEditingAlert(null);
     },
   });
 
@@ -196,6 +219,7 @@ export function AlertsPage(): React.JSX.Element {
               key={alert.id}
               alert={alert}
               onToggle={handleToggle}
+              onEdit={(a) => setEditingAlert(a)}
               onDelete={handleDelete}
               isTogglingId={togglingId}
               isDeletingId={deletingId}
@@ -210,6 +234,18 @@ export function AlertsPage(): React.JSX.Element {
           onSubmit={(data) => createMutation.mutate(data)}
           onClose={() => setShowForm(false)}
           isPending={createMutation.isPending}
+        />
+      )}
+
+      {/* Edit alert form modal */}
+      {editingAlert && (
+        <AlertForm
+          initial={editingAlert}
+          onSubmit={(data) =>
+            editMutation.mutate({ id: editingAlert.id, payload: data })
+          }
+          onClose={() => setEditingAlert(null)}
+          isPending={editMutation.isPending}
         />
       )}
     </div>

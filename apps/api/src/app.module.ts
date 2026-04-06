@@ -8,7 +8,6 @@ import { DashboardModule } from './dashboard/dashboard.module.js';
 import { IngestModule } from './ingest/ingest.module.js';
 import { SpanProcessorModule } from './span-processor/span-processor.module.js';
 import { SpansModule } from './spans/spans.module.js';
-import { AlertsModule } from './alerts/alerts.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { WaitlistModule } from './waitlist/waitlist.module.js';
 
@@ -38,7 +37,6 @@ import { WaitlistModule } from './waitlist/waitlist.module.js';
     SpanProcessorModule,
     DashboardModule,
     SpansModule,
-    AlertsModule,
     ProjectsModule,
     AlertEngineModule,
     WaitlistModule,

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import type { SpanNode } from '../lib/types';
 
-const WS_URL = (import.meta.env['VITE_WS_URL'] as string | undefined) ?? '';
+const WS_URL = (import.meta.env['VITE_WS_URL'] as string | undefined) ??
+  (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
 
 export function useTraceSocket(traceId: string, enabled: boolean): { liveSpans: SpanNode[] } {
   const [liveSpans, setLiveSpans] = useState<SpanNode[]>([]);

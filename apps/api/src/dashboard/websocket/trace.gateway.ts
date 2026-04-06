@@ -8,9 +8,16 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { JwtService } from '@nestjs/jwt';
 import Redis from 'ioredis';
 import { Server, Socket } from 'socket.io';
 import type { ProcessedSpan } from '../../span-processor/span-processor.types.js';
+
+interface SocketData {
+  userId: string;
+  orgId: string;
+  email: string;
+}
 
 @WebSocketGateway({ namespace: '/ws/traces', cors: { origin: '*' } })
 export class TraceGateway
@@ -23,7 +30,10 @@ export class TraceGateway
 
   private subscriber!: Redis;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   onModuleInit(): void {
     const redisUrl = this.configService.getOrThrow<string>('REDIS_URL');
@@ -59,8 +69,10 @@ export class TraceGateway
         if (channelType === 'spans') {
           this.server.to(`trace:${traceId}`).emit('span-added', span);
         } else if (channelType === 'spans-completed') {
-          // Broadcast to all connected clients in the live-feed room
-          this.server.to('live-feed').emit('span-completed', span);
+          // Emit to the project-specific live-feed room only
+          this.server
+            .to(`live-feed:${span.projectId}`)
+            .emit('span-completed', span);
         }
       } catch (err) {
         this.logger.warn(`Failed to parse Redis message on channel ${channel}: ${String(err)}`);
@@ -73,7 +85,26 @@ export class TraceGateway
   }
 
   handleConnection(client: Socket): void {
-    this.logger.debug(`Client connected: ${client.id}`);
+    const token = (client.handshake.auth as { token?: string })?.token;
+    if (!token) {
+      this.logger.warn(`Client ${client.id} rejected: no auth token`);
+      client.disconnect(true);
+      return;
+    }
+
+    try {
+      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      const payload = this.jwtService.verify<SocketData>(token, { secret });
+      (client.data as SocketData) = {
+        userId: payload.userId,
+        orgId: payload.orgId,
+        email: payload.email,
+      };
+      this.logger.debug(`Client connected: ${client.id} (user=${payload.userId})`);
+    } catch {
+      this.logger.warn(`Client ${client.id} rejected: invalid token`);
+      client.disconnect(true);
+    }
   }
 
   handleDisconnect(client: Socket): void {
@@ -101,15 +132,23 @@ export class TraceGateway
   }
 
   @SubscribeMessage('subscribe-live-feed')
-  async handleSubscribeLiveFeed(client: Socket): Promise<void> {
-    await client.join('live-feed');
-    this.logger.debug(`Client ${client.id} joined live-feed room`);
+  async handleSubscribeLiveFeed(
+    client: Socket,
+    payload: { projectId: string },
+  ): Promise<void> {
+    const room = `live-feed:${payload.projectId}`;
+    await client.join(room);
+    this.logger.debug(`Client ${client.id} joined ${room}`);
   }
 
   @SubscribeMessage('unsubscribe-live-feed')
-  async handleUnsubscribeLiveFeed(client: Socket): Promise<void> {
-    await client.leave('live-feed');
-    this.logger.debug(`Client ${client.id} left live-feed room`);
+  async handleUnsubscribeLiveFeed(
+    client: Socket,
+    payload: { projectId: string },
+  ): Promise<void> {
+    const room = `live-feed:${payload.projectId}`;
+    await client.leave(room);
+    this.logger.debug(`Client ${client.id} left ${room}`);
   }
 
   /**
