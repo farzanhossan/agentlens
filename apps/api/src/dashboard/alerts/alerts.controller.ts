@@ -8,12 +8,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -78,5 +80,38 @@ export class AlertsController {
     @Param('alertId') alertId: string,
   ): Promise<void> {
     return this.alertsService.remove(projectId, alertId);
+  }
+
+  @Get('history')
+  @ApiOperation({ summary: 'List alert firing history for a project' })
+  @ApiParam({ name: 'projectId', description: 'Project UUID' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Alert firing history' })
+  async history(
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<unknown[]> {
+    return this.alertsService.getHistory(
+      projectId,
+      limit ? parseInt(limit, 10) : 50,
+      offset ? parseInt(offset, 10) : 0,
+    );
+  }
+
+  @Post(':alertId/test')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send a test notification for an alert' })
+  @ApiParam({ name: 'projectId', description: 'Project UUID' })
+  @ApiParam({ name: 'alertId', description: 'Alert rule UUID' })
+  @ApiResponse({ status: 200, description: 'Test notification sent' })
+  @ApiResponse({ status: 404, description: 'Alert not found' })
+  async testNotification(
+    @Param('projectId') projectId: string,
+    @Param('alertId') alertId: string,
+  ): Promise<{ sent: boolean }> {
+    await this.alertsService.sendTestNotification(projectId, alertId);
+    return { sent: true };
   }
 }

@@ -9,6 +9,8 @@ import { TracesPage } from './pages/TracesPage';
 import { TraceDetailPage } from './pages/TraceDetailPage';
 import { CostPage } from './pages/CostPage';
 import { AlertsPage } from './pages/AlertsPage';
+import { AlertHistoryPage } from './pages/AlertHistoryPage';
+import { TraceComparePage } from './pages/TraceComparePage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { LiveFeedPage } from './pages/LiveFeedPage';
@@ -41,8 +43,10 @@ export function App(): React.JSX.Element {
               <Route path="live" element={<LiveFeedPage />} />
               <Route path="traces" element={<TracesPage />} />
               <Route path="traces/:traceId" element={<TraceDetailPage />} />
+              <Route path="traces/compare" element={<TraceComparePage />} />
               <Route path="cost" element={<CostPage />} />
               <Route path="alerts" element={<AlertsPage />} />
+              <Route path="alerts/history" element={<AlertHistoryPage />} />
               <Route path="projects" element={<ProjectsPage />} />
             </Route>
           </Route>

@@ -192,6 +192,25 @@ export function OverviewPage(): React.JSX.Element {
         </div>
       </div>
 
+      {/* Quick links */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { to: '/live', label: 'Live Feed', icon: '/' },
+          { to: '/traces/compare', label: 'Compare Traces' },
+          { to: '/cost', label: 'Cost Analysis' },
+          { to: '/alerts', label: 'Manage Alerts' },
+          { to: '/alerts/history', label: 'Alert History' },
+        ].map((link) => (
+          <button
+            key={link.to}
+            onClick={() => void navigate(link.to)}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-100 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+          >
+            {link.label} →
+          </button>
+        ))}
+      </div>
+
       {/* Bottom row */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Model usage */}

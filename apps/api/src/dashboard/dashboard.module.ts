@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AlertEntity, SpanEntity, TraceEntity } from '../database/entities/index.js';
+import { AlertEntity, AlertFiringEntity, ProjectEntity, SpanEntity, TraceEntity } from '../database/entities/index.js';
 import { ElasticsearchService } from '../span-processor/elasticsearch/elasticsearch.service.js';
 import { AlertsController } from './alerts/alerts.controller.js';
 import { AlertsService } from './alerts/alerts.service.js';
@@ -19,7 +20,8 @@ import { TraceGateway } from './websocket/trace.gateway.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TraceEntity, SpanEntity, AlertEntity]),
+    TypeOrmModule.forFeature([TraceEntity, SpanEntity, AlertEntity, AlertFiringEntity, ProjectEntity]),
+    BullModule.registerQueue({ name: 'notification-dispatch' }),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

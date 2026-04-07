@@ -60,6 +60,8 @@ export interface CostSummary {
   totalInputTokens: number;
   totalOutputTokens: number;
   prevPeriodCostUsd: number;
+  monthCostUsd?: number;
+  monthlyBudgetUsd?: number;
 }
 
 export interface CostTimeseries {
@@ -105,6 +107,20 @@ export interface CreateAlertPayload {
   threshold: number;
   channel: AlertChannel;
   channelConfig: Record<string, unknown>;
+}
+
+export interface AlertFiring {
+  id: string;
+  alertId: string;
+  projectId: string;
+  alertName: string;
+  alertType: AlertType;
+  currentValue: string;
+  threshold: string;
+  channel: AlertChannel;
+  deliveryStatus: 'success' | 'failed' | 'pending';
+  errorMessage?: string;
+  firedAt: string;
 }
 
 // Overview

@@ -74,6 +74,12 @@ export class CostSummaryDto {
 
   @ApiProperty()
   dateTo!: string;
+
+  @ApiProperty({ description: 'Monthly cost for the current calendar month', nullable: true })
+  monthCostUsd?: number;
+
+  @ApiProperty({ description: 'Monthly budget in USD (null if not set)', nullable: true })
+  monthlyBudgetUsd?: number;
 }
 
 export class CostTimeseriesDto {

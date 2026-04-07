@@ -10,6 +10,7 @@ import type {
   CostByModel,
   CostByAgent,
   AlertResponse,
+  AlertFiring,
   CreateAlertPayload,
   OverviewData,
 } from './types';
@@ -372,4 +373,15 @@ export async function updateAlert(id: string, payload: Partial<CreateAlertPayloa
 
 export async function deleteAlert(id: string): Promise<void> {
   await api.delete(`/projects/${getProjectId()}/alerts/${id}`);
+}
+
+export async function fetchAlertHistory(limit = 50, offset = 0): Promise<AlertFiring[]> {
+  const res = await api.get<AlertFiring[]>(`/projects/${getProjectId()}/alerts/history`, {
+    params: { limit, offset },
+  });
+  return res.data;
+}
+
+export async function testAlertNotification(alertId: string): Promise<void> {
+  await api.post(`/projects/${getProjectId()}/alerts/${alertId}/test`);
 }

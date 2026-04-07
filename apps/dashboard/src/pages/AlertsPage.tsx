@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchAlerts, createAlert, updateAlert, deleteAlert } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { fetchAlerts, createAlert, updateAlert, deleteAlert, testAlertNotification } from '../lib/api';
 import type { AlertResponse, AlertType, AlertChannel, CreateAlertPayload } from '../lib/types';
 import { AlertForm } from '../components/AlertForm';
 import { SkeletonCard } from '../components/Skeleton';
@@ -35,15 +36,19 @@ function AlertCard({
   alert,
   onToggle,
   onEdit,
+  onTest,
   onDelete,
   isTogglingId,
+  isTestingId,
   isDeletingId,
 }: {
   alert: AlertResponse;
   onToggle: (id: string, current: boolean) => void;
   onEdit: (alert: AlertResponse) => void;
+  onTest: (id: string) => void;
   onDelete: (id: string) => void;
   isTogglingId: string | null;
+  isTestingId: string | null;
   isDeletingId: string | null;
 }): React.JSX.Element {
   return (
@@ -101,6 +106,19 @@ function AlertCard({
           </svg>
         </button>
 
+        {/* Test */}
+        <button
+          onClick={() => onTest(alert.id)}
+          disabled={isTestingId === alert.id}
+          aria-label="Send test notification"
+          className="text-gray-600 hover:text-yellow-400 transition-colors disabled:opacity-50"
+          title="Send test notification"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+
         {/* Delete */}
         <button
           onClick={() => onDelete(alert.id)}
@@ -119,9 +137,11 @@ function AlertCard({
 
 export function AlertsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingAlert, setEditingAlert] = useState<AlertResponse | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const alertsQuery = useQuery({
@@ -144,6 +164,12 @@ export function AlertsPage(): React.JSX.Element {
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
       setEditingAlert(null);
     },
+  });
+
+  const testMutation = useMutation({
+    mutationFn: (id: string) => testAlertNotification(id),
+    onMutate: (id) => setTestingId(id),
+    onSettled: () => setTestingId(null),
   });
 
   const toggleMutation = useMutation({
@@ -180,12 +206,20 @@ export function AlertsPage(): React.JSX.Element {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-gray-100">Alerts</h1>
-        <button
-          className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          onClick={() => setShowForm(true)}
-        >
-          + Create Alert
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            onClick={() => navigate('/alerts/history')}
+          >
+            View History
+          </button>
+          <button
+            className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            onClick={() => setShowForm(true)}
+          >
+            + Create Alert
+          </button>
+        </div>
       </div>
 
       {/* Error state for alerts query */}
@@ -220,8 +254,10 @@ export function AlertsPage(): React.JSX.Element {
               alert={alert}
               onToggle={handleToggle}
               onEdit={(a) => setEditingAlert(a)}
+              onTest={(id) => testMutation.mutate(id)}
               onDelete={handleDelete}
               isTogglingId={togglingId}
+              isTestingId={testingId}
               isDeletingId={deletingId}
             />
           ))}

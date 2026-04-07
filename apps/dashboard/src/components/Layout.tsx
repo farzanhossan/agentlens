@@ -81,6 +81,8 @@ const pageTitles: Record<string, string> = {
   '/traces': 'Traces',
   '/live': 'Live Feed',
   '/cost': 'Cost',
+  '/traces/compare': 'Compare Traces',
+  '/alerts/history': 'Alert History',
   '/alerts': 'Alerts',
   '/projects': 'Projects',
 };

@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
-import { AlertEntity, AlertType, ProjectEntity } from '../database/entities/index.js';
+import { AlertEntity, AlertType, AlertFiringEntity, DeliveryStatus, ProjectEntity } from '../database/entities/index.js';
 import type { NotificationJobData } from './notification.processor.js';
 import { AlertStateService } from './alert-state.service.js';
 
@@ -26,6 +26,8 @@ export class AlertEvaluatorService {
     private readonly alertRepo: Repository<AlertEntity>,
     @InjectRepository(ProjectEntity)
     private readonly projectRepo: Repository<ProjectEntity>,
+    @InjectRepository(AlertFiringEntity)
+    private readonly firingRepo: Repository<AlertFiringEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly alertState: AlertStateService,
@@ -89,6 +91,21 @@ export class AlertEvaluatorService {
             const projectName = projectNames.get(alert.projectId) ?? alert.projectId;
             await this.dispatchNotification(alert, projectName, currentValue, threshold, dashboardBase);
             await this.alertState.setLastFired(alert.id);
+
+            // Persist alert firing record
+            await this.firingRepo.save(
+              this.firingRepo.create({
+                alertId: alert.id,
+                projectId: alert.projectId,
+                alertName: alert.name,
+                alertType: alert.type,
+                currentValue: String(currentValue),
+                threshold: alert.threshold,
+                channel: alert.channel,
+                deliveryStatus: DeliveryStatus.PENDING,
+              }),
+            );
+
             this.logger.log({
               event: 'alert.fired',
               alertId: alert.id,

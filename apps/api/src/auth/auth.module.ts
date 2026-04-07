@@ -7,6 +7,7 @@ import { UserEntity } from '../database/entities/user.entity.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { GlobalJwtGuard } from './guards/global-jwt.guard.js';
+import { RolesGuard } from './guards/roles.guard.js';
 import { OrgController } from './org.controller.js';
 import { OrgService } from './org.service.js';
 import { ProjectsController } from './projects.controller.js';
@@ -24,11 +25,12 @@ import { ProjectsAuthService } from './projects.service.js';
     OrgService,
     ProjectsAuthService,
     GlobalJwtGuard,
+    RolesGuard,
     {
       provide: APP_GUARD,
       useExisting: GlobalJwtGuard,
     },
   ],
-  exports: [GlobalJwtGuard],
+  exports: [GlobalJwtGuard, RolesGuard],
 })
 export class AuthModule {}

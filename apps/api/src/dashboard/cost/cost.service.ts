@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { ProjectEntity } from '../../database/entities/index.js';
 import {
   CostByAgentDto,
   CostByDateDto,
@@ -14,6 +15,8 @@ export class CostService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @InjectRepository(ProjectEntity)
+    private readonly projectRepo: Repository<ProjectEntity>,
   ) {}
 
   async getSummary(
@@ -92,6 +95,21 @@ export class CostService {
     dto.byAgent = byAgent;
     dto.dateFrom = dateFrom;
     dto.dateTo = dateTo;
+
+    // 7. Monthly cost + budget
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthCostResult = await this.dataSource.query<Array<{ total_cost: string }>>(
+      `SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at >= $2`,
+      [projectId, monthStart.toISOString()],
+    );
+    dto.monthCostUsd = parseFloat((monthCostResult[0] ?? { total_cost: '0' }).total_cost);
+
+    const project = await this.projectRepo.findOne({ where: { id: projectId } });
+    dto.monthlyBudgetUsd = project?.monthlyBudgetUsd
+      ? parseFloat(project.monthlyBudgetUsd)
+      : undefined;
 
     return dto;
   }

@@ -26,7 +26,7 @@ describe('CostService — enhanced summary', () => {
     ];
 
     const ds = makeDataSource(results);
-    const service = new CostService(ds);
+    const service = new CostService(ds, null as never);
     const result = await service.getSummary('proj-1', '2026-03-25', '2026-04-01');
 
     expect(result.totalInputTokens).toBe(500000);

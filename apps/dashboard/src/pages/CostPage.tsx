@@ -12,6 +12,7 @@ import {
 import { fetchCostSummary, fetchCostTimeseries, fetchCostByModel, fetchCostByAgent } from '../lib/api';
 import { SkeletonCard, SkeletonText } from '../components/Skeleton';
 import { ModelEfficiencyTable } from '../components/ModelEfficiencyTable';
+import { downloadCsv } from '../lib/export-csv';
 
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0] ?? '';
@@ -154,6 +155,27 @@ export function CostPage(): React.JSX.Element {
           onChange={(e) => { setTo(e.target.value); setActivePreset(null); }}
           aria-label="To date"
         />
+        <div className="flex-1" />
+        <button
+          className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-md text-sm transition-colors disabled:opacity-50"
+          disabled={!byModelQuery.data?.length}
+          onClick={() => {
+            const models = byModelQuery.data ?? [];
+            downloadCsv(
+              models.map((m) => ({
+                model: m.model,
+                calls: m.callCount,
+                avgTokens: m.avgTokensPerCall,
+                avgCost: m.avgCostPerCall,
+                avgLatencyMs: m.avgLatencyMs,
+                totalCost: m.costUsd,
+              })),
+              `agentlens-cost-${from}-${to}.csv`,
+            );
+          }}
+        >
+          Export CSV
+        </button>
       </div>
 
       {/* Summary cards */}
@@ -201,6 +223,38 @@ export function CostPage(): React.JSX.Element {
           ))
         )}
       </div>
+
+      {/* Monthly budget progress */}
+      {summary?.monthlyBudgetUsd != null && summary.monthlyBudgetUsd > 0 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+              Monthly Budget
+            </h2>
+            <span className="text-sm text-gray-300">
+              ${(summary.monthCostUsd ?? 0).toFixed(2)} / ${summary.monthlyBudgetUsd.toFixed(2)}
+            </span>
+          </div>
+          {(() => {
+            const pct = Math.min(((summary.monthCostUsd ?? 0) / summary.monthlyBudgetUsd!) * 100, 100);
+            const barColor = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-500' : 'bg-brand-600';
+            return (
+              <div className="relative">
+                <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${barColor} rounded-full transition-all`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>{pct.toFixed(0)}% used</span>
+                  <span>${((summary.monthlyBudgetUsd ?? 0) - (summary.monthCostUsd ?? 0)).toFixed(2)} remaining</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Daily Cost Trend bar chart */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">

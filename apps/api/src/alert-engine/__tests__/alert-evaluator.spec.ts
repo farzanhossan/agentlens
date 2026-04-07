@@ -26,6 +26,7 @@ function makeDataSourceMock(rows: Array<{ project_id: string; value: string }>):
 const service = new AlertEvaluatorService(
   null as never, // alertRepo
   null as never, // projectRepo
+  null as never, // firingRepo
   null as never, // dataSource (not used in direct calls)
   null as never, // alertState
   null as never, // notificationQueue

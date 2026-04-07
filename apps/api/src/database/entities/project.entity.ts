@@ -39,6 +39,10 @@ export class ProjectEntity {
   @Column({ type: 'int', default: 30, name: 'retention_days' })
   retentionDays!: number;
 
+  /** Monthly cost budget in USD. Null means no budget set. */
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'monthly_budget_usd' })
+  monthlyBudgetUsd?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
