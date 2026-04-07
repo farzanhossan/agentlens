@@ -96,20 +96,29 @@ export class CostService {
     dto.dateFrom = dateFrom;
     dto.dateTo = dateTo;
 
-    // 7. Monthly cost + budget
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
-    const monthCostResult = await this.dataSource.query<Array<{ total_cost: string }>>(
-      `SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at >= $2`,
-      [projectId, monthStart.toISOString()],
-    );
-    dto.monthCostUsd = parseFloat((monthCostResult[0] ?? { total_cost: '0' }).total_cost);
+    // 7. Monthly cost + budget (gracefully degrade if migration hasn't run yet)
+    try {
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthCostResult = await this.dataSource.query<Array<{ total_cost: string }>>(
+        `SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at >= $2`,
+        [projectId, monthStart.toISOString()],
+      );
+      dto.monthCostUsd = parseFloat((monthCostResult[0] ?? { total_cost: '0' }).total_cost);
 
-    const project = await this.projectRepo.findOne({ where: { id: projectId } });
-    dto.monthlyBudgetUsd = project?.monthlyBudgetUsd
-      ? parseFloat(project.monthlyBudgetUsd)
-      : undefined;
+      const project = await this.projectRepo.findOne({
+        where: { id: projectId },
+        select: ['id', 'monthlyBudgetUsd'],
+      });
+      dto.monthlyBudgetUsd = project?.monthlyBudgetUsd
+        ? parseFloat(project.monthlyBudgetUsd)
+        : undefined;
+    } catch {
+      // monthly_budget_usd column may not exist yet — skip budget data
+      dto.monthCostUsd = undefined;
+      dto.monthlyBudgetUsd = undefined;
+    }
 
     return dto;
   }

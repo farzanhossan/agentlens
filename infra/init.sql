@@ -32,6 +32,10 @@ DO $$ BEGIN
     CREATE TYPE alert_channel AS ENUM ('slack', 'email', 'webhook');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+DO $$ BEGIN
+    CREATE TYPE delivery_status AS ENUM ('success', 'failed', 'pending');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- ──────────────────────────────────────────────────────────
 -- organizations
 -- ──────────────────────────────────────────────────────────
@@ -50,7 +54,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 -- users
 -- ──────────────────────────────────────────────────────────
 DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member');
+    CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member', 'viewer');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -75,6 +79,7 @@ CREATE TABLE IF NOT EXISTS projects (
     api_key          VARCHAR(64)  NOT NULL,
     description      TEXT,
     retention_days   INT          NOT NULL DEFAULT 30,
+    monthly_budget_usd DECIMAL(10, 2),
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_projects_api_key UNIQUE (api_key),
@@ -148,6 +153,23 @@ CREATE TABLE IF NOT EXISTS alerts (
 );
 
 -- ──────────────────────────────────────────────────────────
+-- alert_firings (history of fired alerts)
+-- ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS alert_firings (
+    id                UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
+    alert_id          UUID              NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
+    project_id        UUID              NOT NULL,
+    alert_name        VARCHAR(256)      NOT NULL,
+    alert_type        alert_type        NOT NULL,
+    current_value     DECIMAL(10, 4)    NOT NULL,
+    threshold         DECIMAL(10, 4)    NOT NULL,
+    channel           alert_channel     NOT NULL,
+    delivery_status   delivery_status   NOT NULL DEFAULT 'pending',
+    error_message     TEXT,
+    fired_at          TIMESTAMPTZ       NOT NULL DEFAULT NOW()
+);
+
+-- ──────────────────────────────────────────────────────────
 -- Indexes
 -- ──────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_traces_project_created
@@ -176,6 +198,12 @@ CREATE INDEX IF NOT EXISTS idx_projects_org
 
 CREATE INDEX IF NOT EXISTS idx_alerts_project_active
     ON alerts (project_id, is_active);
+
+CREATE INDEX IF NOT EXISTS idx_alert_firings_project
+    ON alert_firings (project_id);
+
+CREATE INDEX IF NOT EXISTS idx_alert_firings_alert
+    ON alert_firings (alert_id);
 
 CREATE INDEX IF NOT EXISTS idx_traces_status
     ON traces (project_id, status)

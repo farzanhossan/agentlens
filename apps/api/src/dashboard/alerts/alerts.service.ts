@@ -86,12 +86,17 @@ export class AlertsService {
     limit: number,
     offset: number,
   ): Promise<AlertFiringEntity[]> {
-    return this.firingRepo.find({
-      where: { projectId },
-      order: { firedAt: 'DESC' },
-      take: Math.min(limit, 100),
-      skip: offset,
-    });
+    try {
+      return await this.firingRepo.find({
+        where: { projectId },
+        order: { firedAt: 'DESC' },
+        take: Math.min(limit, 100),
+        skip: offset,
+      });
+    } catch {
+      // alert_firings table may not exist yet if migration hasn't run
+      return [];
+    }
   }
 
   async sendTestNotification(projectId: string, alertId: string): Promise<void> {
