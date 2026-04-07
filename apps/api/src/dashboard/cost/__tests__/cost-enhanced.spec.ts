@@ -23,10 +23,13 @@ describe('CostService — enhanced summary', () => {
       [{ agent_name: 'proxy', cost: '7.00' }],
       // 6. Previous period cost
       [{ total_cost: '8.50' }],
+      // 7. Monthly cost
+      [{ total_cost: '12.00' }],
     ];
 
     const ds = makeDataSource(results);
-    const service = new CostService(ds, null as never);
+    const projectRepo = { findOne: jest.fn().mockResolvedValue(null) } as never;
+    const service = new CostService(ds, projectRepo);
     const result = await service.getSummary('proj-1', '2026-03-25', '2026-04-01');
 
     expect(result.totalInputTokens).toBe(500000);

@@ -29,10 +29,10 @@ describe('SpanProcessorService.calculateCost', () => {
       outputTokens: 500,
     });
     const result = service.calculateCost(span);
-    // input: 1000/1000 * 0.005 = 0.005
-    // output: 500/1000 * 0.015 = 0.0075
-    // total: 0.0125
-    expect(result.costUsd).toBeCloseTo(0.0125, 6);
+    // input: 1000/1000 * 0.0025 = 0.0025
+    // output: 500/1000 * 0.01 = 0.005
+    // total: 0.0075
+    expect(result.costUsd).toBeCloseTo(0.0075, 6);
   });
 
   it('computes cost for gpt-4o-mini', () => {

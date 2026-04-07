@@ -18,7 +18,7 @@ function StatCard({
   right: string | number | null;
   format?: (v: string | number | null) => string;
 }): React.JSX.Element {
-  const fmt = format ?? ((v) => (v != null ? String(v) : '—'));
+  const fmt = format ?? ((v: string | number | null): string => (v != null ? String(v) : '—'));
   const l = fmt(left);
   const r = fmt(right);
   const different = l !== r;

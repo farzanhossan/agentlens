@@ -235,8 +235,8 @@ export function CostPage(): React.JSX.Element {
               ${(summary.monthCostUsd ?? 0).toFixed(2)} / ${summary.monthlyBudgetUsd.toFixed(2)}
             </span>
           </div>
-          {(() => {
-            const pct = Math.min(((summary.monthCostUsd ?? 0) / summary.monthlyBudgetUsd!) * 100, 100);
+          {((): React.JSX.Element => {
+            const pct = Math.min(((summary.monthCostUsd ?? 0) / summary.monthlyBudgetUsd) * 100, 100);
             const barColor = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-500' : 'bg-brand-600';
             return (
               <div className="relative">
