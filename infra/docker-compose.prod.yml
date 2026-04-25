@@ -1,5 +1,19 @@
 version: "3.9"
 
+# ============================================================================
+# AgentLens — Self-Hosted Production Stack
+# ============================================================================
+# Usage:
+#   1. Copy .env.prod.example to .env  (in this directory)
+#   2. Fill in secrets (HMAC_SECRET, JWT_SECRET, POSTGRES_PASSWORD, REDIS_PASSWORD)
+#   3. docker compose -f docker-compose.prod.yml up -d --build
+#
+# Services exposed:
+#   - API:       http://localhost:3001
+#   - Dashboard: http://localhost:3000
+#   - Proxy:     http://localhost:8080
+# ============================================================================
+
 services:
   api:
     build:
@@ -15,17 +29,57 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://agentlens:agentlens@postgres:5432/agentlens
-      REDIS_URL: redis://:agentlens@redis:6379
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-agentlens}:${POSTGRES_PASSWORD:-agentlens}@postgres:5432/${POSTGRES_DB:-agentlens}
+      DATABASE_SSL: "false"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-agentlens}
       ELASTICSEARCH_URL: http://elasticsearch:9200
-      JWT_SECRET: agentlens
-      HMAC_SECRET: agentlens
-      RESEND_API_KEY: re_skip
-      FRONTEND_URL: https://project-crqpe.vercel.app
-      CORS_ORIGIN: https://project-crqpe.vercel.app,http://localhost:5173
-      PORT: 3000
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: ""
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      HMAC_SECRET: ${HMAC_SECRET:?Set HMAC_SECRET in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
     ports:
-      - "4020:3000"
+      - "${API_PORT:-3001}:3000"
+    networks:
+      - agentlens-prod
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3001}
+    restart: always
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "${DASHBOARD_PORT:-3000}:80"
+    networks:
+      - agentlens-prod
+
+  proxy:
+    build:
+      context: ..
+      dockerfile: apps/proxy/Dockerfile
+    restart: always
+    environment:
+      AGENTLENS_INGEST_URL: http://api:3000/v1/spans
+      PORT: "8080"
+      LOG_LEVEL: info
+    ports:
+      - "${PROXY_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_started
     networks:
       - agentlens-prod
 
@@ -33,14 +87,14 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_DB: agentlens
-      POSTGRES_USER: agentlens
-      POSTGRES_PASSWORD: agentlens
+      POSTGRES_DB: ${POSTGRES_DB:-agentlens}
+      POSTGRES_USER: ${POSTGRES_USER:-agentlens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentlens}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U agentlens -d agentlens"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentlens} -d ${POSTGRES_DB:-agentlens}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -51,11 +105,11 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    command: redis-server --appendonly yes --maxmemory-policy noeviction --requirepass agentlens
+    command: redis-server --appendonly yes --maxmemory-policy noeviction --requirepass ${REDIS_PASSWORD:-agentlens}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "agentlens", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-agentlens}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -64,11 +118,12 @@ services:
       - agentlens-prod
 
   elasticsearch:
-    image: elasticsearch:8.13.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     restart: always
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
       - bootstrap.memory_lock=false
     ulimits:
@@ -90,23 +145,6 @@ services:
       timeout: 10s
       retries: 10
       start_period: 60s
-    networks:
-      - agentlens-prod
-
-  proxy:
-    build:
-      context: ..
-      dockerfile: apps/proxy/Dockerfile
-    restart: always
-    environment:
-      AGENTLENS_INGEST_URL: http://api:3000/v1/spans
-      PORT: "8080"
-      LOG_LEVEL: info
-    ports:
-      - "8090:8080"
-    depends_on:
-      api:
-        condition: service_started
     networks:
       - agentlens-prod
 

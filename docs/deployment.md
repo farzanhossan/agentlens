@@ -1,6 +1,79 @@
-# Production Deployment Guide
+# Deployment Guide
 
-This guide covers deploying AgentLens to production. The recommended setup uses:
+## Quick Self-Hosting (Docker Compose)
+
+The fastest way to self-host AgentLens — a single `docker compose` command runs the full stack (API, dashboard, proxy, PostgreSQL, Redis, Elasticsearch).
+
+### Prerequisites
+
+- Docker and Docker Compose v2+
+- At least 4 GB RAM (Elasticsearch needs ~1 GB)
+
+### Steps
+
+```bash
+git clone https://github.com/farzanhossan/agentlens
+cd agentlens/infra
+
+# 1. Create your .env from the template
+cp .env.prod.example .env
+
+# 2. Generate secrets and paste them into .env
+openssl rand -hex 32   # → JWT_SECRET
+openssl rand -hex 32   # → HMAC_SECRET
+
+# 3. Start everything
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Wait ~60 seconds for Elasticsearch to initialise, then open:
+
+| Service | URL |
+|---------|-----|
+| Dashboard | http://localhost:3000 |
+| API | http://localhost:3001 |
+| API Health | http://localhost:3001/health |
+| Proxy | http://localhost:8080 |
+
+### Customising ports
+
+Edit the `.env` file:
+
+```env
+API_PORT=3001
+DASHBOARD_PORT=3000
+PROXY_PORT=8080
+```
+
+### Using a custom domain
+
+Update these in `.env`:
+
+```env
+CORS_ORIGIN=https://app.yourdomain.com
+FRONTEND_URL=https://app.yourdomain.com
+VITE_API_URL=https://api.yourdomain.com
+VITE_WS_URL=https://api.yourdomain.com
+```
+
+Then rebuild the dashboard (Vite bakes env vars at build time):
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build dashboard
+```
+
+### Stopping
+
+```bash
+docker compose -f docker-compose.prod.yml down        # stop, keep data
+docker compose -f docker-compose.prod.yml down -v      # stop and delete volumes
+```
+
+---
+
+## Production Deployment (Advanced)
+
+For larger-scale or multi-service deployments, the recommended setup uses:
 
 - **DigitalOcean** — API, database, Redis, Elasticsearch
 - **Cloudflare Workers** — ingest edge worker
@@ -81,8 +154,10 @@ curl http://localhost:9200/_cluster/health?pretty
 pnpm install --frozen-lockfile
 pnpm turbo run build --filter=@farzanhossans/agentlens-api
 
-# Run migrations
-pnpm --filter @farzanhossans/agentlens-api run migration:run
+# The database schema is bootstrapped by infra/init.sql (loaded automatically
+# when PostgreSQL starts for the first time via docker-entrypoint-initdb.d).
+# If running PostgreSQL without Docker, apply the schema manually:
+#   psql $DATABASE_URL -f infra/init.sql
 
 # Start the API with PM2
 npm install -g pm2

@@ -112,22 +112,39 @@ Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 
 ## Self-Hosting
 
+### Production (Docker Compose — recommended)
+
+```bash
+git clone https://github.com/farzanhossan/agentlens
+cd agentlens/infra
+cp .env.prod.example .env
+# Generate secrets: openssl rand -hex 32  →  paste into JWT_SECRET and HMAC_SECRET
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+| Service | URL |
+|---------|-----|
+| Dashboard | http://localhost:3000 |
+| API | http://localhost:3001 |
+| Proxy | http://localhost:8080 |
+
+### Development
+
 ```bash
 git clone https://github.com/farzanhossan/agentlens
 cd agentlens
 cp apps/api/.env.example apps/api/.env
-# Fill in HMAC_SECRET, JWT_SECRET, and database credentials
-docker-compose -f infra/docker-compose.yml up -d
+# Fill in secrets, then:
+docker compose -f infra/docker-compose.yml up -d   # postgres, redis, elasticsearch
 pnpm install && pnpm dev
 ```
 
 | Service | URL |
 |---------|-----|
 | Dashboard | http://localhost:5173 |
-| API | http://localhost:3000 |
-| Swagger | http://localhost:3000/docs |
+| API | http://localhost:3001 |
 
-See [docs/deployment.md](./docs/deployment.md) for production deployment on DigitalOcean, Cloudflare Workers, and Vercel.
+See [docs/deployment.md](./docs/deployment.md) for advanced production deployment on DigitalOcean, Cloudflare Workers, and Vercel.
 
 ---
 
