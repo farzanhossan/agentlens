@@ -9,12 +9,11 @@
         |___/
 ```
 
-**AI Agent Observability Platform**
+**Open-source observability for AI agents**
+
+See every LLM call, what it cost, and why it failed — without changing your code.
 
 [![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens-core?color=6366f1&label=npm)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
-[![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens-core?label=%40agentlens%2Fcore)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
-[![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens-openai?label=%40agentlens%2Fopenai)](https://www.npmjs.com/package/@farzanhossans/agentlens-openai)
-[![npm downloads](https://img.shields.io/npm/dm/@farzanhossans/agentlens-core)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-22c55e.svg)](#)
 [![Tests](https://img.shields.io/badge/tests-96%2F96-22c55e.svg)](#)
@@ -22,73 +21,86 @@
 
 </div>
 
-AgentLens gives you full visibility into every LLM call your AI agent makes — traces, costs, failures, and session replay. In 3 lines of code.
+---
 
-<!-- Demo GIF here -->
-![AgentLens Demo](./docs/demo.gif)
+## Why AgentLens?
+
+You're building AI agents that make dozens of LLM calls per session. Something breaks in production. You have no idea which call failed, how much it cost, or what the model actually said.
+
+AgentLens fixes that. Point your LLM traffic at the proxy, and you get full visibility — traces, costs, errors, and session replay — **without touching your application code**.
 
 ---
 
-## Features
+## How It Works
 
-- 🔭 **Trace Viewer** — full input/output timeline across every span in your agent run
-- 💰 **Cost Analytics** — token usage broken down by agent, model, feature, and user
-- 🚨 **Failure Alerts** — Slack or email the moment an agent errors or times out
-- ⏪ **Session Replay** — step through any past run exactly as it happened
-- 🔒 **PII Scrubbing** — sensitive data auto-masked before it leaves your infrastructure (GDPR ready)
-- 🔌 **Framework Agnostic** — OpenAI, Anthropic, LangChain, LlamaIndex, or fully custom
+AgentLens sits between your app and the LLM provider. There are three ways to integrate, from zero effort to full control:
 
----
+### Option 1: Proxy (zero code changes)
 
-## Quick Start
-
-### TypeScript / Node.js
+Just change your base URL. That's it. No SDK, no imports, no wrappers.
 
 ```bash
-npm install @farzanhossans/agentlens-core @farzanhossans/agentlens-openai
+# Before — your app talks directly to OpenAI
+OPENAI_BASE_URL=https://api.openai.com
+
+# After — route through AgentLens proxy
+OPENAI_BASE_URL=http://localhost:8080/v1/p/{projectId}/openai
 ```
+
+Every request is forwarded to OpenAI (or Anthropic), and AgentLens automatically captures the trace, tokens, cost, latency, and full input/output — then shows it all in the dashboard.
+
+Works with **any language, any framework, any HTTP client**. If it can call an API, it works with AgentLens.
+
+**Supported providers:**
+
+| Provider | Proxy path |
+|----------|-----------|
+| OpenAI | `/v1/p/{projectId}/openai/v1/chat/completions` |
+| Anthropic | `/v1/p/{projectId}/anthropic/v1/messages` |
+| Any LLM API | `/v1/p/{projectId}/custom/...` + `X-AgentLens-Upstream` header |
+
+Streaming responses are fully supported — AgentLens buffers transparently without adding latency.
+
+### Option 2: SDK auto-instrumentation (one import)
+
+If you want richer metadata or custom span names, add the SDK. One import auto-patches your LLM client:
 
 ```typescript
 import { AgentLens } from '@farzanhossans/agentlens-core'
-import '@farzanhossans/agentlens-openai'
+import '@farzanhossans/agentlens-openai'   // auto-patches OpenAI — that's it
 
 AgentLens.init({ apiKey: 'proj_xxx', projectId: 'your-project-uuid' })
 
-// That's it. Every OpenAI call is now traced automatically.
+// Every OpenAI call is now traced automatically. No other changes needed.
 const response = await openai.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Summarise this ticket...' }],
 })
 ```
 
-### Python
-
-```bash
-pip install agentlens
-```
-
 ```python
+# Python — same idea
 from agentlens import AgentLens
-import agentlens.patchers.openai  # auto-patches the openai SDK
+import agentlens.patchers.openai
 
-AgentLens.init(api_key='proj_xxx', project='my-agent')
-
-# Every OpenAI call is now traced
-response = openai.chat.completions.create(
-    model='gpt-4o',
-    messages=[{'role': 'user', 'content': 'Summarise this ticket...'}],
-)
+AgentLens.init(api_key='proj_xxx', project_id='your-project-uuid')
+# All OpenAI calls are now traced
 ```
 
-### Manual tracing (fine-grained control)
+### Option 3: Manual tracing (full control)
+
+For complex agent flows where you want to name spans, add metadata, or create parent/child hierarchies:
 
 ```typescript
 const result = await AgentLens.trace('classify-intent', async (span) => {
   span.setInput(JSON.stringify({ userMessage }))
+  span.setMetadata('userId', user.id)
+
   const res = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: userMessage }],
   })
+
   span.setOutput(res.choices[0].message.content ?? '')
   return res
 })
@@ -98,21 +110,37 @@ Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 
 ---
 
-## SDK Packages
+## What You Get
 
-| Package | Description | Install |
-|---------|-------------|---------|
-| [`@farzanhossans/agentlens-core`](./packages/sdk-core) | Core tracer — framework agnostic | `npm i @farzanhossans/agentlens-core` |
-| [`@farzanhossans/agentlens-openai`](./packages/sdk-openai) | OpenAI auto-instrumentation | `npm i @farzanhossans/agentlens-openai` |
-| [`@farzanhossans/agentlens-anthropic`](./packages/sdk-anthropic) | Anthropic auto-instrumentation | `npm i @farzanhossans/agentlens-anthropic` |
-| `@farzanhossans/agentlens-langchain` | LangChain callback handler | `npm i @farzanhossans/agentlens-langchain` |
-| [`agentlens`](./packages/sdk-python) | Python SDK | `pip install agentlens` |
+### Trace Viewer
+Full input/output timeline for every span in your agent run. See exactly what the model received and what it returned, with parent/child hierarchy.
+
+### Cost Analytics
+Token usage and dollar cost broken down by model, agent, feature, and date. Daily trend charts. Monthly budget tracking with alerts.
+
+### Failure Alerts
+Get notified via Slack, email, or webhook the moment something goes wrong:
+- **Error rate** spikes above threshold
+- **Cost** exceeds budget in a time window
+- **P95 latency** crosses SLA
+- **Failure count** hits limit
+
+Alert history with delivery status tracking. Test notifications before going live.
+
+### Live Feed
+Real-time trace stream via WebSocket. Watch agent calls as they happen.
+
+### Session Replay
+Step through any past agent run exactly as it happened. Group traces by session to see multi-turn conversations.
+
+### PII Scrubbing
+Emails, API keys, SSNs, and credit card numbers are auto-masked before data leaves your infrastructure. GDPR ready.
 
 ---
 
 ## Self-Hosting
 
-### Production (Docker Compose — recommended)
+Everything runs with a single `docker compose` command. No third-party accounts needed — no Vercel, no Cloudflare, no managed services.
 
 ```bash
 git clone https://github.com/farzanhossan/agentlens
@@ -128,74 +156,107 @@ docker compose -f docker-compose.prod.yml up -d --build
 | API | http://localhost:3001 |
 | Proxy | http://localhost:8080 |
 
-### Development
+**Requirements:** Docker, 4 GB RAM.
+
+The stack includes PostgreSQL, Redis, Elasticsearch, the API, dashboard, and proxy — all containerised.
+
+See [docs/deployment.md](./docs/deployment.md) for custom domains, SSL, backups, monitoring, and production hardening.
+
+### Development setup
 
 ```bash
 git clone https://github.com/farzanhossan/agentlens
 cd agentlens
-cp apps/api/.env.example apps/api/.env
-# Fill in secrets, then:
-docker compose -f infra/docker-compose.yml up -d   # postgres, redis, elasticsearch
+cp apps/api/.env.example apps/api/.env   # fill in secrets
+docker compose -f infra/docker-compose.yml up -d
 pnpm install && pnpm dev
 ```
-
-| Service | URL |
-|---------|-----|
-| Dashboard | http://localhost:5173 |
-| API | http://localhost:3001 |
-
-No Vercel, Cloudflare, or third-party accounts needed. See [docs/deployment.md](./docs/deployment.md) for custom domains, SSL, backups, and more.
 
 ---
 
 ## Architecture
 
 ```
-SDK (your app)
-    │
-    │  POST /v1/spans  (batched, gzip-compressed)
-    ▼
-CF Worker (edge)              ← HMAC auth, rate-limit, validation
-    │
-    │  BullMQ job enqueue
-    ▼
-NestJS Span Processor         ← PII scrubbing, cost calculation
-    │
-    ├──► PostgreSQL            ← trace/span metadata, alerts, users
-    └──► Elasticsearch         ← full input/output text, full-text search
+Your App
+  │
+  │  Option A: change base URL (proxy)
+  │  Option B: import SDK (auto-patch)
+  │  Option C: manual AgentLens.trace()
+  ▼
+AgentLens Proxy / SDK
+  │
+  │  POST /v1/spans  (batched, gzip-compressed)
+  ▼
+NestJS API                        ← BullMQ async processing
+  │
+  ├──► PII Scrubber               ← masks sensitive data
+  ├──► Cost Calculator             ← per-model pricing tables
+  ├──► Alert Engine                ← evaluates thresholds, sends notifications
+  │
+  ├──► PostgreSQL                  ← traces, spans, alerts, users, projects
+  └──► Elasticsearch               ← full input/output text, full-text search
 
-NestJS Dashboard API          ← REST + WebSocket (live updates)
-    │
-    ▼
-React Dashboard               ← trace viewer, cost charts, session replay
+React Dashboard                   ← trace viewer, cost charts, live feed, alerts
+  │
+  └──► WebSocket (Socket.io)       ← real-time trace updates
 ```
 
 ---
 
-## Environment Variables
+## SDK Packages
 
-Configure `apps/api/.env` (copy from `.env.example`):
+The proxy covers most use cases with zero code changes. Use the SDKs when you want richer control:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `PORT` | No | `3001` | HTTP port the API binds to |
-| `HOST` | No | `0.0.0.0` | Host the API listens on |
-| `NODE_ENV` | No | `development` | `development` \| `production` \| `test` |
-| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin for the dashboard |
-| `DATABASE_URL` | **Yes** | — | PostgreSQL connection string (`postgresql://user:pass@host:5432/db`) |
-| `DATABASE_SSL` | No | `false` | Set `true` to enable SSL for managed Postgres (e.g. RDS) |
-| `DATABASE_POOL_MAX` | No | `20` | Max DB connection pool size |
-| `DATABASE_POOL_MIN` | No | `2` | Min DB connection pool size |
-| `REDIS_HOST` | **Yes** | — | Redis hostname (BullMQ) |
-| `REDIS_PORT` | No | `6379` | Redis port |
-| `REDIS_PASSWORD` | No | — | Redis password (leave empty for no auth) |
-| `ELASTICSEARCH_URL` | **Yes** | — | Elasticsearch node URL (`http://localhost:9200`) |
-| `ELASTICSEARCH_USERNAME` | No | `elastic` | Elasticsearch username |
-| `ELASTICSEARCH_PASSWORD` | **Yes** | — | Elasticsearch password |
-| `HMAC_SECRET` | **Yes** | — | 32-byte secret for ingest-worker HMAC verification. Generate: `openssl rand -hex 32` |
-| `JWT_SECRET` | **Yes** | — | Secret for JWT signing. Generate: `openssl rand -hex 32` |
-| `RESEND_API_KEY` | No | — | [Resend](https://resend.com) API key for email alerts |
-| `ALERT_EMAIL_FROM` | No | — | Sender address for email alerts (e.g. `alerts@yourdomain.com`) |
+| Package | Description | Install |
+|---------|-------------|---------|
+| [`@farzanhossans/agentlens-core`](./packages/sdk-core) | Core tracer — manual spans, context propagation | `npm i @farzanhossans/agentlens-core` |
+| [`@farzanhossans/agentlens-openai`](./packages/sdk-openai) | Auto-patches OpenAI SDK (chat, completions, embeddings) | `npm i @farzanhossans/agentlens-openai` |
+| [`@farzanhossans/agentlens-anthropic`](./packages/sdk-anthropic) | Auto-patches Anthropic SDK | `npm i @farzanhossans/agentlens-anthropic` |
+| [`agentlens`](./packages/sdk-python) | Python SDK with decorators + auto-patchers | `pip install agentlens` |
+
+---
+
+## What Gets Captured
+
+**Per LLM call (span):**
+
+| Metric | Source |
+|--------|--------|
+| Input/output tokens | LLM response headers |
+| Cost (USD) | Built-in pricing tables (OpenAI, Anthropic) |
+| Latency | Request start → response end |
+| Status | success / error / timeout |
+| Model + provider | Parsed from request |
+| Full prompt + completion | Stored in Elasticsearch (PII-scrubbed) |
+| Error message | Captured on failure |
+| Custom metadata | Your key-value pairs |
+
+**Per trace (agent run):**
+
+| Metric | Description |
+|--------|-------------|
+| Total spans | Number of LLM calls in the run |
+| Total tokens | Sum across all spans |
+| Total cost | Sum across all spans |
+| Total latency | End-to-end duration |
+| Agent name | Identifier for the agent |
+| Session ID | Group multi-turn conversations |
+| Span hierarchy | Parent/child relationships |
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Backend | NestJS, Fastify, TypeORM, BullMQ |
+| Frontend | React 18, Vite, Recharts, TailwindCSS |
+| Proxy | Hono (Node.js) |
+| Database | PostgreSQL + Elasticsearch + Redis |
+| SDKs | TypeScript (Node + browser), Python |
+| Auth | JWT + bcrypt |
+| Real-time | Socket.io (WebSocket) |
+| Build | pnpm workspaces, Turborepo, tsup |
 
 ---
 
@@ -204,23 +265,11 @@ Configure `apps/api/.env` (copy from `.env.example`):
 We welcome PRs. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
 
 ```bash
-# Fork → clone → install
 git clone https://github.com/YOUR_USERNAME/agentlens
 pnpm install
-
-# Create a feature branch
-git checkout -b feat/my-feature
-
-# Run tests
-pnpm test
-
-# Lint + format
-pnpm lint && pnpm format
+pnpm test       # 96 tests across all packages
+pnpm lint       # ESLint + Prettier
 ```
-
-- **Code style:** ESLint + Prettier (auto-enforced, no arguments)
-- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, etc.)
-- **Tests:** every new feature needs a matching test
 
 ---
 
@@ -228,9 +277,9 @@ pnpm lint && pnpm format
 
 - [ ] LangChain auto-patcher
 - [ ] LlamaIndex auto-patcher
-- [ ] Prompt versioning
+- [ ] Prompt versioning and diffing
 - [ ] A/B testing for prompts
-- [ ] Cost budgets + auto-shutoff
+- [ ] Cost budgets with auto-shutoff
 - [ ] Multi-region support
 
 ---
