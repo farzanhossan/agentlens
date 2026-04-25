@@ -1,28 +1,42 @@
 # Deployment Guide
 
-## Quick Self-Hosting (Docker Compose)
+> **Self-hosters**: You only need the [Self-Hosting](#self-hosting-docker-compose) section below. No Vercel, Cloudflare, or third-party accounts required — just Docker.
 
-The fastest way to self-host AgentLens — a single `docker compose` command runs the full stack (API, dashboard, proxy, PostgreSQL, Redis, Elasticsearch).
+---
+
+## Self-Hosting (Docker Compose)
+
+Run the full AgentLens stack on any server with Docker. Everything is included: API, dashboard, proxy, PostgreSQL, Redis, and Elasticsearch.
 
 ### Prerequisites
 
 - Docker and Docker Compose v2+
-- At least 4 GB RAM (Elasticsearch needs ~1 GB)
+- At least **4 GB RAM** (Elasticsearch needs ~1 GB)
+- Any Linux server, Mac, or Windows with WSL2
 
-### Steps
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/farzanhossan/agentlens
 cd agentlens/infra
 
-# 1. Create your .env from the template
+# Create your environment file
 cp .env.prod.example .env
+```
 
-# 2. Generate secrets and paste them into .env
-openssl rand -hex 32   # → JWT_SECRET
-openssl rand -hex 32   # → HMAC_SECRET
+### 2. Generate secrets
 
-# 3. Start everything
+```bash
+# Generate two secrets and paste them into .env
+openssl rand -hex 32   # → paste as JWT_SECRET
+openssl rand -hex 32   # → paste as HMAC_SECRET
+```
+
+Edit `infra/.env` and fill in `JWT_SECRET` and `HMAC_SECRET`. The other defaults work out of the box.
+
+### 3. Start everything
+
+```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
@@ -33,11 +47,32 @@ Wait ~60 seconds for Elasticsearch to initialise, then open:
 | Dashboard | http://localhost:3000 |
 | API | http://localhost:3001 |
 | API Health | http://localhost:3001/health |
-| Proxy | http://localhost:8080 |
+| Proxy (SDK endpoint) | http://localhost:8080 |
+
+That's it — AgentLens is running.
+
+### 4. Connect your app
+
+Install the SDK in your application:
+
+```bash
+npm install @farzanhossans/agentlens-core @farzanhossans/agentlens-openai
+```
+
+```typescript
+import { AgentLens } from '@farzanhossans/agentlens-core'
+import '@farzanhossans/agentlens-openai'
+
+AgentLens.init({
+  apiKey: 'your-project-api-key',   // from the dashboard
+  projectId: 'your-project-uuid',   // from the dashboard
+  endpoint: 'http://your-server:3001',  // your self-hosted API URL
+})
+```
 
 ### Customising ports
 
-Edit the `.env` file:
+Edit `infra/.env`:
 
 ```env
 API_PORT=3001
@@ -45,9 +80,9 @@ DASHBOARD_PORT=3000
 PROXY_PORT=8080
 ```
 
-### Using a custom domain
+### Using a custom domain (with reverse proxy)
 
-Update these in `.env`:
+If you put nginx, Caddy, or Traefik in front, update `infra/.env`:
 
 ```env
 CORS_ORIGIN=https://app.yourdomain.com
@@ -62,120 +97,16 @@ Then rebuild the dashboard (Vite bakes env vars at build time):
 docker compose -f docker-compose.prod.yml up -d --build dashboard
 ```
 
-### Stopping
-
-```bash
-docker compose -f docker-compose.prod.yml down        # stop, keep data
-docker compose -f docker-compose.prod.yml down -v      # stop and delete volumes
-```
-
----
-
-## Production Deployment (Advanced)
-
-For larger-scale or multi-service deployments, the recommended setup uses:
-
-- **DigitalOcean** — API, database, Redis, Elasticsearch
-- **Cloudflare Workers** — ingest edge worker
-- **Vercel** — dashboard + landing page
-
----
-
-## 1. DigitalOcean (API + Infrastructure)
-
-### 1.1 Create a Droplet
-
-Recommended spec: **8 GB RAM / 4 vCPUs / 160 GB SSD** (CPU-optimized droplet).
-
-```bash
-# Install Docker
-curl -fsSL https://get.docker.com | sh
-usermod -aG docker $USER
-
-# Install pnpm + Node 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
-npm install -g pnpm
-```
-
-### 1.2 Clone and configure
-
-```bash
-git clone https://github.com/farzanhossan/agentlens /opt/agentlens
-cd /opt/agentlens
-
-cp apps/api/.env.example apps/api/.env
-```
-
-Edit `apps/api/.env` with production values:
-
-```env
-NODE_ENV=production
-PORT=3001
-HOST=0.0.0.0
-CORS_ORIGIN=https://app.yourdomain.com
-
-DATABASE_URL=postgresql://agentlens:<PASSWORD>@localhost:5432/agentlens
-DATABASE_SSL=false
-DATABASE_POOL_MAX=20
-DATABASE_POOL_MIN=2
-
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=<STRONG_REDIS_PASSWORD>
-
-ELASTICSEARCH_URL=http://localhost:9200
-ELASTICSEARCH_USERNAME=elastic
-ELASTICSEARCH_PASSWORD=<STRONG_ES_PASSWORD>
-
-HMAC_SECRET=<openssl rand -hex 32>
-JWT_SECRET=<openssl rand -hex 32>
-
-RESEND_API_KEY=re_xxxxxxxxxxxx
-ALERT_EMAIL_FROM=alerts@yourdomain.com
-```
-
-### 1.3 Start infrastructure services
-
-```bash
-docker compose -f infra/docker-compose.yml up -d postgres redis elasticsearch
-```
-
-Wait 30 seconds for Elasticsearch to initialise, then verify:
-
-```bash
-curl http://localhost:9200/_cluster/health?pretty
-# "status" should be "yellow" or "green"
-```
-
-### 1.4 Build and start the API
-
-```bash
-pnpm install --frozen-lockfile
-pnpm turbo run build --filter=@farzanhossans/agentlens-api
-
-# The database schema is bootstrapped by infra/init.sql (loaded automatically
-# when PostgreSQL starts for the first time via docker-entrypoint-initdb.d).
-# If running PostgreSQL without Docker, apply the schema manually:
-#   psql $DATABASE_URL -f infra/init.sql
-
-# Start the API with PM2
-npm install -g pm2
-pm2 start apps/api/dist/main.js --name agentlens-api
-pm2 save
-pm2 startup
-```
-
-### 1.5 Set up nginx reverse proxy
+#### Example: nginx reverse proxy with SSL
 
 ```nginx
-# /etc/nginx/sites-available/agentlens-api
 server {
     listen 80;
-    server_name api.yourdomain.com;
+    server_name api.yourdomain.com app.yourdomain.com;
     return 301 https://$host$request_uri;
 }
 
+# API
 server {
     listen 443 ssl http2;
     server_name api.yourdomain.com;
@@ -195,198 +126,184 @@ server {
         proxy_read_timeout 86400;
     }
 }
-```
 
-```bash
-ln -s /etc/nginx/sites-available/agentlens-api /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
-```
+# Dashboard
+server {
+    listen 443 ssl http2;
+    server_name app.yourdomain.com;
 
-### 1.6 SSL with Let's Encrypt
+    ssl_certificate     /etc/letsencrypt/live/app.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.yourdomain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
 
 ```bash
 apt install -y certbot python3-certbot-nginx
-certbot --nginx -d api.yourdomain.com
-# Auto-renew is configured automatically
+certbot --nginx -d api.yourdomain.com -d app.yourdomain.com
 ```
 
----
+### Changing database passwords
 
-## 2. Cloudflare Workers (Ingest Edge Worker)
+For production, change the default passwords in `infra/.env`:
 
-The ingest worker runs at the edge and accepts spans from SDKs before forwarding them to the NestJS API via BullMQ.
+```env
+POSTGRES_PASSWORD=your-strong-password-here
+REDIS_PASSWORD=your-strong-password-here
+```
 
-### 2.1 Prerequisites
+### Email alerts (optional)
+
+To enable email notifications for alerts, sign up at [resend.com](https://resend.com) and add:
+
+```env
+RESEND_API_KEY=re_xxxxxxxxxxxx
+ALERT_EMAIL_FROM=alerts@yourdomain.com
+```
+
+### Updating
 
 ```bash
-npm install -g wrangler
-wrangler login
+cd agentlens/infra
+git pull origin main
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-### 2.2 Configure `wrangler.toml`
-
-Edit `apps/ingest-worker/wrangler.toml`:
-
-```toml
-name = "agentlens-ingest"
-main = "src/index.ts"
-compatibility_date = "2024-05-01"
-
-[vars]
-API_URL = "https://api.yourdomain.com"
-
-[[kv_namespaces]]
-binding = "RATE_LIMIT_KV"
-id = "<your-kv-namespace-id>"
-```
-
-### 2.3 Set secrets
+### Stopping
 
 ```bash
-wrangler secret put HMAC_SECRET
-# Paste the same value as in apps/api/.env → HMAC_SECRET
-
-wrangler secret put REDIS_URL
-# Format: rediss://:password@host:6380 (use Upstash Redis for CF Workers)
+docker compose -f docker-compose.prod.yml down        # stop, keep data
+docker compose -f docker-compose.prod.yml down -v      # stop AND delete all data
 ```
 
-> **Tip:** Use [Upstash Redis](https://upstash.com) for the BullMQ connection from Cloudflare Workers — it provides an HTTP-compatible Redis client that works in the Workers runtime.
+### Backups
 
-### 2.4 Deploy
-
-```bash
-cd apps/ingest-worker
-pnpm deploy
-```
-
-The worker will be available at `https://agentlens-ingest.<your-cf-subdomain>.workers.dev`.
-
-Map a custom domain in the Cloudflare dashboard: **Workers & Pages → your worker → Custom Domains → Add** `ingest.yourdomain.com`.
-
----
-
-## 3. Vercel (Dashboard + Landing Page)
-
-### 3.1 Dashboard
-
-```bash
-cd apps/dashboard
-vercel --prod
-```
-
-Set environment variable in the Vercel dashboard:
-
-| Variable | Value |
-|----------|-------|
-| `VITE_API_URL` | `https://api.yourdomain.com` |
-
-### 3.2 Landing page
-
-```bash
-# The landing page is a single static HTML file — no build step needed
-cd apps/landing
-vercel --prod
-```
-
-Vercel will serve `index.html` directly from the root.
-
----
-
-## 4. Environment variables checklist
-
-Before going live, verify these are set in `apps/api/.env`:
-
-| Variable | How to generate |
-|----------|----------------|
-| `HMAC_SECRET` | `openssl rand -hex 32` |
-| `JWT_SECRET` | `openssl rand -hex 32` |
-| `ELASTICSEARCH_PASSWORD` | Use a password manager; min 20 chars |
-| `REDIS_PASSWORD` | Use a password manager; min 20 chars |
-| `DATABASE_URL` | Use `pg_hba.conf` + strong password |
-| `RESEND_API_KEY` | Create at [resend.com/api-keys](https://resend.com/api-keys) |
-
----
-
-## 5. SSL summary
-
-| Service | SSL method |
-|---------|-----------|
-| API (nginx) | Let's Encrypt via `certbot --nginx` |
-| Ingest worker | Cloudflare-managed (automatic) |
-| Dashboard | Vercel-managed (automatic) |
-| Landing page | Vercel-managed (automatic) |
-
-Certificates auto-renew. To manually renew: `certbot renew --dry-run`.
-
----
-
-## 6. Monitoring
-
-### API health check
-
-```bash
-curl https://api.yourdomain.com/health
-# {"status":"ok","uptime":12345}
-```
-
-### PM2 process status
-
-```bash
-pm2 status
-pm2 logs agentlens-api --lines 100
-```
-
-### Elasticsearch cluster health
-
-```bash
-curl http://localhost:9200/_cluster/health?pretty
-```
-
-### Redis connectivity
-
-```bash
-redis-cli -a <REDIS_PASSWORD> ping
-# PONG
-```
-
-### BullMQ queue depth
-
-```bash
-# Monitor via the API's /health endpoint or connect redis-cli:
-redis-cli -a <REDIS_PASSWORD> llen bull:span-processing:wait
-```
-
----
-
-## 7. PostgreSQL backup
-
-### Automated daily backups with cron
+#### Automated daily PostgreSQL backups
 
 ```bash
 # /etc/cron.d/agentlens-pg-backup
-0 2 * * * root pg_dump postgresql://agentlens:<PASSWORD>@localhost:5432/agentlens \
-  | gzip > /backups/agentlens_$(date +\%Y-\%m-\%d).sql.gz
+0 2 * * * root docker exec agentlens-prod-postgres-1 \
+  pg_dump -U agentlens agentlens | gzip > /backups/agentlens_$(date +\%Y-\%m-\%d).sql.gz
 ```
 
 ```bash
-mkdir -p /backups
-chmod 700 /backups
+mkdir -p /backups && chmod 700 /backups
 ```
 
-### Retain 30 days
+#### Retain 30 days
 
 ```bash
-# Add to crontab — runs after the backup
 5 2 * * * root find /backups -name "agentlens_*.sql.gz" -mtime +30 -delete
 ```
 
-### Restore from backup
+#### Restore from backup
 
 ```bash
 gunzip -c /backups/agentlens_2025-01-15.sql.gz | \
-  psql postgresql://agentlens:<PASSWORD>@localhost:5432/agentlens
+  docker exec -i agentlens-prod-postgres-1 psql -U agentlens agentlens
 ```
 
-### DigitalOcean managed database (recommended for production)
+### Monitoring
 
-For mission-critical deployments, use [DigitalOcean Managed PostgreSQL](https://www.digitalocean.com/products/managed-databases-postgresql) — automated backups, failover, and point-in-time recovery are included. Update `DATABASE_URL` and set `DATABASE_SSL=true`.
+```bash
+# API health
+curl http://localhost:3001/health
+
+# All container status
+docker compose -f docker-compose.prod.yml ps
+
+# API logs
+docker compose -f docker-compose.prod.yml logs -f api
+
+# Elasticsearch health
+curl http://localhost:9200/_cluster/health?pretty
+
+# Redis
+docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens ping
+
+# BullMQ queue depth
+docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens llen bull:span-processing:wait
+```
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Elasticsearch won't start | Increase `vm.max_map_count`: `sysctl -w vm.max_map_count=262144` (add to `/etc/sysctl.conf` to persist) |
+| Dashboard shows "Network Error" | Check `VITE_API_URL` points to reachable API, then rebuild dashboard |
+| API exits immediately | Check `docker compose logs api` — usually a missing secret or DB connection issue |
+| Port conflict | Change `API_PORT`, `DASHBOARD_PORT`, or `PROXY_PORT` in `.env` |
+
+### Environment variables reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JWT_SECRET` | **(required)** | Auth token signing. Generate: `openssl rand -hex 32` |
+| `HMAC_SECRET` | **(required)** | Ingest HMAC verification. Generate: `openssl rand -hex 32` |
+| `POSTGRES_DB` | `agentlens` | PostgreSQL database name |
+| `POSTGRES_USER` | `agentlens` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | `agentlens` | PostgreSQL password (change for production!) |
+| `REDIS_PASSWORD` | `agentlens` | Redis password (change for production!) |
+| `API_PORT` | `3001` | Host port for the API |
+| `DASHBOARD_PORT` | `3000` | Host port for the dashboard |
+| `PROXY_PORT` | `8080` | Host port for the SDK proxy |
+| `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
+| `FRONTEND_URL` | `http://localhost:3000` | Used in email links |
+| `VITE_API_URL` | `http://localhost:3001` | API URL baked into dashboard at build time |
+| `VITE_WS_URL` | `http://localhost:3001` | WebSocket URL baked into dashboard |
+| `RESEND_API_KEY` | *(empty)* | Optional — for email alerts |
+| `ALERT_EMAIL_FROM` | *(empty)* | Optional — sender address for alerts |
+
+---
+
+## Internal: SaaS Deployment (AgentLens team only)
+
+> The section below documents how the hosted AgentLens SaaS is deployed. **Self-hosters can ignore everything below.**
+
+### Architecture
+
+| Component | Platform | Why |
+|-----------|----------|-----|
+| API + DB + Redis + ES | DigitalOcean Droplet | Single server, full Docker stack |
+| Dashboard | Vercel | CDN, zero-config deploys |
+| Landing page | Vercel | Static HTML, edge-cached |
+| Ingest worker | Cloudflare Workers | Edge latency, global PoPs |
+
+### DigitalOcean setup
+
+The deploy workflow (`.github/workflows/deploy.yml`) automatically:
+1. SSHs into the droplet
+2. Pulls latest code from `main`
+3. Creates/updates `infra/.env` from GitHub secrets
+4. Runs `docker compose up -d --build --force-recreate`
+5. Health-checks the API
+
+Required GitHub secrets: `DROPLET_IP`, `SSH_PRIVATE_KEY`, `JWT_SECRET`, `HMAC_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VITE_API_URL`, `VITE_WS_URL`.
+
+### Vercel setup
+
+Dashboard and landing page deploy automatically via the same workflow.
+
+Required GitHub secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_DASHBOARD`, `VERCEL_PROJECT_ID_LANDING`.
+
+### Cloudflare Workers setup
+
+The ingest worker deploys automatically.
+
+Required GitHub secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `HMAC_SECRET`, `WORKER_SECRET`.
+
+### SSL
+
+| Service | SSL method |
+|---------|-----------|
+| API (nginx on droplet) | Let's Encrypt via `certbot --nginx` |
+| Ingest worker | Cloudflare-managed (automatic) |
+| Dashboard | Vercel-managed (automatic) |
+| Landing page | Vercel-managed (automatic) |

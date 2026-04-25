@@ -144,7 +144,7 @@ pnpm install && pnpm dev
 | Dashboard | http://localhost:5173 |
 | API | http://localhost:3001 |
 
-See [docs/deployment.md](./docs/deployment.md) for advanced production deployment on DigitalOcean, Cloudflare Workers, and Vercel.
+No Vercel, Cloudflare, or third-party accounts needed. See [docs/deployment.md](./docs/deployment.md) for custom domains, SSL, backups, and more.
 
 ---
 
