@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentLens — Full visibility into every AI decision</title>
-  <meta name="description" content="AgentLens gives you full visibility into every LLM call, every decision, every dollar. Debug AI agents faster. Ship with confidence." />
+  <title>AgentLens — See every LLM call. Change zero code.</title>
+  <meta name="description" content="Open-source AI agent observability. Route your LLM traffic through the proxy — get traces, costs, and alerts without touching your code. Self-host in 2 minutes." />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="AgentLens — Full visibility into every AI decision" />
-  <meta property="og:description" content="Trace every LLM call, track costs, replay sessions. The observability platform built for AI engineers." />
+  <meta property="og:title" content="AgentLens — See every LLM call. Change zero code." />
+  <meta property="og:description" content="Open-source AI agent observability. Traces, costs, alerts — without changing your application code. Self-host with Docker." />
   <meta property="og:image" content="https://agentlens.ai/og.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://agentlens.ai" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="AgentLens — Full visibility into every AI decision" />
-  <meta name="twitter:description" content="Trace every LLM call, track costs, replay sessions. The observability platform built for AI engineers." />
+  <meta name="twitter:title" content="AgentLens — See every LLM call. Change zero code." />
+  <meta name="twitter:description" content="Open-source AI agent observability. Traces, costs, alerts — without changing your application code." />
   <meta name="twitter:image" content="https://agentlens.ai/og.png" />
 
   <!-- Fonts -->
@@ -65,7 +65,7 @@
 
     a { color: inherit; text-decoration: none; }
 
-    /* ── Utilities ─────────────────────────────────────────────────────── */
+    /* Utilities */
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
     .section    { padding: 100px 0; }
     .section-sm { padding: 60px 0; }
@@ -85,7 +85,7 @@
       50%      { opacity: .5; transform: scale(1.4); }
     }
 
-    /* ── Buttons ───────────────────────────────────────────────────────── */
+    /* Buttons */
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 12px 24px; border-radius: 8px;
@@ -121,7 +121,7 @@
 
     .btn-sm { padding: 8px 16px; font-size: 13px; }
 
-    /* ── Nav ───────────────────────────────────────────────────────────── */
+    /* Nav */
     #nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       padding: 16px 0;
@@ -159,7 +159,7 @@
       .nav-cta   { margin-left: auto; }
     }
 
-    /* ── Hero ──────────────────────────────────────────────────────────── */
+    /* Hero */
     #hero {
       padding: 160px 0 100px;
       position: relative; overflow: hidden;
@@ -230,7 +230,7 @@
     }
     .terminal-body {
       padding: 24px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-      font-size: 14px; line-height: 1.8; min-height: 200px;
+      font-size: 13px; line-height: 1.8; min-height: 220px;
     }
     .terminal-line { opacity: 0; display: block; white-space: pre; }
     .terminal-line.visible { opacity: 1; }
@@ -239,6 +239,7 @@
     .terminal-line.import { color: #93c5fd; }
     .terminal-line.method { color: #86efac; }
     .terminal-line.success{ color: #86efac; }
+    .terminal-line.url    { color: #fbbf24; }
     .terminal-line.blank  { display: block; height: 8px; }
     .cursor {
       display: inline-block; width: 2px; height: 16px;
@@ -247,14 +248,14 @@
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    /* ── Fade-in animations ────────────────────────────────────────────── */
+    /* Fade-in animations */
     .fade-up {
       opacity: 0; transform: translateY(24px);
       transition: opacity .6s ease, transform .6s ease;
     }
     .fade-up.in { opacity: 1; transform: translateY(0); }
 
-    /* ── Section headings ──────────────────────────────────────────────── */
+    /* Section headings */
     .section-label {
       font-size: 12px; font-weight: 600; text-transform: uppercase;
       letter-spacing: .12em; color: var(--accent2); margin-bottom: 12px;
@@ -269,7 +270,7 @@
     }
     .section-head { margin-bottom: 56px; }
 
-    /* ── Problem ───────────────────────────────────────────────────────── */
+    /* Problem */
     #problem { background: var(--bg); }
     .problem-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
@@ -291,8 +292,59 @@
     .problem-emoji { font-size: 24px; margin-bottom: 12px; display: block; }
     .problem-text  { font-size: 15px; color: var(--muted); line-height: 1.6; }
 
-    /* ── Features ──────────────────────────────────────────────────────── */
-    #features { background: var(--bg3); }
+    /* How it works */
+    #how-it-works { background: var(--bg3); }
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    @media (max-width: 860px) { .how-grid { grid-template-columns: 1fr; } }
+
+    .how-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      position: relative;
+      transition: transform .2s, border-color .2s;
+    }
+    .how-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99,102,241,.4);
+    }
+    .how-card.recommended {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 30px rgba(99,102,241,.15);
+    }
+    .how-badge {
+      position: absolute; top: -11px; left: 24px;
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      padding: 3px 10px; border-radius: 999px;
+    }
+    .how-step {
+      font-size: 13px; font-weight: 600; color: var(--accent2);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px;
+    }
+    .how-title {
+      font-size: 20px; font-weight: 700; margin-bottom: 10px;
+    }
+    .how-desc {
+      font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 20px;
+    }
+    .how-code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px; overflow-x: auto;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 12px; line-height: 1.7; color: #e2e8f0;
+    }
+    .how-code .dim { color: var(--muted2); }
+    .how-code .hl  { color: #fbbf24; }
+    .how-code .grn { color: #86efac; }
+
+    /* Features */
+    #features { background: var(--bg); }
     .features-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
     }
@@ -319,41 +371,7 @@
     }
     .feature-desc  { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-    /* ── Demo ──────────────────────────────────────────────────────────── */
-    #demo { background: var(--bg); }
-    .demo-inner { max-width: 680px; margin: 0 auto; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 0; }
-    .tab {
-      padding: 10px 20px; font-size: 14px; font-weight: 500;
-      border-radius: 8px 8px 0 0;
-      cursor: pointer; border: 1px solid transparent;
-      color: var(--muted); background: var(--bg3);
-      transition: all .2s; border-bottom: none;
-    }
-    .tab.active {
-      color: var(--text); background: var(--bg2);
-      border-color: var(--border);
-    }
-    .tab-panels {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 0 8px 8px 8px;
-      overflow: hidden;
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-    .tab-panel pre {
-      margin: 0 !important; padding: 28px !important;
-      font-size: 14px !important; line-height: 1.7 !important;
-      background: transparent !important;
-    }
-    .demo-caption {
-      text-align: center; margin-top: 28px;
-      font-size: 16px; color: var(--muted);
-    }
-    .demo-caption strong { color: var(--text); }
-
-    /* ── Comparison ────────────────────────────────────────────────────── */
+    /* Comparison */
     #comparison { background: var(--bg3); }
     .table-wrap { overflow-x: auto; border-radius: var(--radius); }
     table {
@@ -377,8 +395,42 @@
     .partial  { color: var(--orange); }
     .money    { color: var(--muted); font-weight: 600; }
 
-    /* ── Pricing ───────────────────────────────────────────────────────── */
-    #pricing { background: var(--bg); }
+    /* Self-host */
+    #selfhost { background: var(--bg); }
+    .selfhost-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+    }
+    @media (max-width: 860px) { .selfhost-inner { grid-template-columns: 1fr; gap: 40px; } }
+    .selfhost-points { list-style: none; margin: 24px 0 32px; display: flex; flex-direction: column; gap: 14px; }
+    .selfhost-points li {
+      font-size: 15px; color: var(--muted);
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .selfhost-points li::before { content: '\2713'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .selfhost-code {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .selfhost-code-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px; color: var(--muted2); font-family: monospace;
+    }
+    .selfhost-code pre {
+      margin: 0; padding: 20px;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 13px; line-height: 1.8; color: #e2e8f0;
+      overflow-x: auto;
+    }
+    .selfhost-code .dim { color: var(--muted2); }
+    .selfhost-code .grn { color: #86efac; }
+
+    /* Pricing */
+    #pricing { background: var(--bg3); }
     .pricing-grid {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
     }
@@ -413,34 +465,21 @@
       font-size: 14px; color: var(--muted);
       display: flex; align-items: flex-start; gap: 10px;
     }
-    .pricing-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .pricing-list li::before { content: '\2713'; color: var(--green); font-weight: 700; flex-shrink: 0; }
     .pricing-cta { width: 100%; text-align: center; }
 
-    /* ── Waitlist ──────────────────────────────────────────────────────── */
-    #waitlist {
-      background: var(--bg3);
+    /* CTA */
+    #cta {
+      background: var(--bg);
       text-align: center;
     }
-    .waitlist-inner { max-width: 520px; margin: 0 auto; }
-    .waitlist-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 12px; }
-    .waitlist-sub   { font-size: 16px; color: var(--muted); margin-bottom: 36px; }
-    .waitlist-form  { display: flex; gap: 10px; margin-bottom: 16px; }
-    .waitlist-input {
-      flex: 1; padding: 12px 18px;
-      background: var(--bg2); border: 1px solid var(--border2);
-      border-radius: 8px; color: var(--text); font-size: 15px;
-      font-family: inherit; outline: none; transition: border-color .2s;
-    }
-    .waitlist-input:focus { border-color: var(--accent); }
-    .waitlist-input::placeholder { color: var(--muted2); }
-    .waitlist-msg { font-size: 14px; min-height: 20px; margin-bottom: 20px; }
-    .waitlist-msg.success { color: var(--green); }
-    .waitlist-msg.error   { color: var(--red); }
-    .trust-badges { font-size: 13px; color: var(--muted2); }
+    .cta-inner { max-width: 600px; margin: 0 auto; }
+    .cta-title { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 12px; }
+    .cta-sub   { font-size: 16px; color: var(--muted); margin-bottom: 36px; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    .cta-note { font-size: 13px; color: var(--muted2); }
 
-    @media (max-width: 480px) { .waitlist-form { flex-direction: column; } }
-
-    /* ── Footer ────────────────────────────────────────────────────────── */
+    /* Footer */
     footer {
       background: var(--bg);
       border-top: 1px solid var(--border);
@@ -463,18 +502,17 @@
       .footer-right { text-align: left; }
     }
 
-    /* ── hljs overrides ────────────────────────────────────────────────── */
+    /* hljs overrides */
     .hljs { background: transparent !important; }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════ NAV ═══ -->
+<!-- NAV -->
 <nav id="nav">
   <div class="container">
     <div class="nav-inner">
       <a href="#" class="nav-logo">
-        <!-- Eye/lens SVG icon -->
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-width="1.5" />
           <ellipse cx="14" cy="14" rx="8" ry="5" stroke="currentColor" stroke-width="1.5"/>
@@ -484,37 +522,37 @@
         AgentLens
       </a>
       <ul class="nav-links">
+        <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="#features">Features</a></li>
         <li><a href="#pricing">Pricing</a></li>
-        <li><a href="#demo">Demo</a></li>
         <li><a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a></li>
       </ul>
-      <a href="#waitlist" class="btn btn-primary btn-sm nav-cta">Start Free</a>
+      <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary btn-sm nav-cta" target="_blank">Self-Host Free</a>
     </div>
   </div>
 </nav>
 
-<!-- ══════════════════════════════════════════════════════════ HERO ═══ -->
+<!-- HERO -->
 <section id="hero">
   <div class="container">
     <div class="hero-inner">
       <div>
         <div class="hero-eyebrow fade-up">
-          <span class="badge">AI Agent Observability</span>
+          <span class="badge">Open Source</span>
         </div>
         <h1 class="hero-headline fade-up" style="transition-delay:.1s">
-          Never wonder what your<br/><span>AI agent did</span> again.
+          See every LLM call.<br/><span>Change zero code.</span>
         </h1>
         <p class="hero-sub fade-up" style="transition-delay:.2s">
-          AgentLens gives you full visibility into every LLM call, every decision, every dollar.
-          Debug faster. Ship with confidence.
+          Point your LLM traffic at the AgentLens proxy. Get traces, costs, errors, and session replay.
+          No SDK required. Works with any language.
         </p>
         <div class="hero-ctas fade-up" style="transition-delay:.3s">
-          <a href="#waitlist" class="btn btn-primary">Start Free — No credit card</a>
-          <a href="#demo" class="btn btn-ghost">View Demo →</a>
+          <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary" target="_blank">Self-Host with Docker</a>
+          <a href="#how-it-works" class="btn btn-ghost">See How It Works</a>
         </div>
         <p class="hero-proof fade-up" style="transition-delay:.4s">
-          Used by 500+ developers &nbsp;·&nbsp; 10M+ LLM calls traced
+          MIT licensed &nbsp;&middot;&nbsp; Self-host in 2 minutes &nbsp;&middot;&nbsp; No vendor lock-in
         </p>
       </div>
 
@@ -534,7 +572,7 @@
   </div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════════ PROBLEM ═══ -->
+<!-- PROBLEM -->
 <section id="problem" class="section">
   <div class="container">
     <div class="section-head fade-up">
@@ -543,26 +581,80 @@
     </div>
     <div class="problem-grid">
       <div class="problem-card fade-up">
-        <span class="problem-emoji">🔴</span>
-        <p class="problem-text">Your agent returned the wrong answer. You have no idea which step went wrong.</p>
+        <span class="problem-emoji">&#x1F534;</span>
+        <p class="problem-text">Your agent returned the wrong answer. You have no idea which LLM call went wrong.</p>
       </div>
       <div class="problem-card fade-up">
-        <span class="problem-emoji">💸</span>
-        <p class="problem-text">Your OpenAI bill hit $2,000. You can't explain where it went.</p>
+        <span class="problem-emoji">&#x1F4B8;</span>
+        <p class="problem-text">Your OpenAI bill hit $2,000. You can't explain which agent or feature caused it.</p>
       </div>
       <div class="problem-card fade-up">
-        <span class="problem-emoji">🐛</span>
-        <p class="problem-text">A bug in production. You can't reproduce it because you have no logs.</p>
+        <span class="problem-emoji">&#x1F41B;</span>
+        <p class="problem-text">A bug in production. You can't reproduce it because you have no trace of what the model saw.</p>
       </div>
       <div class="problem-card fade-up">
-        <span class="problem-emoji">🤯</span>
-        <p class="problem-text">5 agents, 3 models. Something broke. Good luck figuring out which one.</p>
+        <span class="problem-emoji">&#x1F92F;</span>
+        <p class="problem-text">5 agents, 3 models, streaming everywhere. Something broke. Good luck finding which call.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════════ FEATURES ═══ -->
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="section">
+  <div class="container">
+    <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Three ways to integrate.<br/>Start with zero effort.</h2>
+      <p class="section-sub" style="text-align:center">The proxy works with any language and any framework. Use the SDK only when you need more control.</p>
+    </div>
+    <div class="how-grid">
+
+      <!-- Option 1: Proxy -->
+      <div class="how-card recommended fade-up">
+        <div class="how-badge">Recommended</div>
+        <div class="how-step">Option 1</div>
+        <div class="how-title">Proxy &mdash; zero code changes</div>
+        <p class="how-desc">Change your LLM base URL. That's it. AgentLens forwards requests to OpenAI/Anthropic and captures everything automatically.</p>
+        <div class="how-code">
+          <span class="dim"># Before</span><br/>
+          OPENAI_BASE_URL=<span class="hl">https://api.openai.com</span><br/><br/>
+          <span class="dim"># After</span><br/>
+          OPENAI_BASE_URL=<span class="grn">http://localhost:8080/v1/p/{id}/openai</span>
+        </div>
+      </div>
+
+      <!-- Option 2: SDK -->
+      <div class="how-card fade-up">
+        <div class="how-step">Option 2</div>
+        <div class="how-title">SDK &mdash; one import</div>
+        <p class="how-desc">Auto-patches your OpenAI or Anthropic client. Adds richer metadata and custom span names.</p>
+        <div class="how-code">
+          <span class="dim">// npm i @farzanhossans/agentlens-openai</span><br/><br/>
+          import '<span class="hl">@farzanhossans/agentlens-openai</span>'<br/><br/>
+          <span class="grn">// done. every call is traced.</span>
+        </div>
+      </div>
+
+      <!-- Option 3: Manual -->
+      <div class="how-card fade-up">
+        <div class="how-step">Option 3</div>
+        <div class="how-title">Manual &mdash; full control</div>
+        <p class="how-desc">Wrap any code in AgentLens.trace() for custom spans, metadata, and parent/child hierarchies.</p>
+        <div class="how-code">
+          <span class="dim">// Full control over spans</span><br/><br/>
+          AgentLens.<span class="hl">trace</span>('classify', (span) => {<br/>
+          &nbsp;&nbsp;span.setMetadata('user', id)<br/>
+          &nbsp;&nbsp;<span class="grn">// your LLM calls here</span><br/>
+          })
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
 <section id="features" class="section">
   <div class="container">
     <div class="section-head fade-up">
@@ -571,80 +663,93 @@
     </div>
     <div class="features-grid">
       <div class="feature-card fade-up">
-        <span class="feature-icon">🔭</span>
+        <span class="feature-icon">&#x1F50D;</span>
         <div class="feature-title">Trace Viewer</div>
-        <p class="feature-desc">See every LLM call in a timeline. Full prompt, full response, exact latency.</p>
+        <p class="feature-desc">Full input/output timeline with parent/child span hierarchy. See exactly what the model received and returned.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">💰</span>
+        <span class="feature-icon">&#x1F4B0;</span>
         <div class="feature-title">Cost Analytics</div>
-        <p class="feature-desc">Token usage broken down by agent, feature, user, model.</p>
+        <p class="feature-desc">Token usage and dollar cost by model, agent, feature, and date. Daily trend charts. Monthly budget tracking.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">🚨</span>
-        <div class="feature-title">Failure Alerts</div>
-        <p class="feature-desc">Get notified on Slack or email the moment an agent fails.</p>
+        <span class="feature-icon">&#x1F6A8;</span>
+        <div class="feature-title">Smart Alerts</div>
+        <p class="feature-desc">Error rate, cost spike, P95 latency, failure count. Notify via Slack, email, or webhook.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">⏪</span>
+        <span class="feature-icon">&#x26A1;</span>
+        <div class="feature-title">Live Feed</div>
+        <p class="feature-desc">Watch agent calls in real-time via WebSocket. See traces as they happen in production.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">&#x23EA;</span>
         <div class="feature-title">Session Replay</div>
-        <p class="feature-desc">Replay any past agent run exactly as it happened.</p>
+        <p class="feature-desc">Step through any past agent run. Group traces by session to see multi-turn conversations.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">🔒</span>
+        <span class="feature-icon">&#x1F512;</span>
         <div class="feature-title">PII Scrubbing</div>
-        <p class="feature-desc">Sensitive data auto-masked before it leaves your infra. GDPR ready.</p>
+        <p class="feature-desc">Emails, API keys, SSNs, credit cards auto-masked before data leaves your infrastructure. GDPR ready.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">🔌</span>
-        <div class="feature-title">Any Framework</div>
-        <p class="feature-desc">3 lines to integrate. OpenAI, Anthropic, LangChain, custom.</p>
+        <span class="feature-icon">&#x1F310;</span>
+        <div class="feature-title">Any Language</div>
+        <p class="feature-desc">The proxy works with any HTTP client &mdash; Python, Go, Rust, Java, curl. No SDK needed.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">&#x1F504;</span>
+        <div class="feature-title">Streaming Support</div>
+        <p class="feature-desc">Full SSE streaming passthrough. AgentLens buffers transparently without adding latency to responses.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <span class="feature-icon">&#x1F3E0;</span>
+        <div class="feature-title">Self-Hostable</div>
+        <p class="feature-desc">One docker compose command. Your data stays on your servers. No third-party accounts required.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════ DEMO ═══ -->
-<section id="demo" class="section">
+<!-- SELF-HOST -->
+<section id="selfhost" class="section">
   <div class="container">
-    <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
-      <div class="section-label">Integration</div>
-      <h2 class="section-title">Integrate in 60 seconds.</h2>
-    </div>
-    <div class="demo-inner fade-up">
-      <div class="tabs">
-        <button class="tab active" data-tab="0">1. Install</button>
-        <button class="tab" data-tab="1">2. Init</button>
-        <button class="tab" data-tab="2">3. Trace</button>
+    <div class="selfhost-inner">
+      <div class="fade-up">
+        <div class="section-label">Self-hosting</div>
+        <h2 class="section-title">Your data. Your servers.<br/>2 minutes to deploy.</h2>
+        <ul class="selfhost-points">
+          <li>Full stack in one <code>docker compose</code> command</li>
+          <li>No Vercel, no Cloudflare, no third-party accounts</li>
+          <li>PostgreSQL, Redis, Elasticsearch all included</li>
+          <li>MIT licensed &mdash; free forever, no usage limits</li>
+          <li>Custom domains and SSL with any reverse proxy</li>
+        </ul>
+        <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary" target="_blank">View on GitHub</a>
       </div>
-      <div class="tab-panels">
-        <div class="tab-panel active">
-          <pre><code class="language-bash">npm install @farzanhossans/agentlens-core @farzanhossans/agentlens-openai</code></pre>
-        </div>
-        <div class="tab-panel">
-          <pre><code class="language-typescript">import { AgentLens } from '@farzanhossans/agentlens-core'
+      <div class="selfhost-code fade-up">
+        <div class="selfhost-code-bar">terminal</div>
+        <pre><span class="dim"># Clone and configure</span>
+git clone https://github.com/farzanhossan/agentlens
+cd agentlens/infra
+cp .env.prod.example .env
 
-AgentLens.init({
-  apiKey: 'proj_xxx',
-  projectId: 'my-agent'
-})</code></pre>
-        </div>
-        <div class="tab-panel">
-          <pre><code class="language-typescript">import '@farzanhossans/agentlens-openai'
-// done. every OpenAI call is now traced.
+<span class="dim"># Generate secrets</span>
+openssl rand -hex 32  <span class="dim"># paste as JWT_SECRET</span>
+openssl rand -hex 32  <span class="dim"># paste as HMAC_SECRET</span>
 
-// Works with Anthropic too:
-import '@farzanhossans/agentlens-anthropic'</code></pre>
-        </div>
+<span class="dim"># Start everything</span>
+docker compose -f docker-compose.prod.yml up -d --build
+
+<span class="grn"># Dashboard  http://localhost:3000</span>
+<span class="grn"># API        http://localhost:3001</span>
+<span class="grn"># Proxy      http://localhost:8080</span></pre>
       </div>
-      <p class="demo-caption">
-        <strong>That's it.</strong> No YAML. No config files. No agent rewrites.
-      </p>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════ COMPARISON ═══ -->
+<!-- COMPARISON -->
 <section id="comparison" class="section">
   <div class="container">
     <div class="section-head fade-up">
@@ -660,65 +765,57 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
             <th>LangSmith</th>
             <th>Langfuse</th>
             <th>Helicone</th>
-            <th>Datadog</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Any framework support</td>
-            <td class="col-us check">✅</td>
-            <td class="cross">❌ LangChain only</td>
-            <td class="partial">⚠️</td>
-            <td class="cross">❌</td>
-            <td class="check">✅</td>
+            <td>Zero code changes (proxy)</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="check">&#x2705;</td>
           </tr>
           <tr>
-            <td>3-line setup</td>
-            <td class="col-us check">✅</td>
-            <td class="cross">❌</td>
-            <td class="cross">❌</td>
-            <td class="check">✅</td>
-            <td class="cross">❌</td>
+            <td>Any language / framework</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="cross">&#x274C; LangChain only</td>
+            <td class="partial">&#x26A0;&#xFE0F;</td>
+            <td class="check">&#x2705;</td>
           </tr>
           <tr>
             <td>PII scrubbing built-in</td>
-            <td class="col-us check">✅</td>
-            <td class="cross">❌</td>
-            <td class="cross">❌</td>
-            <td class="cross">❌</td>
-            <td class="cross">❌</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="cross">&#x274C;</td>
           </tr>
           <tr>
             <td>Session replay</td>
-            <td class="col-us check">✅</td>
-            <td class="check">✅</td>
-            <td class="check">✅</td>
-            <td class="cross">❌</td>
-            <td class="cross">❌</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="check">&#x2705;</td>
+            <td class="check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
           </tr>
           <tr>
-            <td>Self-host option</td>
-            <td class="col-us check">✅</td>
-            <td class="cross">❌</td>
-            <td class="check">✅</td>
-            <td class="cross">❌</td>
-            <td class="check">✅</td>
+            <td>Self-host (open source)</td>
+            <td class="col-us check">&#x2705; MIT</td>
+            <td class="cross">&#x274C;</td>
+            <td class="check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
           </tr>
           <tr>
-            <td>Starts at free</td>
-            <td class="col-us check">✅</td>
-            <td class="check">✅</td>
-            <td class="check">✅</td>
-            <td class="check">✅</td>
-            <td class="cross">❌</td>
+            <td>Real-time live feed</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="cross">&#x274C;</td>
+            <td class="cross">&#x274C;</td>
           </tr>
           <tr>
-            <td>Price (paid)</td>
-            <td class="col-us" style="color:var(--accent2);font-weight:700">$19/mo</td>
-            <td class="money">$39/mo</td>
-            <td class="money">$49/mo</td>
-            <td class="money">$20/mo</td>
-            <td class="money">$$$</td>
+            <td>Free tier</td>
+            <td class="col-us" style="color:var(--accent2);font-weight:700">Unlimited (self-host)</td>
+            <td class="money">5k traces</td>
+            <td class="money">50k events</td>
+            <td class="money">10k requests</td>
           </tr>
         </tbody>
       </table>
@@ -726,46 +823,47 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════ PRICING ═══ -->
+<!-- PRICING -->
 <section id="pricing" class="section">
   <div class="container">
     <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
       <div class="section-label">Pricing</div>
-      <h2 class="section-title">Simple pricing. No surprises.</h2>
+      <h2 class="section-title">Free to self-host. Managed plans if you prefer.</h2>
     </div>
     <div class="pricing-grid">
 
-      <!-- Free -->
-      <div class="pricing-card fade-up">
-        <div class="pricing-plan">Free</div>
-        <div class="pricing-price">$0<span>/mo</span></div>
-        <div class="pricing-sub">Perfect for side projects</div>
+      <!-- Self-Host -->
+      <div class="pricing-card popular fade-up">
+        <div class="popular-badge">Most Popular</div>
+        <div class="pricing-plan">Self-Hosted</div>
+        <div class="pricing-price">$0</div>
+        <div class="pricing-sub">Free forever, no limits</div>
         <ul class="pricing-list">
-          <li>10k traces/month</li>
-          <li>3-day retention</li>
-          <li>1 project</li>
-          <li>Community support</li>
+          <li>Unlimited traces</li>
+          <li>Unlimited projects</li>
+          <li>All features included</li>
+          <li>Your infrastructure</li>
+          <li>MIT license</li>
         </ul>
-        <a href="#waitlist" class="btn btn-ghost pricing-cta">Start Free</a>
+        <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary pricing-cta" target="_blank">Deploy Now</a>
       </div>
 
       <!-- Starter -->
       <div class="pricing-card fade-up">
         <div class="pricing-plan">Starter</div>
         <div class="pricing-price">$19<span>/mo</span></div>
-        <div class="pricing-sub">For growing teams</div>
+        <div class="pricing-sub">Managed, for small teams</div>
         <ul class="pricing-list">
           <li>100k traces/month</li>
           <li>30-day retention</li>
           <li>5 projects</li>
           <li>Email alerts</li>
         </ul>
-        <a href="#waitlist" class="btn btn-ghost pricing-cta">Get Started</a>
+        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
       </div>
 
       <!-- Pro -->
-      <div class="pricing-card popular fade-up">
-        <div class="popular-badge">Most Popular</div>
+      <div class="pricing-card fade-up">
         <div class="pricing-plan">Pro</div>
         <div class="pricing-price">$79<span>/mo</span></div>
         <div class="pricing-sub">For production AI systems</div>
@@ -773,20 +871,19 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
           <li>1M traces/month</li>
           <li>90-day retention</li>
           <li>Unlimited projects</li>
-          <li>PII scrub + Session replay</li>
-          <li>Slack alerts</li>
+          <li>PII scrub + Slack alerts</li>
         </ul>
-        <a href="#waitlist" class="btn btn-primary pricing-cta">Get Started</a>
+        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
       </div>
 
       <!-- Enterprise -->
       <div class="pricing-card fade-up">
         <div class="pricing-plan">Enterprise</div>
         <div class="pricing-price" style="font-size:32px">Custom</div>
-        <div class="pricing-sub">For scale & compliance</div>
+        <div class="pricing-sub">Scale + compliance</div>
         <ul class="pricing-list">
           <li>Unlimited traces</li>
-          <li>Self-host option</li>
+          <li>Managed hosting</li>
           <li>SSO + SLA</li>
           <li>Dedicated support</li>
         </ul>
@@ -797,32 +894,22 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
   </div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════════ WAITLIST ═══ -->
-<section id="waitlist" class="section">
+<!-- CTA -->
+<section id="cta" class="section">
   <div class="container">
-    <div class="waitlist-inner fade-up">
-      <h2 class="waitlist-title">Start debugging your AI agents today.</h2>
-      <p class="waitlist-sub">Free forever for small projects. No credit card required.</p>
-      <form class="waitlist-form" id="waitlistForm">
-        <input
-          type="email"
-          class="waitlist-input"
-          id="waitlistEmail"
-          placeholder="you@company.com"
-          required
-          autocomplete="email"
-        />
-        <button type="submit" class="btn btn-primary">Create Free Account</button>
-      </form>
-      <div class="waitlist-msg" id="waitlistMsg"></div>
-      <div class="trust-badges">
-        🔒 SOC2 in progress &nbsp;·&nbsp; ✅ GDPR ready &nbsp;·&nbsp; 🚫 Data never sold
+    <div class="cta-inner fade-up">
+      <h2 class="cta-title">Start debugging your AI agents today.</h2>
+      <p class="cta-sub">Deploy in 2 minutes. Free forever. No vendor lock-in.</p>
+      <div class="cta-buttons">
+        <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary" target="_blank">View on GitHub</a>
+        <a href="https://github.com/farzanhossan/agentlens/blob/main/docs/deployment.md" class="btn btn-ghost" target="_blank">Deployment Guide</a>
       </div>
+      <p class="cta-note">MIT licensed &nbsp;&middot;&nbsp; Docker only &nbsp;&middot;&nbsp; No third-party accounts needed</p>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════ FOOTER ═══ -->
+<!-- FOOTER -->
 <footer>
   <div class="container">
     <div class="footer-inner">
@@ -835,36 +922,36 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
           </svg>
           AgentLens
         </div>
-        <div class="footer-logo-sub">Full visibility into every AI decision.</div>
+        <div class="footer-logo-sub">Open-source AI agent observability.</div>
       </div>
       <div class="footer-links">
         <a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a>
-        <a href="https://twitter.com/agentlens_ai" target="_blank">Twitter</a>
-        <a href="mailto:hello@agentlens.ai">Email</a>
+        <a href="https://github.com/farzanhossan/agentlens/blob/main/docs/deployment.md" target="_blank">Docs</a>
+        <a href="mailto:hello@agentlens.ai">Contact</a>
       </div>
       <div class="footer-right">
         <div class="footer-by">Built by Farzan Hossan</div>
-        <div class="footer-copy">© 2025 AgentLens. All rights reserved.</div>
+        <div class="footer-copy">&copy; 2025 AgentLens. MIT License.</div>
       </div>
     </div>
   </div>
 </footer>
 
 <script>
-  // ── highlight.js ──────────────────────────────────────────────────────────
+  // highlight.js
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('pre code').forEach((block) => {
       hljs.highlightElement(block);
     });
   });
 
-  // ── Nav scroll effect ─────────────────────────────────────────────────────
+  // Nav scroll effect
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 20);
   }, { passive: true });
 
-  // ── Intersection Observer — fade-up ───────────────────────────────────────
+  // Intersection Observer fade-up
   const fadeEls = document.querySelectorAll('.fade-up');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
@@ -876,32 +963,23 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
   }, { threshold: 0.12 });
   fadeEls.forEach(el => observer.observe(el));
 
-  // Hero elements visible immediately (above fold)
+  // Hero elements visible immediately
   document.querySelectorAll('#hero .fade-up').forEach(el => {
     setTimeout(() => el.classList.add('in'), 50);
   });
 
-  // ── Demo tabs ─────────────────────────────────────────────────────────────
-  const tabs   = document.querySelectorAll('.tab');
-  const panels = document.querySelectorAll('.tab-panel');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const idx = parseInt(tab.dataset.tab, 10);
-      tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
-      panels.forEach((p, i) => p.classList.toggle('active', i === idx));
-    });
-  });
-
-  // ── Terminal typewriter ───────────────────────────────────────────────────
+  // Terminal typewriter — shows proxy approach
   const termLines = [
-    { cls: 'cmd',    text: '$ npm install @farzanhossans/agentlens-core @farzanhossans/agentlens-openai' },
-    { cls: 'blank',  text: '' },
-    { cls: 'import', text: "import { AgentLens } from '@farzanhossans/agentlens-core'" },
-    { cls: 'import', text: "import '@farzanhossans/agentlens-openai'" },
-    { cls: 'blank',  text: '' },
-    { cls: 'method', text: "AgentLens.init({ apiKey: 'proj_xxx' })" },
-    { cls: 'blank',  text: '' },
-    { cls: 'success',text: '✓ Every LLM call is now traced' },
+    { cls: 'comment', text: '# Change one environment variable' },
+    { cls: 'blank',   text: '' },
+    { cls: 'cmd',     text: '$ export OPENAI_BASE_URL=\\' },
+    { cls: 'url',     text: '    http://localhost:8080/v1/p/my-project/openai' },
+    { cls: 'blank',   text: '' },
+    { cls: 'comment', text: '# Run your app normally' },
+    { cls: 'cmd',     text: '$ python my_agent.py' },
+    { cls: 'blank',   text: '' },
+    { cls: 'success', text: '\u2713 Every LLM call is now traced' },
+    { cls: 'success', text: '\u2713 Dashboard at http://localhost:3000' },
   ];
 
   function runTerminal() {
@@ -918,7 +996,6 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
           return;
         }
 
-        // Typewriter each character
         let charIdx = 0;
         span.textContent = '';
         container.appendChild(span);
@@ -935,7 +1012,6 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
           } else {
             clearInterval(interval);
             span.textContent = line.text;
-            // Remove cursor unless last line
             if (i === termLines.length - 1) {
               span.appendChild(cursor);
             }
@@ -945,81 +1021,15 @@ import '@farzanhossans/agentlens-anthropic'</code></pre>
         span.classList.add('visible');
       }, delay);
 
-      // Accumulate delay: typing time + gap
       const typingMs = line.text.length * 18;
       delay += (line.cls === 'blank') ? 120 : typingMs + 160;
     });
 
-    // Loop after completion
-    const totalDelay = delay + 3000;
+    const totalDelay = delay + 4000;
     setTimeout(runTerminal, totalDelay);
   }
 
-  // Start terminal after page load
   setTimeout(runTerminal, 600);
-
-  // ── Waitlist form ─────────────────────────────────────────────────────────
-  const API_URL = 'VITE_API_URL_PLACEHOLDER';
-  const form    = document.getElementById('waitlistForm');
-  const emailEl = document.getElementById('waitlistEmail');
-  const msgEl   = document.getElementById('waitlistMsg');
-
-  const STORAGE_KEY = 'agentlens_waitlist_submitted';
-
-  // Pre-fill if already submitted
-  if (localStorage.getItem(STORAGE_KEY)) {
-    msgEl.textContent = '🎉 You\'re already on the list! We\'ll be in touch soon.';
-    msgEl.className = 'waitlist-msg success';
-    emailEl.value = localStorage.getItem(STORAGE_KEY + '_email') || '';
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = emailEl.value.trim();
-
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      msgEl.textContent = 'Please enter a valid email address.';
-      msgEl.className = 'waitlist-msg error';
-      return;
-    }
-
-    // Duplicate check
-    if (localStorage.getItem(STORAGE_KEY)) {
-      msgEl.textContent = '🎉 You\'re already on the list!';
-      msgEl.className = 'waitlist-msg success';
-      return;
-    }
-
-    const btn = form.querySelector('button[type="submit"]');
-    btn.textContent = 'Joining...';
-    btn.disabled = true;
-
-    try {
-      const res = await fetch(`${API_URL}/waitlist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (res.status === 201 || res.status === 409) {
-        localStorage.setItem(STORAGE_KEY, '1');
-        localStorage.setItem(STORAGE_KEY + '_email', email);
-        msgEl.textContent = '🎉 You\'re on the list! We\'ll be in touch soon.';
-        msgEl.className = 'waitlist-msg success';
-        btn.textContent = '✓ Joined';
-      } else {
-        throw new Error('Server error');
-      }
-    } catch {
-      // Graceful degradation — still record locally if API is down
-      localStorage.setItem(STORAGE_KEY, '1');
-      localStorage.setItem(STORAGE_KEY + '_email', email);
-      msgEl.textContent = '🎉 You\'re on the list! We\'ll be in touch soon.';
-      msgEl.className = 'waitlist-msg success';
-      btn.textContent = '✓ Joined';
-    }
-  });
 </script>
 </body>
 </html>
