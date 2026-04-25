@@ -40,9 +40,10 @@ jobs:
               cp infra/.env.prod.example "$ENV_FILE"
             fi
 
-            # Update secrets from GitHub (idempotent — overwrites if present)
+            # Update secrets from GitHub (only overwrite if value is non-empty)
             set_env() {
               local key="$1" val="$2"
+              [ -z "$val" ] && return 0
               if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
                 sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
               else
@@ -52,8 +53,8 @@ jobs:
 
             set_env "JWT_SECRET"       "${{ secrets.JWT_SECRET }}"
             set_env "HMAC_SECRET"      "${{ secrets.HMAC_SECRET }}"
-            set_env "POSTGRES_PASSWORD" "${POSTGRES_PASSWORD:-agentlens}"
-            set_env "REDIS_PASSWORD"   "${REDIS_PASSWORD:-agentlens}"
+            set_env "POSTGRES_PASSWORD" "${{ secrets.POSTGRES_PASSWORD }}"
+            set_env "REDIS_PASSWORD"   "${{ secrets.REDIS_PASSWORD }}"
             set_env "RESEND_API_KEY"   "${{ secrets.RESEND_API_KEY }}"
             set_env "ALERT_EMAIL_FROM" "${{ secrets.ALERT_EMAIL_FROM }}"
             set_env "CORS_ORIGIN"      "${{ secrets.CORS_ORIGIN }}"
@@ -61,8 +62,24 @@ jobs:
             set_env "VITE_API_URL"     "${{ secrets.VITE_API_URL }}"
             set_env "VITE_WS_URL"      "${{ secrets.VITE_WS_URL }}"
 
+            # Verify required secrets exist in .env
+            for key in JWT_SECRET HMAC_SECRET; do
+              val=$(grep "^${key}=" "$ENV_FILE" | cut -d= -f2)
+              if [ -z "$val" ]; then
+                echo "❌ ERROR: ${key} is empty in .env. Add it as a GitHub secret."
+                exit 1
+              fi
+            done
+
+            # ── Detect docker compose version ────────────────────────
+            if docker compose version >/dev/null 2>&1; then
+              DC="docker compose"
+            else
+              DC="docker-compose"
+            fi
+
             # ── Bring up the full stack ──────────────────────────────
-            docker compose -f infra/docker-compose.prod.yml up -d --build --force-recreate
+            $DC -f infra/docker-compose.prod.yml up -d --build --force-recreate
 
             # ── Health checks ────────────────────────────────────────
             echo "Waiting for services to start..."
