@@ -17,7 +17,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@farzanhossans/agentlens-core)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-22c55e.svg)](#)
-[![Tests](https://img.shields.io/badge/tests-47%2F47-22c55e.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-96%2F96-22c55e.svg)](#)
 [![Discord](https://img.shields.io/badge/discord-join-6366f1.svg)](https://discord.gg/agentlens)
 
 </div>

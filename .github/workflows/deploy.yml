@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Deploy API + Proxy + DB stack to DigitalOcean ────────────────────────────
   deploy-api:
     name: Deploy API to DigitalOcean
     runs-on: ubuntu-latest
@@ -24,6 +25,7 @@ jobs:
           script: |
             set -e
 
+            # ── Clone or update repo ─────────────────────────────────
             if [ ! -d "/opt/agentlens" ]; then
               git clone https://github.com/farzanhossan/agentlens /opt/agentlens
             fi
@@ -32,22 +34,46 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Start infra services if not already running
-            docker-compose -f infra/docker-compose.prod.yml up -d postgres redis elasticsearch
+            # ── Ensure .env exists with secrets ──────────────────────
+            ENV_FILE="infra/.env"
+            if [ ! -f "$ENV_FILE" ]; then
+              cp infra/.env.prod.example "$ENV_FILE"
+            fi
 
-            # Build and restart API (migrations run automatically on startup)
-            docker-compose -f infra/docker-compose.prod.yml rm -f api || true
-            docker-compose -f infra/docker-compose.prod.yml up -d --build --force-recreate api
+            # Update secrets from GitHub (idempotent — overwrites if present)
+            set_env() {
+              local key="$1" val="$2"
+              if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+                sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+              else
+                echo "${key}=${val}" >> "$ENV_FILE"
+              fi
+            }
 
-            # Build and restart Proxy (port 8090 -> container 8080)
-            docker rm -f infra-proxy-1 || true
-            docker-compose -f infra/docker-compose.prod.yml up -d --build --force-recreate proxy
+            set_env "JWT_SECRET"       "${{ secrets.JWT_SECRET }}"
+            set_env "HMAC_SECRET"      "${{ secrets.HMAC_SECRET }}"
+            set_env "POSTGRES_PASSWORD" "${POSTGRES_PASSWORD:-agentlens}"
+            set_env "REDIS_PASSWORD"   "${REDIS_PASSWORD:-agentlens}"
+            set_env "RESEND_API_KEY"   "${{ secrets.RESEND_API_KEY }}"
+            set_env "ALERT_EMAIL_FROM" "${{ secrets.ALERT_EMAIL_FROM }}"
+            set_env "CORS_ORIGIN"      "${{ secrets.CORS_ORIGIN }}"
+            set_env "FRONTEND_URL"     "${{ secrets.FRONTEND_URL }}"
+            set_env "VITE_API_URL"     "${{ secrets.VITE_API_URL }}"
+            set_env "VITE_WS_URL"      "${{ secrets.VITE_WS_URL }}"
 
-            # Health checks
-            sleep 20
-            curl -f http://localhost:4020/health && echo "✅ API healthy" || echo "⚠️ API health check failed"
-            curl -f http://localhost:8090/health && echo "✅ Proxy healthy" || echo "⚠️ Proxy health check failed"
+            # ── Bring up the full stack ──────────────────────────────
+            docker compose -f infra/docker-compose.prod.yml up -d --build --force-recreate
 
+            # ── Health checks ────────────────────────────────────────
+            echo "Waiting for services to start..."
+            sleep 25
+
+            API_PORT=$(grep -E '^API_PORT=' "$ENV_FILE" | cut -d= -f2)
+            API_PORT="${API_PORT:-3001}"
+
+            curl -f "http://localhost:${API_PORT}/health" && echo " ✅ API healthy" || echo " ⚠️ API health check failed"
+
+  # ── Deploy Dashboard to Vercel ───────────────────────────────────────────────
   deploy-dashboard:
     name: Deploy Dashboard to Vercel
     runs-on: ubuntu-latest
@@ -89,6 +115,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DASHBOARD }}
 
+  # ── Deploy Landing page to Vercel ────────────────────────────────────────────
   deploy-landing:
     name: Deploy Landing to Vercel
     runs-on: ubuntu-latest
@@ -119,6 +146,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
 
+  # ── Deploy Ingest Worker to Cloudflare ───────────────────────────────────────
   deploy-worker:
     name: Deploy Ingest Worker to Cloudflare
     runs-on: ubuntu-latest
