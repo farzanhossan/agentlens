@@ -254,10 +254,10 @@ docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens llen
 | `API_PORT` | `4020` | Host port for the API |
 | `DASHBOARD_PORT` | `4021` | Host port for the dashboard |
 | `PROXY_PORT` | `8090` | Host port for the SDK proxy |
-| `CORS_ORIGIN` | `http://localhost:4021` | Allowed CORS origin |
-| `FRONTEND_URL` | `http://localhost:4021` | Used in email links |
-| `VITE_API_URL` | `http://localhost:4020` | API URL baked into dashboard at build time |
-| `VITE_WS_URL` | `http://localhost:4020` | WebSocket URL baked into dashboard |
+| `CORS_ORIGIN` | **(required)** | Allowed CORS origin (e.g. `http://localhost:4021` or your domain) |
+| `FRONTEND_URL` | **(required)** | Used in email links (e.g. `http://localhost:4021` or your domain) |
+| `VITE_API_URL` | **(required)** | API URL baked into dashboard at build time |
+| `VITE_WS_URL` | **(required)** | WebSocket URL baked into dashboard |
 | `RESEND_API_KEY` | *(empty)* | Optional — for email alerts |
 | `ALERT_EMAIL_FROM` | *(empty)* | Optional — sender address for alerts |
 

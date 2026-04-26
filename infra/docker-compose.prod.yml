@@ -29,7 +29,7 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      PORT: "3000"
+      PORT: "${API_PORT:-4020}"
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-agentlens}:${POSTGRES_PASSWORD:-agentlens}@postgres:5432/${POSTGRES_DB:-agentlens}
       DATABASE_SSL: "false"
@@ -41,12 +41,18 @@ services:
       ELASTICSEARCH_PASSWORD: ""
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       HMAC_SECRET: ${HMAC_SECRET:?Set HMAC_SECRET in .env}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:${DASHBOARD_PORT:-4021}}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${DASHBOARD_PORT:-4021}}
+      CORS_ORIGIN: ${CORS_ORIGIN:?Set CORS_ORIGIN in .env}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL in .env}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
     ports:
-      - "${API_PORT:-4020}:3000"
+      - "${API_PORT:-4020}:${API_PORT:-4020}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-4020}/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     networks:
       - agentlens-prod
 
@@ -55,8 +61,8 @@ services:
       context: ..
       dockerfile: apps/dashboard/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:${API_PORT:-4020}}
-        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:${API_PORT:-4020}}
+        VITE_API_URL: ${VITE_API_URL:?Set VITE_API_URL in .env}
+        VITE_WS_URL: ${VITE_WS_URL:?Set VITE_WS_URL in .env}
     restart: always
     depends_on:
       api:
@@ -72,11 +78,17 @@ services:
       dockerfile: apps/proxy/Dockerfile
     restart: always
     environment:
-      AGENTLENS_INGEST_URL: http://api:3000/v1/spans
-      PORT: "8080"
+      AGENTLENS_INGEST_URL: http://api:${API_PORT:-4020}/v1/spans
+      PORT: "${PROXY_PORT:-8090}"
       LOG_LEVEL: info
     ports:
-      - "${PROXY_PORT:-8090}:8080"
+      - "${PROXY_PORT:-8090}:${PROXY_PORT:-8090}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PROXY_PORT:-8090}/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
     depends_on:
       api:
         condition: service_started
