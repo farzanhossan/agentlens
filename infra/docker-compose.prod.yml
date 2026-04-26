@@ -33,9 +33,7 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-agentlens}:${POSTGRES_PASSWORD:-agentlens}@postgres:5432/${POSTGRES_DB:-agentlens}
       DATABASE_SSL: "false"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-agentlens}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-agentlens}@redis:6379
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_USERNAME: elastic
       ELASTICSEARCH_PASSWORD: ""
