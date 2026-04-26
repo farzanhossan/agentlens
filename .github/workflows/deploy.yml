@@ -57,10 +57,13 @@ jobs:
             set_env "REDIS_PASSWORD"   "agentlens"
             set_env "RESEND_API_KEY"   "${{ secrets.RESEND_API_KEY }}"
             set_env "ALERT_EMAIL_FROM" "${{ secrets.ALERT_EMAIL_FROM }}"
-            set_env "CORS_ORIGIN"      "https://project-crqpe.vercel.app,http://localhost:5173,http://localhost:3000"
+            set_env "CORS_ORIGIN"      "https://project-crqpe.vercel.app,http://localhost:5173,http://localhost:4021"
             set_env "FRONTEND_URL"     "https://project-crqpe.vercel.app"
             set_env "VITE_API_URL"     "https://api-agentlens.techmatbd.com"
             set_env "VITE_WS_URL"      "https://api-agentlens.techmatbd.com"
+            set_env "API_PORT"         "4020"
+            set_env "DASHBOARD_PORT"   "4021"
+            set_env "PROXY_PORT"       "8090"
 
             # ── Detect docker compose version ────────────────────────
             if docker compose version >/dev/null 2>&1; then

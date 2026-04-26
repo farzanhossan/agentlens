@@ -44,10 +44,10 @@ Wait ~60 seconds for Elasticsearch to initialise, then open:
 
 | Service | URL |
 |---------|-----|
-| Dashboard | http://localhost:3000 |
-| API | http://localhost:3001 |
-| API Health | http://localhost:3001/health |
-| Proxy (SDK endpoint) | http://localhost:8080 |
+| Dashboard | http://localhost:4021 |
+| API | http://localhost:4020 |
+| API Health | http://localhost:4020/health |
+| Proxy (SDK endpoint) | http://localhost:8090 |
 
 That's it — AgentLens is running.
 
@@ -75,9 +75,9 @@ AgentLens.init({
 Edit `infra/.env`:
 
 ```env
-API_PORT=3001
-DASHBOARD_PORT=3000
-PROXY_PORT=8080
+API_PORT=4020
+DASHBOARD_PORT=4021
+PROXY_PORT=8090
 ```
 
 ### Using a custom domain (with reverse proxy)
@@ -115,7 +115,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/api.yourdomain.com/privkey.pem;
 
     location / {
-        proxy_pass         http://127.0.0.1:3001;
+        proxy_pass         http://127.0.0.1:4020;
         proxy_http_version 1.1;
         proxy_set_header   Upgrade $http_upgrade;
         proxy_set_header   Connection "upgrade";
@@ -136,7 +136,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/app.yourdomain.com/privkey.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:4021;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -214,7 +214,7 @@ gunzip -c /backups/agentlens_2025-01-15.sql.gz | \
 
 ```bash
 # API health
-curl http://localhost:3001/health
+curl http://localhost:4020/health
 
 # All container status
 docker compose -f docker-compose.prod.yml ps
@@ -251,13 +251,13 @@ docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens llen
 | `POSTGRES_USER` | `agentlens` | PostgreSQL username |
 | `POSTGRES_PASSWORD` | `agentlens` | PostgreSQL password (change for production!) |
 | `REDIS_PASSWORD` | `agentlens` | Redis password (change for production!) |
-| `API_PORT` | `3001` | Host port for the API |
-| `DASHBOARD_PORT` | `3000` | Host port for the dashboard |
-| `PROXY_PORT` | `8080` | Host port for the SDK proxy |
-| `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
-| `FRONTEND_URL` | `http://localhost:3000` | Used in email links |
-| `VITE_API_URL` | `http://localhost:3001` | API URL baked into dashboard at build time |
-| `VITE_WS_URL` | `http://localhost:3001` | WebSocket URL baked into dashboard |
+| `API_PORT` | `4020` | Host port for the API |
+| `DASHBOARD_PORT` | `4021` | Host port for the dashboard |
+| `PROXY_PORT` | `8090` | Host port for the SDK proxy |
+| `CORS_ORIGIN` | `http://localhost:4021` | Allowed CORS origin |
+| `FRONTEND_URL` | `http://localhost:4021` | Used in email links |
+| `VITE_API_URL` | `http://localhost:4020` | API URL baked into dashboard at build time |
+| `VITE_WS_URL` | `http://localhost:4020` | WebSocket URL baked into dashboard |
 | `RESEND_API_KEY` | *(empty)* | Optional — for email alerts |
 | `ALERT_EMAIL_FROM` | *(empty)* | Optional — sender address for alerts |
 

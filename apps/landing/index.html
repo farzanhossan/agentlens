@@ -620,7 +620,7 @@
           <span class="dim"># Before</span><br/>
           OPENAI_BASE_URL=<span class="hl">https://api.openai.com</span><br/><br/>
           <span class="dim"># After</span><br/>
-          OPENAI_BASE_URL=<span class="grn">http://localhost:8080/v1/p/{id}/openai</span>
+          OPENAI_BASE_URL=<span class="grn">http://localhost:8090/v1/p/{id}/openai</span>
         </div>
       </div>
 
@@ -741,9 +741,9 @@ openssl rand -hex 32  <span class="dim"># paste as HMAC_SECRET</span>
 <span class="dim"># Start everything</span>
 docker compose -f docker-compose.prod.yml up -d --build
 
-<span class="grn"># Dashboard  http://localhost:3000</span>
-<span class="grn"># API        http://localhost:3001</span>
-<span class="grn"># Proxy      http://localhost:8080</span></pre>
+<span class="grn"># Dashboard  http://localhost:4021</span>
+<span class="grn"># API        http://localhost:4020</span>
+<span class="grn"># Proxy      http://localhost:8090</span></pre>
       </div>
     </div>
   </div>
@@ -973,13 +973,13 @@ docker compose -f docker-compose.prod.yml up -d --build
     { cls: 'comment', text: '# Change one environment variable' },
     { cls: 'blank',   text: '' },
     { cls: 'cmd',     text: '$ export OPENAI_BASE_URL=\\' },
-    { cls: 'url',     text: '    http://localhost:8080/v1/p/my-project/openai' },
+    { cls: 'url',     text: '    http://localhost:8090/v1/p/my-project/openai' },
     { cls: 'blank',   text: '' },
     { cls: 'comment', text: '# Run your app normally' },
     { cls: 'cmd',     text: '$ python my_agent.py' },
     { cls: 'blank',   text: '' },
     { cls: 'success', text: '\u2713 Every LLM call is now traced' },
-    { cls: 'success', text: '\u2713 Dashboard at http://localhost:3000' },
+    { cls: 'success', text: '\u2713 Dashboard at http://localhost:4021' },
   ];
 
   function runTerminal() {

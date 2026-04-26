@@ -9,9 +9,9 @@ version: "3.9"
 #   3. docker compose -f docker-compose.prod.yml up -d --build
 #
 # Services exposed:
-#   - API:       http://localhost:3001
-#   - Dashboard: http://localhost:3000
-#   - Proxy:     http://localhost:8080
+#   - API:       http://localhost:4020
+#   - Dashboard: http://localhost:4021
+#   - Proxy:     http://localhost:8090
 # ============================================================================
 
 services:
@@ -41,12 +41,12 @@ services:
       ELASTICSEARCH_PASSWORD: ""
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       HMAC_SECRET: ${HMAC_SECRET:?Set HMAC_SECRET in .env}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4021}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4021}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
     ports:
-      - "${API_PORT:-3001}:3000"
+      - "${API_PORT:-4020}:3000"
     networks:
       - agentlens-prod
 
@@ -55,14 +55,14 @@ services:
       context: ..
       dockerfile: apps/dashboard/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
-        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3001}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4020}
+        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:4020}
     restart: always
     depends_on:
       api:
         condition: service_started
     ports:
-      - "${DASHBOARD_PORT:-3000}:80"
+      - "${DASHBOARD_PORT:-4021}:80"
     networks:
       - agentlens-prod
 

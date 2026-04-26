@@ -44,7 +44,7 @@ Just change your base URL. That's it. No SDK, no imports, no wrappers.
 OPENAI_BASE_URL=https://api.openai.com
 
 # After — route through AgentLens proxy
-OPENAI_BASE_URL=http://localhost:8080/v1/p/{projectId}/openai
+OPENAI_BASE_URL=http://localhost:8090/v1/p/{projectId}/openai
 ```
 
 Every request is forwarded to OpenAI (or Anthropic), and AgentLens automatically captures the trace, tokens, cost, latency, and full input/output — then shows it all in the dashboard.
@@ -152,9 +152,9 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 | Service | URL |
 |---------|-----|
-| Dashboard | http://localhost:3000 |
-| API | http://localhost:3001 |
-| Proxy | http://localhost:8080 |
+| Dashboard | http://localhost:4021 |
+| API | http://localhost:4020 |
+| Proxy | http://localhost:8090 |
 
 **Requirements:** Docker, 4 GB RAM.
 
