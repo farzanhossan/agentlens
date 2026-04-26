@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { listProjects, type ProjectResponse } from '../lib/api';
 
 interface NavItem {
   to: string;
@@ -56,6 +58,88 @@ function ProjectsIcon(): React.JSX.Element {
   );
 }
 
+function ChevronUpDownIcon(): React.JSX.Element {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4M8 15l4 4 4-4" />
+    </svg>
+  );
+}
+
+function CheckIcon(): React.JSX.Element {
+  return (
+    <svg className="w-3.5 h-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function ProjectSelector({ activeProjectId, onSwitch }: {
+  activeProjectId: string;
+  onSwitch: (id: string) => void;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: projects } = useQuery<ProjectResponse[]>({
+    queryKey: ['projects'],
+    queryFn: listProjects,
+    staleTime: 30_000,
+  });
+
+  const activeProject = projects?.find((p) => p.id === activeProjectId);
+  const label = activeProject?.name ?? activeProjectId.slice(0, 8) + '...';
+
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open, handleClickOutside]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full gap-2 px-3 py-2 rounded-md text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <ProjectsIcon />
+          <span className="truncate font-medium">{label}</span>
+        </div>
+        <ChevronUpDownIcon />
+      </button>
+
+      {open && projects && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+          <div className="px-3 py-2 border-b border-gray-700">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Projects</p>
+          </div>
+          {projects.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => { onSwitch(p.id); setOpen(false); }}
+              className={`flex items-center justify-between w-full px-3 py-2.5 text-sm transition-colors ${
+                p.id === activeProjectId
+                  ? 'bg-brand-600/10 text-brand-400'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium">{p.name}</p>
+                <p className="text-xs text-gray-500 font-mono truncate">{p.id.slice(0, 12)}...</p>
+              </div>
+              {p.id === activeProjectId && <CheckIcon />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LogoutIcon(): React.JSX.Element {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,10 +182,18 @@ function usePageTitle(): string {
 export function Layout(): React.JSX.Element {
   const pageTitle = usePageTitle();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Read from localStorage at render time (not build-time env var)
-  const projectId = localStorage.getItem('agentlens_project_id') ?? '';
+  const [projectId, setProjectId] = useState(
+    () => localStorage.getItem('agentlens_project_id') ?? ''
+  );
   const shortId = projectId ? projectId.slice(0, 8) + '...' : '(not set)';
+
+  function switchProject(id: string): void {
+    localStorage.setItem('agentlens_project_id', id);
+    setProjectId(id);
+    queryClient.invalidateQueries();
+  }
 
   function handleLogout(): void {
     localStorage.removeItem('agentlens_token');
@@ -158,12 +250,9 @@ export function Layout(): React.JSX.Element {
           </div>
         </nav>
 
-        {/* Project ID + Logout */}
-        <div className="px-4 py-3 border-t border-gray-800 space-y-2">
-          <div>
-            <p className="text-xs text-gray-600 mb-0.5">Project</p>
-            <p className="text-xs text-gray-400 font-mono truncate" title={projectId}>{shortId}</p>
-          </div>
+        {/* Project selector + Logout */}
+        <div className="px-2 py-3 border-t border-gray-800 space-y-1">
+          <ProjectSelector activeProjectId={projectId} onSwitch={switchProject} />
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors"
@@ -179,10 +268,7 @@ export function Layout(): React.JSX.Element {
         {/* Topbar */}
         <header className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 shrink-0">
           <span className="text-sm font-semibold text-gray-200 flex-1">{pageTitle}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Project:</span>
-            <span className="text-xs text-gray-400 font-mono" title={projectId}>{shortId}</span>
-          </div>
+          <span className="text-xs text-gray-500 font-mono" title={projectId}>{shortId}</span>
         </header>
 
         {/* Page content */}
