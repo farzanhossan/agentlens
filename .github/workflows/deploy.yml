@@ -69,8 +69,11 @@ jobs:
               DC="docker-compose"
             fi
 
+            # ── Stop old containers to free ports ────────────────────
+            $DC -f infra/docker-compose.prod.yml down --remove-orphans || true
+
             # ── Bring up the full stack ──────────────────────────────
-            $DC -f infra/docker-compose.prod.yml up -d --build --force-recreate
+            $DC -f infra/docker-compose.prod.yml up -d --build
 
             # ── Health checks ────────────────────────────────────────
             echo "Waiting for services to start..."
