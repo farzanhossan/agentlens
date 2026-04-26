@@ -41,8 +41,8 @@ services:
       ELASTICSEARCH_PASSWORD: ""
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       HMAC_SECRET: ${HMAC_SECRET:?Set HMAC_SECRET in .env}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4021}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4021}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:${DASHBOARD_PORT:-4021}}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${DASHBOARD_PORT:-4021}}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
     ports:
@@ -55,8 +55,8 @@ services:
       context: ..
       dockerfile: apps/dashboard/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:4020}
-        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:4020}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:${API_PORT:-4020}}
+        VITE_WS_URL: ${VITE_WS_URL:-http://localhost:${API_PORT:-4020}}
     restart: always
     depends_on:
       api:
