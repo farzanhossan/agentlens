@@ -48,7 +48,7 @@ services:
     ports:
       - "${API_PORT:-4020}:${API_PORT:-4020}"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-4020}/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:$${PORT}/health || exit 1"]
       interval: 30s
       timeout: 5s
       start_period: 15s
@@ -84,7 +84,7 @@ services:
     ports:
       - "${PROXY_PORT:-8090}:${PROXY_PORT:-8090}"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PROXY_PORT:-8090}/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:$${PORT}/health || exit 1"]
       interval: 15s
       timeout: 5s
       start_period: 5s
