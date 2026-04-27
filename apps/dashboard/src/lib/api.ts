@@ -13,6 +13,7 @@ import type {
   AlertFiring,
   CreateAlertPayload,
   OverviewData,
+  SystemHealth,
 } from './types';
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
@@ -192,6 +193,21 @@ export async function deleteProject(projectId: string): Promise<void> {
 
 export async function rotateProjectKey(projectId: string): Promise<ProjectWithKey> {
   const res = await api.post<ProjectWithKey>(`/projects/${projectId}/rotate-key`);
+  return res.data;
+}
+
+export async function updateProject(
+  projectId: string,
+  data: { name?: string; description?: string; retentionDays?: number },
+): Promise<ProjectResponse> {
+  const res = await api.patch<ProjectResponse>(`/projects/${projectId}`, data);
+  return res.data;
+}
+
+// ── System Health ────────────────────────────────────────────────────────────
+
+export async function fetchSystemHealth(): Promise<SystemHealth> {
+  const res = await api.get<SystemHealth>('/system/health');
   return res.data;
 }
 

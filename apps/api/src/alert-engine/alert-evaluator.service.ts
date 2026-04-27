@@ -1,9 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
 import { AlertEntity, AlertType, AlertFiringEntity, DeliveryStatus, ProjectEntity } from '../database/entities/index.js';
+import { ElasticsearchService, type AlertMetricType } from '../span-processor/elasticsearch/elasticsearch.service.js';
 import type { NotificationJobData } from './notification.processor.js';
 import { AlertStateService } from './alert-state.service.js';
 
@@ -11,6 +12,12 @@ interface MetricRow {
   project_id: string;
   value: string;
 }
+
+const ALERT_TYPE_TO_ES_METRIC: Partial<Record<AlertType, AlertMetricType>> = {
+  [AlertType.ERROR_RATE]: 'error_rate',
+  [AlertType.COST_SPIKE]: 'cost_spike',
+  [AlertType.LATENCY_P95]: 'latency_p95',
+};
 
 /**
  * Core evaluation logic for the alert engine.
@@ -33,6 +40,8 @@ export class AlertEvaluatorService {
     private readonly alertState: AlertStateService,
     @InjectQueue('notification-dispatch')
     private readonly notificationQueue: Queue<NotificationJobData>,
+    @Optional()
+    private readonly esService?: ElasticsearchService,
   ) {}
 
   /**
@@ -155,6 +164,17 @@ export class AlertEvaluatorService {
   ): Promise<Map<string, number>> {
     if (projectIds.length === 0) return new Map();
 
+    // Try ES for span-based metrics (error_rate, cost_spike, latency_p95)
+    const esMetricType = ALERT_TYPE_TO_ES_METRIC[type];
+    if (esMetricType && this.esService) {
+      try {
+        return await this.esService.getAlertMetrics(esMetricType, projectIds);
+      } catch (err) {
+        this.logger.warn(`ES alert metrics failed for ${type}, falling back to PG: ${String(err)}`);
+      }
+    }
+
+    // Postgres fallback (always used for FAILURE type)
     switch (type) {
       case AlertType.ERROR_RATE:
         return this.fetchErrorRateMetrics(projectIds, ds);

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { listProjects, type ProjectResponse } from '../lib/api';
+import { listProjects, fetchSystemHealth, type ProjectResponse } from '../lib/api';
+import type { SystemHealth } from '../lib/types';
 
 interface NavItem {
   to: string;
@@ -148,6 +149,31 @@ function LogoutIcon(): React.JSX.Element {
   );
 }
 
+function HealthIndicator(): React.JSX.Element {
+  const { data } = useQuery<SystemHealth>({
+    queryKey: ['system-health'],
+    queryFn: fetchSystemHealth,
+    refetchInterval: 60_000,
+    retry: 1,
+  });
+
+  const esUp = data?.elasticsearch === 'connected';
+  const dotColor = esUp ? 'bg-green-500' : 'bg-yellow-500';
+  const label = esUp ? 'Systems OK' : 'Degraded';
+  const tooltip = esUp
+    ? 'All systems operational'
+    : 'Elasticsearch unavailable — analytics falling back to database';
+
+  return (
+    <div className="px-5 py-2 border-b border-gray-800" title={tooltip}>
+      <div className="flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
+        <span className="text-xs text-gray-500">{label}</span>
+      </div>
+    </div>
+  );
+}
+
 const mainNavItems: NavItem[] = [
   { to: '/overview', label: 'Overview', icon: <OverviewIcon /> },
   { to: '/traces', label: 'Traces', icon: <TracesIcon /> },
@@ -209,6 +235,9 @@ export function Layout(): React.JSX.Element {
         <div className="px-5 py-5 border-b border-gray-800">
           <span className="text-lg font-bold text-brand-500 tracking-tight">AgentLens</span>
         </div>
+
+        {/* Health indicator */}
+        <HealthIndicator />
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-3 flex flex-col">

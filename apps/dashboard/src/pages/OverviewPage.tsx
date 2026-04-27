@@ -156,6 +156,35 @@ export function OverviewPage(): React.JSX.Element {
           )}
         </div>
 
+        {/* Error Clusters (ES-powered) */}
+        {data.errorClusters && data.errorClusters.length > 0 && (
+          <div className="md:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+              Error Patterns
+            </h2>
+            <div className="space-y-3">
+              {data.errorClusters.map((cluster) => (
+                <div
+                  key={cluster.pattern}
+                  className="bg-gray-800/50 border border-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition-colors"
+                  onClick={() => void navigate(`/traces/${cluster.traceIds[0]}`)}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-red-400 truncate flex-1">{cluster.pattern}</p>
+                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-900/50 text-red-300 rounded-full whitespace-nowrap">
+                      {cluster.count}x
+                    </span>
+                  </div>
+                  <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                    {cluster.models.length > 0 && <span>{cluster.models.join(', ')}</span>}
+                    <span>{timeAgo(cluster.lastSeen)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Recent errors */}
         <div className="md:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">

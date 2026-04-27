@@ -68,6 +68,23 @@ export class RecentErrorDto {
   startedAt!: string;
 }
 
+export class ErrorClusterDto {
+  @ApiProperty()
+  pattern!: string;
+
+  @ApiProperty()
+  count!: number;
+
+  @ApiProperty({ type: [String] })
+  traceIds!: string[];
+
+  @ApiProperty({ type: [String] })
+  models!: string[];
+
+  @ApiProperty()
+  lastSeen!: string;
+}
+
 export class OverviewDto {
   @ApiProperty()
   totalRequests!: number;
@@ -107,4 +124,7 @@ export class OverviewDto {
 
   @ApiProperty({ type: () => [RecentErrorDto] })
   recentErrors!: RecentErrorDto[];
+
+  @ApiPropertyOptional({ type: () => [ErrorClusterDto] })
+  errorClusters?: ErrorClusterDto[];
 }

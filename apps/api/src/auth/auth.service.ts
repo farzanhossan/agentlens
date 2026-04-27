@@ -31,7 +31,7 @@ export class AuthService {
     const org = this.orgRepo.create({
       name: dto.orgName,
       slug: dto.orgSlug,
-      plan: OrgPlan.FREE,
+      plan: OrgPlan.SELF_HOSTED,
     });
     const savedOrg = await this.orgRepo.save(org);
 

@@ -52,6 +52,11 @@ export class Tracer {
 
     const span = new Span(spanId, traceId, name, this.projectId, parentSpanId);
 
+    // Root spans (no parent) carry the agent name for ES aggregations
+    if (!parentSpanId) {
+      span.setAgentName(name);
+    }
+
     const ctx = { traceId, currentSpanId: spanId };
 
     return runWithTrace(ctx, async () => {

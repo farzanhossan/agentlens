@@ -59,7 +59,14 @@ describe('OverviewService', () => {
     });
 
     const traceRepo = makeTraceRepoMock(2);
-    const service = new OverviewService(ds, traceRepo);
+    const esService = {
+      getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')),
+      getHourlyVolume: jest.fn().mockRejectedValue(new Error('no ES')),
+      getModelUsage: jest.fn().mockRejectedValue(new Error('no ES')),
+      getTopAgents: jest.fn().mockRejectedValue(new Error('no ES')),
+      getRecentErrors: jest.fn().mockRejectedValue(new Error('no ES')),
+    } as any;
+    const service = new OverviewService(ds, traceRepo, esService);
     const result = await service.getOverview('project-1', 24);
 
     expect(result.totalRequests).toBe(100);

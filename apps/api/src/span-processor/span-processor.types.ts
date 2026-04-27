@@ -14,6 +14,8 @@ export interface RawSpanData {
   input?: string;
   /** LLM completion text — stored only in Elasticsearch, never in PostgreSQL. */
   output?: string;
+  /** Agent name sent by SDKs/proxy for ES aggregations. */
+  agentName?: string;
   inputTokens?: number;
   outputTokens?: number;
   costUsd?: number;
@@ -33,6 +35,8 @@ export interface RawSpanData {
 export interface ProcessedSpan extends RawSpanData {
   /** Computed by model-pricing.ts; undefined if model is unknown. */
   costUsd: number | undefined;
+  /** Denormalized from the parent trace for ES agent-level aggregations. */
+  agentName?: string;
 }
 
 /** Shape of a BullMQ job pushed by the ingest worker. */

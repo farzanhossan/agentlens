@@ -23,6 +23,7 @@ export class Span {
   private _latencyMs?: number;
   private _status: SpanStatus = 'success';
   private _errorMessage?: string;
+  private _agentName?: string;
   private _metadata: Record<string, unknown> = {};
   private _endedAt?: Date;
 
@@ -64,6 +65,12 @@ export class Span {
   /** Attaches a free-form metadata key-value pair to this span. */
   setMetadata(key: string, value: unknown): this {
     this._metadata[key] = value;
+    return this;
+  }
+
+  /** Sets the agent name (used for ES aggregations). */
+  setAgentName(name: string): this {
+    this._agentName = name;
     return this;
   }
 
@@ -122,6 +129,7 @@ export class Span {
       startedAt: this._startedAt.toISOString(),
     };
 
+    if (this._agentName !== undefined) data.agentName = this._agentName;
     if (this._parentSpanId !== undefined) data.parentSpanId = this._parentSpanId;
     if (this._model !== undefined) data.model = this._model;
     if (this._provider !== undefined) data.provider = this._provider;

@@ -98,7 +98,7 @@ describe('Auth → Projects (e2e)', () => {
 
     expect(res.body.name).toBe('Test Org');
     expect(res.body.slug).toBe('test-org');
-    expect(res.body.plan).toBe('free');
+    expect(res.body.plan).toBe('self_hosted');
   });
 
   it('POST /projects — creates project and returns API key', async () => {

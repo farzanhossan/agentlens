@@ -152,6 +152,14 @@ export interface RecentError {
   startedAt: string;
 }
 
+export interface ErrorCluster {
+  pattern: string;
+  count: number;
+  traceIds: string[];
+  models: string[];
+  lastSeen: string;
+}
+
 export interface OverviewData {
   totalRequests: number;
   totalRequestsPrev: number;
@@ -166,6 +174,12 @@ export interface OverviewData {
   modelUsage: ModelUsage[];
   topAgents: TopAgent[];
   recentErrors: RecentError[];
+  errorClusters?: ErrorCluster[];
+}
+
+// System Health
+export interface SystemHealth {
+  elasticsearch: 'connected' | 'unavailable';
 }
 
 // Live Feed entry

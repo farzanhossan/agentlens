@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { SpanEntity, TraceEntity } from '../../database/entities/index.js';
+import { ElasticsearchService } from '../../span-processor/elasticsearch/elasticsearch.service.js';
+import { withEsFallback } from '../../shared/es-fallback.js';
 import {
   ListTracesQueryDto,
   PaginatedDto,
@@ -25,6 +27,8 @@ function decodeCursor(cursor: string): CursorPayload {
 
 @Injectable()
 export class TracesService {
+  private readonly logger = new Logger(TracesService.name);
+
   constructor(
     @InjectRepository(TraceEntity)
     private readonly traceRepo: Repository<TraceEntity>,
@@ -32,6 +36,7 @@ export class TracesService {
     private readonly spanRepo: Repository<SpanEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly esService: ElasticsearchService,
   ) {}
 
   async listTraces(
@@ -39,6 +44,23 @@ export class TracesService {
     query: ListTracesQueryDto,
   ): Promise<PaginatedDto<TraceSummaryDto>> {
     const limit = query.limit ?? 20;
+
+    // Resolve full-text search via ES (falls back to agentName ILIKE)
+    let esTraceIds: string[] | null = null;
+    let searchFallback = false;
+    if (query.search) {
+      try {
+        const esResult = await this.esService.searchSpans(projectId, query.search, 0, 200);
+        const ids = [...new Set(esResult.hits.map((h) => h._source.traceId))];
+        if (ids.length > 0) {
+          esTraceIds = ids;
+        } else {
+          searchFallback = true;
+        }
+      } catch {
+        searchFallback = true;
+      }
+    }
 
     // Build the count query (no cursor, same filters)
     const countQb = this.traceRepo
@@ -54,9 +76,11 @@ export class TracesService {
       });
     }
     if (query.search) {
-      countQb.andWhere('t.agentName ILIKE :search', {
-        search: `%${query.search}%`,
-      });
+      if (esTraceIds) {
+        countQb.andWhere('t.id IN (:...esTraceIds)', { esTraceIds });
+      } else if (searchFallback) {
+        countQb.andWhere('t.agentName ILIKE :search', { search: `%${query.search}%` });
+      }
     }
     if (query.dateFrom) {
       countQb.andWhere('t.startedAt >= :dateFrom', { dateFrom: query.dateFrom });
@@ -99,9 +123,11 @@ export class TracesService {
       });
     }
     if (query.search) {
-      dataQb.andWhere('t.agentName ILIKE :search', {
-        search: `%${query.search}%`,
-      });
+      if (esTraceIds) {
+        dataQb.andWhere('t.id IN (:...esTraceIds)', { esTraceIds });
+      } else if (searchFallback) {
+        dataQb.andWhere('t.agentName ILIKE :search', { search: `%${query.search}%` });
+      }
     }
     if (query.dateFrom) {
       dataQb.andWhere('t.startedAt >= :dateFrom', { dateFrom: query.dateFrom });
@@ -200,47 +226,44 @@ export class TracesService {
   }
 
   async getStats(projectId: string, dateFrom: string, dateTo: string): Promise<TraceStatsDto> {
-    const result = await this.dataSource.query<
-      Array<{
-        total_traces: string;
-        success_count: string;
-        error_count: string;
-        avg_latency_ms: string | null;
-        total_cost_usd: string | null;
-      }>
-    >(
-      `SELECT
-        COUNT(*) AS total_traces,
-        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
-        SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count,
-        AVG(total_latency_ms) AS avg_latency_ms,
-        SUM(total_cost_usd::float) AS total_cost_usd
-       FROM traces
-       WHERE project_id = $1
-         AND started_at >= $2
-         AND started_at < ($3::date + INTERVAL '1 day')`,
-      [projectId, dateFrom, dateTo],
+    // Extend dateTo by 1 day to match original inclusive behavior
+    const dateToEnd = new Date(new Date(dateTo).getTime() + 86400_000).toISOString();
+
+    const stats = await withEsFallback(
+      async () => {
+        const s = await this.esService.getSummaryStats(projectId, dateFrom, dateToEnd);
+        return {
+          totalTraces: s.uniqueTraces,
+          errorCount: s.errorCount,
+          avgLatencyMs: s.avgLatencyMs,
+          totalCostUsd: s.totalCostUsd,
+        };
+      },
+      async () => {
+        const result = await this.dataSource.query(
+          `SELECT COUNT(*) AS total_traces, SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count, AVG(total_latency_ms) AS avg_latency_ms, SUM(total_cost_usd::float) AS total_cost_usd FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at < ($3::date + INTERVAL '1 day')`,
+          [projectId, dateFrom, dateTo],
+        );
+        const row = result[0] ?? {};
+        return {
+          totalTraces: parseInt(row.total_traces ?? '0', 10),
+          errorCount: parseInt(row.error_count ?? '0', 10),
+          avgLatencyMs: row.avg_latency_ms ? parseFloat(row.avg_latency_ms) : 0,
+          totalCostUsd: row.total_cost_usd ? parseFloat(row.total_cost_usd) : 0,
+        };
+      },
+      this.logger,
     );
 
-    const row = result[0] ?? {
-      total_traces: '0',
-      success_count: '0',
-      error_count: '0',
-      avg_latency_ms: null,
-      total_cost_usd: null,
-    };
-
-    const totalTraces = parseInt(row.total_traces, 10);
-    const successCount = parseInt(row.success_count, 10);
-    const errorCount = parseInt(row.error_count, 10);
+    const successCount = stats.totalTraces - stats.errorCount;
 
     const dto = new TraceStatsDto();
-    dto.totalTraces = totalTraces;
+    dto.totalTraces = stats.totalTraces;
     dto.successCount = successCount;
-    dto.errorCount = errorCount;
-    dto.successRate = totalTraces > 0 ? successCount / totalTraces : 0;
-    dto.avgLatencyMs = row.avg_latency_ms !== null ? parseFloat(row.avg_latency_ms) : 0;
-    dto.totalCostUsd = row.total_cost_usd !== null ? parseFloat(row.total_cost_usd) : 0;
+    dto.errorCount = stats.errorCount;
+    dto.successRate = stats.totalTraces > 0 ? successCount / stats.totalTraces : 0;
+    dto.avgLatencyMs = stats.avgLatencyMs;
+    dto.totalCostUsd = stats.totalCostUsd;
     dto.dateFrom = dateFrom;
     dto.dateTo = dateTo;
 

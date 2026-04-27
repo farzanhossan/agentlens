@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { TraceEntity } from '../../database/entities/index.js';
 import { TraceStatus } from '../../database/entities/trace.entity.js';
+import { ElasticsearchService } from '../../span-processor/elasticsearch/elasticsearch.service.js';
+import { withEsFallback } from '../../shared/es-fallback.js';
 import {
+  ErrorClusterDto,
   HourlyVolumeDto,
   ModelUsageDto,
   OverviewDto,
@@ -13,11 +16,14 @@ import {
 
 @Injectable()
 export class OverviewService {
+  private readonly logger = new Logger(OverviewService.name);
+
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @InjectRepository(TraceEntity)
     private readonly traceRepo: Repository<TraceEntity>,
+    private readonly esService: ElasticsearchService,
   ) {}
 
   async getOverview(projectId: string, hours: number): Promise<OverviewDto> {
@@ -27,204 +33,232 @@ export class OverviewService {
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
     const nowIso = now.toISOString();
 
+    // ── ES-powered queries with Postgres fallback ──────────────────────────
+
     const [
-      summaryResult,
-      prevResult,
-      monthResult,
-      hourlyResult,
-      modelResult,
-      agentResult,
-      errorsResult,
+      summaryStats,
+      prevStats,
+      monthStats,
+      hourlyVolume,
+      modelUsage,
+      topAgents,
+      recentErrors,
       activeTraces,
     ] = await Promise.all([
       // 1. Current-period summary
-      this.dataSource.query<
-        Array<{
-          total_requests: string;
-          error_count: string;
-          total_cost: string;
-          avg_latency_ms: string | null;
-          p95_latency_ms: string | null;
-        }>
-      >(
-        `SELECT
-           COUNT(*) AS total_requests,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count,
-           COALESCE(SUM(total_cost_usd::float), 0) AS total_cost,
-           AVG(total_latency_ms) AS avg_latency_ms,
-           PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_latency_ms) AS p95_latency_ms
-         FROM traces
-         WHERE project_id = $1
-           AND started_at >= $2
-           AND started_at <= $3`,
-        [projectId, windowStart, nowIso],
+      withEsFallback(
+        () => this.esService.getSummaryStats(projectId, windowStart, nowIso),
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT COUNT(*) AS total_requests, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count, COALESCE(SUM(total_cost_usd::float), 0) AS total_cost, AVG(total_latency_ms) AS avg_latency_ms, PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_latency_ms) AS p95_latency_ms FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3`,
+            [projectId, windowStart, nowIso],
+          );
+          const r = rows[0] ?? {};
+          return {
+            totalSpans: 0,
+            errorCount: parseInt(r.error_count ?? '0', 10),
+            totalCostUsd: parseFloat(r.total_cost ?? '0'),
+            avgLatencyMs: r.avg_latency_ms ? parseFloat(r.avg_latency_ms) : 0,
+            p95LatencyMs: r.p95_latency_ms ? parseFloat(r.p95_latency_ms) : 0,
+            totalInputTokens: 0,
+            totalOutputTokens: 0,
+            uniqueTraces: parseInt(r.total_requests ?? '0', 10),
+          };
+        },
+        this.logger,
       ),
 
       // 2. Previous-period summary (for deltas)
-      this.dataSource.query<Array<{ total_requests: string; error_count: string }>>(
-        `SELECT
-           COUNT(*) AS total_requests,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count
-         FROM traces
-         WHERE project_id = $1
-           AND started_at >= $2
-           AND started_at < $3`,
-        [projectId, prevWindowStart, windowStart],
+      withEsFallback(
+        () => this.esService.getSummaryStats(projectId, prevWindowStart, windowStart),
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT COUNT(*) AS total_requests, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at < $3`,
+            [projectId, prevWindowStart, windowStart],
+          );
+          const r = rows[0] ?? {};
+          return {
+            totalSpans: 0, errorCount: parseInt(r.error_count ?? '0', 10),
+            totalCostUsd: 0, avgLatencyMs: 0, p95LatencyMs: 0,
+            totalInputTokens: 0, totalOutputTokens: 0,
+            uniqueTraces: parseInt(r.total_requests ?? '0', 10),
+          };
+        },
+        this.logger,
       ),
 
       // 3. Month-to-date cost
-      this.dataSource.query<Array<{ month_cost: string }>>(
-        `SELECT COALESCE(SUM(total_cost_usd::float), 0) AS month_cost
-         FROM traces
-         WHERE project_id = $1
-           AND started_at >= $2`,
-        [projectId, monthStart],
+      withEsFallback(
+        () => this.esService.getSummaryStats(projectId, monthStart, nowIso),
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT COALESCE(SUM(total_cost_usd::float), 0) AS month_cost FROM traces WHERE project_id = $1 AND started_at >= $2`,
+            [projectId, monthStart],
+          );
+          return {
+            totalSpans: 0, errorCount: 0,
+            totalCostUsd: parseFloat(rows[0]?.month_cost ?? '0'),
+            avgLatencyMs: 0, p95LatencyMs: 0,
+            totalInputTokens: 0, totalOutputTokens: 0, uniqueTraces: 0,
+          };
+        },
+        this.logger,
       ),
 
       // 4. Hourly volume
-      this.dataSource.query<Array<{ hour: string; total: string; errors: string }>>(
-        `SELECT
-           date_trunc('hour', started_at) AS hour,
-           COUNT(*) AS total,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
-         FROM traces
-         WHERE project_id = $1
-           AND started_at >= $2
-           AND started_at <= $3
-         GROUP BY date_trunc('hour', started_at)
-         ORDER BY hour ASC`,
-        [projectId, windowStart, nowIso],
+      withEsFallback(
+        () => this.esService.getHourlyVolume(projectId, windowStart, nowIso),
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT date_trunc('hour', started_at) AS hour, COUNT(*) AS total, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 GROUP BY date_trunc('hour', started_at) ORDER BY hour ASC`,
+            [projectId, windowStart, nowIso],
+          );
+          return rows.map((r: any) => ({
+            hour: typeof r.hour === 'string' ? r.hour : new Date(r.hour).toISOString(),
+            total: parseInt(r.total, 10),
+            errors: parseInt(r.errors, 10),
+          }));
+        },
+        this.logger,
       ),
 
       // 5. Model usage
-      this.dataSource.query<Array<{ model: string | null; calls: string; cost: string }>>(
-        `SELECT
-           model,
-           COUNT(*) AS calls,
-           COALESCE(SUM(cost_usd::float), 0) AS cost
-         FROM spans
-         WHERE project_id = $1
-           AND started_at >= $2
-           AND started_at <= $3
-           AND model IS NOT NULL
-         GROUP BY model
-         ORDER BY calls DESC`,
-        [projectId, windowStart, nowIso],
+      withEsFallback(
+        async () => {
+          const usage = await this.esService.getModelUsage(projectId, windowStart, nowIso);
+          return usage.map((u) => ({ model: u.model, calls: u.calls, costUsd: u.costUsd }));
+        },
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT model, COUNT(*) AS calls, COALESCE(SUM(cost_usd::float), 0) AS cost FROM spans WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 AND model IS NOT NULL GROUP BY model ORDER BY calls DESC`,
+            [projectId, windowStart, nowIso],
+          );
+          return rows.map((r: any) => ({
+            model: r.model ?? 'unknown',
+            calls: parseInt(r.calls, 10),
+            costUsd: parseFloat(r.cost),
+          }));
+        },
+        this.logger,
       ),
 
       // 6. Top agents
-      this.dataSource.query<
-        Array<{
-          agent_name: string | null;
-          calls: string;
-          errors: string;
-          avg_latency_ms: string | null;
-          cost: string;
-        }>
-      >(
-        `SELECT
-           agent_name,
-           COUNT(*) AS calls,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors,
-           AVG(total_latency_ms) AS avg_latency_ms,
-           COALESCE(SUM(total_cost_usd::float), 0) AS cost
-         FROM traces
-         WHERE project_id = $1
-           AND started_at >= $2
-           AND started_at <= $3
-         GROUP BY agent_name
-         ORDER BY calls DESC
-         LIMIT 5`,
-        [projectId, windowStart, nowIso],
+      withEsFallback(
+        async () => {
+          const agents = await this.esService.getTopAgents(projectId, windowStart, nowIso);
+          return agents.map((a) => ({
+            agentName: a.agentName,
+            calls: a.traceCount,
+            errors: a.errorCount,
+            avgLatencyMs: Math.round(a.avgLatencyMs),
+            costUsd: a.costUsd,
+          }));
+        },
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT agent_name, COUNT(*) AS calls, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors, AVG(total_latency_ms) AS avg_latency_ms, COALESCE(SUM(total_cost_usd::float), 0) AS cost FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 GROUP BY agent_name ORDER BY calls DESC LIMIT 5`,
+            [projectId, windowStart, nowIso],
+          );
+          return rows.map((r: any) => ({
+            agentName: r.agent_name ?? 'unknown',
+            calls: parseInt(r.calls, 10),
+            errors: parseInt(r.errors, 10),
+            avgLatencyMs: r.avg_latency_ms ? Math.round(parseFloat(r.avg_latency_ms)) : 0,
+            costUsd: parseFloat(r.cost),
+          }));
+        },
+        this.logger,
       ),
 
       // 7. Recent errors
-      this.dataSource.query<
-        Array<{
-          trace_id: string;
-          error_message: string | null;
-          agent_name: string | null;
-          model: string | null;
-          started_at: string;
-        }>
-      >(
-        `SELECT
-           t.id AS trace_id,
-           s.error_message,
-           t.agent_name,
-           s.model,
-           t.started_at
-         FROM traces t
-         LEFT JOIN LATERAL (
-           SELECT error_message, model
-           FROM spans
-           WHERE trace_id = t.id AND status = 'error'
-           ORDER BY started_at DESC
-           LIMIT 1
-         ) s ON true
-         WHERE t.project_id = $1
-           AND t.status = 'error'
-           AND t.started_at >= $2
-           AND t.started_at <= $3
-         ORDER BY t.started_at DESC
-         LIMIT 5`,
-        [projectId, windowStart, nowIso],
+      withEsFallback(
+        async () => {
+          const errors = await this.esService.getRecentErrors(projectId, windowStart, nowIso);
+          return errors.map((e) => ({
+            traceId: e.traceId,
+            errorMessage: e.errorMessage || 'Unknown error',
+            agentName: e.agentName,
+            model: e.model,
+            startedAt: e.startedAt,
+          }));
+        },
+        async () => {
+          const rows = await this.dataSource.query(
+            `SELECT t.id AS trace_id, s.error_message, t.agent_name, s.model, t.started_at FROM traces t LEFT JOIN LATERAL (SELECT error_message, model FROM spans WHERE trace_id = t.id AND status = 'error' ORDER BY started_at DESC LIMIT 1) s ON true WHERE t.project_id = $1 AND t.status = 'error' AND t.started_at >= $2 AND t.started_at <= $3 ORDER BY t.started_at DESC LIMIT 5`,
+            [projectId, windowStart, nowIso],
+          );
+          return rows.map((r: any) => ({
+            traceId: r.trace_id,
+            errorMessage: r.error_message ?? 'Unknown error',
+            agentName: r.agent_name ?? undefined,
+            model: r.model ?? undefined,
+            startedAt: typeof r.started_at === 'string' ? r.started_at : new Date(r.started_at).toISOString(),
+          }));
+        },
+        this.logger,
       ),
 
-      // 8. Active traces count
+      // 8. Active traces count — always Postgres (live state)
       this.traceRepo.count({
         where: { projectId, status: TraceStatus.RUNNING },
       }),
     ]);
 
-    // Assemble DTO
-    const s = summaryResult[0] ?? {
-      total_requests: '0',
-      error_count: '0',
-      total_cost: '0',
-      avg_latency_ms: null,
-      p95_latency_ms: null,
-    };
-    const p = prevResult[0] ?? { total_requests: '0', error_count: '0' };
+    // ── Assemble DTO ─────────────────────────────────────────────────────────
 
     const dto = new OverviewDto();
-    dto.totalRequests = parseInt(s.total_requests, 10);
-    dto.errorCount = parseInt(s.error_count, 10);
-    dto.totalRequestsPrev = parseInt(p.total_requests, 10);
-    dto.errorCountPrev = parseInt(p.error_count, 10);
-    dto.totalCostUsd = parseFloat(s.total_cost);
-    dto.monthCostUsd = parseFloat((monthResult[0] ?? { month_cost: '0' }).month_cost);
-    dto.avgLatencyMs = s.avg_latency_ms !== null ? Math.round(parseFloat(s.avg_latency_ms)) : 0;
-    dto.p95LatencyMs = s.p95_latency_ms !== null ? Math.round(parseFloat(s.p95_latency_ms)) : 0;
+    dto.totalRequests = summaryStats.uniqueTraces;
+    dto.errorCount = summaryStats.errorCount;
+    dto.totalRequestsPrev = prevStats.uniqueTraces;
+    dto.errorCountPrev = prevStats.errorCount;
+    dto.totalCostUsd = summaryStats.totalCostUsd;
+    dto.monthCostUsd = monthStats.totalCostUsd;
+    dto.avgLatencyMs = Math.round(summaryStats.avgLatencyMs);
+    dto.p95LatencyMs = Math.round(summaryStats.p95LatencyMs);
     dto.activeTraces = activeTraces;
 
-    dto.hourlyVolume = hourlyResult.map((r): HourlyVolumeDto => ({
-      hour: typeof r.hour === 'string' ? r.hour : new Date(r.hour).toISOString(),
-      total: parseInt(r.total, 10),
-      errors: parseInt(r.errors, 10),
+    dto.hourlyVolume = (hourlyVolume as HourlyVolumeDto[]).map((r): HourlyVolumeDto => ({
+      hour: r.hour,
+      total: r.total,
+      errors: r.errors,
     }));
 
-    dto.modelUsage = modelResult.map((r): ModelUsageDto => ({
-      model: r.model ?? 'unknown',
-      calls: parseInt(r.calls, 10),
-      costUsd: parseFloat(r.cost),
+    dto.modelUsage = (modelUsage as ModelUsageDto[]).map((r): ModelUsageDto => ({
+      model: r.model,
+      calls: r.calls,
+      costUsd: r.costUsd,
     }));
 
-    dto.topAgents = agentResult.map((r): TopAgentDto => ({
-      agentName: r.agent_name ?? 'unknown',
-      calls: parseInt(r.calls, 10),
-      errors: parseInt(r.errors, 10),
-      avgLatencyMs: r.avg_latency_ms !== null ? Math.round(parseFloat(r.avg_latency_ms)) : 0,
-      costUsd: parseFloat(r.cost),
+    dto.topAgents = (topAgents as TopAgentDto[]).map((r): TopAgentDto => ({
+      agentName: r.agentName,
+      calls: r.calls,
+      errors: r.errors,
+      avgLatencyMs: r.avgLatencyMs,
+      costUsd: r.costUsd,
     }));
 
-    dto.recentErrors = errorsResult.map((r): RecentErrorDto => ({
-      traceId: r.trace_id,
-      errorMessage: r.error_message ?? 'Unknown error',
-      agentName: r.agent_name ?? undefined,
-      model: r.model ?? undefined,
-      startedAt: typeof r.started_at === 'string' ? r.started_at : new Date(r.started_at).toISOString(),
+    dto.recentErrors = (recentErrors as RecentErrorDto[]).map((r): RecentErrorDto => ({
+      traceId: r.traceId,
+      errorMessage: r.errorMessage,
+      agentName: r.agentName,
+      model: r.model,
+      startedAt: r.startedAt,
     }));
+
+    // Error clustering (ES-only, best-effort)
+    try {
+      const clusters = await this.esService.getErrorClusters(projectId, windowStart, nowIso);
+      dto.errorClusters = clusters.map((c): ErrorClusterDto => ({
+        pattern: c.pattern,
+        count: c.count,
+        traceIds: c.traceIds,
+        models: c.models,
+        lastSeen: c.lastSeen,
+      }));
+    } catch {
+      // Error clusters are optional — if ES fails, skip them
+      dto.errorClusters = undefined;
+    }
 
     return dto;
   }

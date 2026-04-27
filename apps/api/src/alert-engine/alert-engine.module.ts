@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AlertEntity, AlertFiringEntity, ProjectEntity } from '../database/entities/index.js';
+import { SpanProcessorModule } from '../span-processor/span-processor.module.js';
 import { AlertEvaluatorProcessor } from './alert-evaluator.processor.js';
 import { AlertEvaluatorService } from './alert-evaluator.service.js';
 import { AlertStateService } from './alert-state.service.js';
@@ -11,6 +12,7 @@ import { NotificationService } from './notification.service.js';
 @Module({
   imports: [
     TypeOrmModule.forFeature([AlertEntity, AlertFiringEntity, ProjectEntity]),
+    SpanProcessorModule,
 
     // Cron queue — the processor bootstraps the repeating job on startup.
     BullModule.registerQueue({

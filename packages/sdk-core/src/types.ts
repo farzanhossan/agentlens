@@ -23,6 +23,8 @@ export interface SpanData {
   input?: string;
   /** Raw LLM completion or tool output (stored in Elasticsearch only). */
   output?: string;
+  /** Agent name for ES aggregations. Auto-set on root spans by the tracer. */
+  agentName?: string;
   inputTokens?: number;
   outputTokens?: number;
   costUsd?: number;

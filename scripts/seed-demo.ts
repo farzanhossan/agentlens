@@ -383,7 +383,7 @@ async function main(): Promise<void> {
       org = orgRepo.create({
         name: cfg.orgName,
         slug: cfg.orgSlug,
-        plan: OrgPlan.PRO,
+        plan: OrgPlan.SELF_HOSTED,
       });
       await orgRepo.save(org);
       console.log(`  ✓ Created demo org: ${cfg.orgName}`);

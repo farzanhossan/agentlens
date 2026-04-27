@@ -432,10 +432,8 @@
     /* Pricing */
     #pricing { background: var(--bg3); }
     .pricing-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 420px; margin: 0 auto;
     }
-    @media (max-width: 960px) { .pricing-grid { grid-template-columns: repeat(2,1fr); } }
-    @media (max-width: 520px) { .pricing-grid { grid-template-columns: 1fr; } }
 
     .pricing-card {
       background: var(--bg2);
@@ -450,15 +448,8 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 1px var(--accent), 0 0 40px rgba(99,102,241,.2);
     }
-    .popular-badge {
-      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
-      background: var(--accent); color: #fff;
-      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
-      padding: 4px 12px; border-radius: 999px; white-space: nowrap;
-    }
     .pricing-plan  { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
     .pricing-price { font-size: 42px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 4px; }
-    .pricing-price span { font-size: 16px; font-weight: 400; color: var(--muted); }
     .pricing-sub   { font-size: 13px; color: var(--muted2); margin-bottom: 24px; }
     .pricing-list  { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
     .pricing-list li {
@@ -524,7 +515,6 @@
       <ul class="nav-links">
         <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="#features">Features</a></li>
-        <li><a href="#pricing">Pricing</a></li>
         <li><a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a></li>
       </ul>
       <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary btn-sm nav-cta" target="_blank">Self-Host Free</a>
@@ -670,12 +660,12 @@
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F4B0;</span>
         <div class="feature-title">Cost Analytics</div>
-        <p class="feature-desc">Token usage and dollar cost by model, agent, feature, and date. Daily trend charts. Monthly budget tracking.</p>
+        <p class="feature-desc">Token usage and dollar cost by model, agent, and date. Instant aggregations across millions of spans. Monthly budget tracking.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F6A8;</span>
         <div class="feature-title">Smart Alerts</div>
-        <p class="feature-desc">Error rate, cost spike, P95 latency, failure count. Notify via Slack, email, or webhook.</p>
+        <p class="feature-desc">Error rate, cost spike, P95 latency, failure count. Real-time metric evaluation. Notify via Slack, email, or webhook.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x26A1;</span>
@@ -698,9 +688,9 @@
         <p class="feature-desc">The proxy works with any HTTP client &mdash; Python, Go, Rust, Java, curl. No SDK needed.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">&#x1F504;</span>
-        <div class="feature-title">Streaming Support</div>
-        <p class="feature-desc">Full SSE streaming passthrough. AgentLens buffers transparently without adding latency to responses.</p>
+        <span class="feature-icon">&#x1F9E9;</span>
+        <div class="feature-title">Error Clustering</div>
+        <p class="feature-desc">Similar failures auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F3E0;</span>
@@ -721,7 +711,7 @@
         <ul class="selfhost-points">
           <li>Full stack in one <code>docker compose</code> command</li>
           <li>No Vercel, no Cloudflare, no third-party accounts</li>
-          <li>PostgreSQL, Redis, Elasticsearch all included</li>
+          <li>PostgreSQL, Redis, Elasticsearch &mdash; search, analytics, and auto-cleanup built in</li>
           <li>MIT licensed &mdash; free forever, no usage limits</li>
           <li>Custom domains and SSL with any reverse proxy</li>
         </ul>
@@ -828,13 +818,12 @@ docker compose -f docker-compose.prod.yml up -d --build
   <div class="container">
     <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
       <div class="section-label">Pricing</div>
-      <h2 class="section-title">Free to self-host. Managed plans if you prefer.</h2>
+      <h2 class="section-title">Free forever. Self-hosted.</h2>
     </div>
     <div class="pricing-grid">
 
       <!-- Self-Host -->
       <div class="pricing-card popular fade-up">
-        <div class="popular-badge">Most Popular</div>
         <div class="pricing-plan">Self-Hosted</div>
         <div class="pricing-price">$0</div>
         <div class="pricing-sub">Free forever, no limits</div>
@@ -846,48 +835,6 @@ docker compose -f docker-compose.prod.yml up -d --build
           <li>MIT license</li>
         </ul>
         <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary pricing-cta" target="_blank">Deploy Now</a>
-      </div>
-
-      <!-- Starter -->
-      <div class="pricing-card fade-up">
-        <div class="pricing-plan">Starter</div>
-        <div class="pricing-price">$19<span>/mo</span></div>
-        <div class="pricing-sub">Managed, for small teams</div>
-        <ul class="pricing-list">
-          <li>100k traces/month</li>
-          <li>30-day retention</li>
-          <li>5 projects</li>
-          <li>Email alerts</li>
-        </ul>
-        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
-      </div>
-
-      <!-- Pro -->
-      <div class="pricing-card fade-up">
-        <div class="pricing-plan">Pro</div>
-        <div class="pricing-price">$79<span>/mo</span></div>
-        <div class="pricing-sub">For production AI systems</div>
-        <ul class="pricing-list">
-          <li>1M traces/month</li>
-          <li>90-day retention</li>
-          <li>Unlimited projects</li>
-          <li>PII scrub + Slack alerts</li>
-        </ul>
-        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
-      </div>
-
-      <!-- Enterprise -->
-      <div class="pricing-card fade-up">
-        <div class="pricing-plan">Enterprise</div>
-        <div class="pricing-price" style="font-size:32px">Custom</div>
-        <div class="pricing-sub">Scale + compliance</div>
-        <ul class="pricing-list">
-          <li>Unlimited traces</li>
-          <li>Managed hosting</li>
-          <li>SSO + SLA</li>
-          <li>Dedicated support</li>
-        </ul>
-        <a href="mailto:hello@agentlens.ai" class="btn btn-ghost pricing-cta">Contact Us</a>
       </div>
 
     </div>

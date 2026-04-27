@@ -14,6 +14,7 @@ import { OverviewService } from './overview/overview.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { SpansController } from './spans/spans.controller.js';
 import { SpansService } from './spans/spans.service.js';
+import { SystemHealthController } from './system-health/system-health.controller.js';
 import { TracesController } from './traces/traces.controller.js';
 import { TracesService } from './traces/traces.service.js';
 import { TraceGateway } from './websocket/trace.gateway.js';
@@ -36,6 +37,7 @@ import { TraceGateway } from './websocket/trace.gateway.js';
     CostController,
     AlertsController,
     OverviewController,
+    SystemHealthController,
   ],
   providers: [
     JwtAuthGuard,

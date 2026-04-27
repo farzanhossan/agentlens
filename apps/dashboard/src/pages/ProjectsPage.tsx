@@ -5,6 +5,7 @@ import {
   createProject,
   deleteProject,
   rotateProjectKey,
+  updateProject,
   type ProjectResponse,
   type ProjectWithKey,
 } from '../lib/api';
@@ -131,6 +132,64 @@ function NewKeyBanner({ apiKey, onDismiss }: { apiKey: string; onDismiss: () => 
   );
 }
 
+// ── Retention Editor ─────────────────────────────────────────────────────────
+
+function RetentionEditor({ projectId, currentDays }: { projectId: string; currentDays: number }): React.JSX.Element {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(currentDays));
+
+  const mutation = useMutation({
+    mutationFn: (days: number) => updateProject(projectId, { retentionDays: days }),
+    onSuccess: () => {
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+
+  function save(): void {
+    const days = parseInt(value, 10);
+    if (isNaN(days) || days < 1 || days > 365) return;
+    mutation.mutate(days);
+  }
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => { setValue(String(currentDays)); setEditing(true); }}
+        className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+        title="Click to edit retention"
+      >
+        Retention: {currentDays}d
+      </button>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="text-xs text-gray-600">Retention:</span>
+      <input
+        autoFocus
+        type="number"
+        min={1}
+        max={365}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+        className="w-14 bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-gray-100 focus:outline-none focus:border-brand-500"
+      />
+      <span className="text-xs text-gray-600">d</span>
+      <button onClick={save} disabled={mutation.isPending}
+        className="text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50">
+        {mutation.isPending ? '…' : 'Save'}
+      </button>
+      <button onClick={() => setEditing(false)} className="text-xs text-gray-500 hover:text-gray-300">
+        Cancel
+      </button>
+    </span>
+  );
+}
+
 // ── Project Row ───────────────────────────────────────────────────────────────
 
 function ProjectRow({
@@ -167,7 +226,8 @@ function ProjectRow({
           </div>
           <p className="text-xs text-gray-500 font-mono">{project.id}</p>
           <p className="text-xs text-gray-600 mt-1">
-            Retention: {project.retentionDays}d &nbsp;·&nbsp; Created {fmtDate(project.createdAt)}
+            <RetentionEditor projectId={project.id} currentDays={project.retentionDays} />
+            {' '}&nbsp;·&nbsp; Created {fmtDate(project.createdAt)}
           </p>
         </div>
 

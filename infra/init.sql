@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- Enum types
 -- ──────────────────────────────────────────────────────────
 DO $$ BEGIN
-    CREATE TYPE org_plan AS ENUM ('free', 'starter', 'pro', 'enterprise');
+    CREATE TYPE org_plan AS ENUM ('self_hosted');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
@@ -43,8 +43,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     name                VARCHAR(256)    NOT NULL,
     slug                VARCHAR(128)    NOT NULL,
-    plan                org_plan        NOT NULL DEFAULT 'free',
-    stripe_customer_id  VARCHAR(128),
+    plan                org_plan        NOT NULL DEFAULT 'self_hosted',
     created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_organizations_slug UNIQUE (slug)

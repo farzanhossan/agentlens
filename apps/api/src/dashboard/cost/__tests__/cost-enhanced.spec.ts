@@ -29,7 +29,8 @@ describe('CostService — enhanced summary', () => {
 
     const ds = makeDataSource(results);
     const projectRepo = { findOne: jest.fn().mockResolvedValue(null) } as never;
-    const service = new CostService(ds, projectRepo);
+    const esService = { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any;
+    const service = new CostService(ds, projectRepo, esService);
     const result = await service.getSummary('proj-1', '2026-03-25', '2026-04-01');
 
     expect(result.totalInputTokens).toBe(500000);

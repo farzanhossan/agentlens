@@ -39,7 +39,7 @@ describe('TracesService — enhanced filters', () => {
   it('applies model filter via andWhere', async () => {
     const qb = makeQueryBuilder([]);
     const traceRepo = makeTraceRepo(qb);
-    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null));
+    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null), { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any);
 
     await service.listTraces('proj-1', { model: 'gpt-4o' });
 
@@ -53,7 +53,7 @@ describe('TracesService — enhanced filters', () => {
   it('applies latency range filters', async () => {
     const qb = makeQueryBuilder([]);
     const traceRepo = makeTraceRepo(qb);
-    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null));
+    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null), { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any);
 
     await service.listTraces('proj-1', { minLatencyMs: 1000, maxLatencyMs: 5000 });
 
@@ -71,7 +71,7 @@ describe('TracesService — enhanced filters', () => {
   it('applies cost range filters', async () => {
     const qb = makeQueryBuilder([]);
     const traceRepo = makeTraceRepo(qb);
-    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null));
+    const service = new TracesService(traceRepo, makeSpanRepo(), makeDataSource(null), { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any);
 
     await service.listTraces('proj-1', { minCostUsd: 0.01, maxCostUsd: 0.10 });
 
@@ -99,7 +99,7 @@ describe('TracesService — enhanced filters', () => {
     const ds = {
       query: jest.fn().mockResolvedValue([{ trace_id: 'trace-1', input_preview: 'Hello world' }]),
     } as unknown as DataSource;
-    const service = new TracesService(traceRepo, makeSpanRepo(), ds);
+    const service = new TracesService(traceRepo, makeSpanRepo(), ds, { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any);
 
     const result = await service.listTraces('proj-1', {});
 

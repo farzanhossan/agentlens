@@ -20,6 +20,7 @@ const RawSpanSchema = z.object({
   provider: z.string().max(64).optional(),
   input: z.string().optional(),
   output: z.string().optional(),
+  agentName: z.string().max(256).optional(),
   inputTokens: z.number().int().nonnegative().optional(),
   outputTokens: z.number().int().nonnegative().optional(),
   costUsd: z.number().nonnegative().optional(),
@@ -242,11 +243,29 @@ export class SpanProcessorService {
 
   /**
    * Indexes the full span (including `input`/`output` text) into Elasticsearch.
+   * Enriches the span with `agentName` for ES agent-level aggregations.
    * Errors here are logged but do not roll back the PostgreSQL transaction.
    */
   async indexToElasticsearch(span: ProcessedSpan): Promise<void> {
     try {
-      await this.esService.indexSpan(span);
+      // Use agentName from payload if SDK/proxy provided it; otherwise derive it
+      let agentName: string | undefined = span.agentName;
+
+      if (!agentName) {
+        if (span.parentSpanId == null) {
+          // Root span — its name IS the agent name
+          agentName = span.name;
+        } else {
+          // Child span — look up the agent name from the parent trace
+          const row = await this.dataSource.query<Array<{ agent_name: string | null }>>(
+            `SELECT agent_name FROM traces WHERE id = $1`,
+            [span.traceId],
+          );
+          agentName = row[0]?.agent_name ?? undefined;
+        }
+      }
+
+      await this.esService.indexSpan({ ...span, agentName });
     } catch (err) {
       this.logger.error(
         `ES indexing failed for span ${span.spanId}: ${String(err)}`,
