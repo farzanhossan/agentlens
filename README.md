@@ -16,7 +16,7 @@ See every LLM call, what it cost, and why it failed — without changing your co
 [![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens-core?color=6366f1&label=npm)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-22c55e.svg)](#)
-[![Tests](https://img.shields.io/badge/tests-96%2F96-22c55e.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-81%2F81-22c55e.svg)](#)
 [![Discord](https://img.shields.io/badge/discord-join-6366f1.svg)](https://discord.gg/agentlens)
 
 </div>
@@ -116,7 +116,13 @@ Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 Full input/output timeline for every span in your agent run. See exactly what the model received and what it returned, with parent/child hierarchy.
 
 ### Cost Analytics
-Token usage and dollar cost broken down by model, agent, feature, and date. Daily trend charts. Monthly budget tracking with alerts.
+Token usage and dollar cost broken down by model, agent, and date. Instant aggregations across millions of spans powered by Elasticsearch. Monthly budget tracking with alerts.
+
+### Error Clustering
+Similar failures are auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs. Powered by Elasticsearch `significant_terms` analysis.
+
+### Full-Text Search
+Search across all LLM prompts, completions, and agent names. Elasticsearch indexes every input/output with fuzzy matching — find the trace you need in seconds.
 
 ### Failure Alerts
 Get notified via Slack, email, or webhook the moment something goes wrong:
@@ -125,7 +131,7 @@ Get notified via Slack, email, or webhook the moment something goes wrong:
 - **P95 latency** crosses SLA
 - **Failure count** hits limit
 
-Alert history with delivery status tracking. Test notifications before going live.
+Real-time metric evaluation via Elasticsearch. Alert history with delivery status tracking. Test notifications before going live.
 
 ### Live Feed
 Real-time trace stream via WebSocket. Watch agent calls as they happen.
@@ -133,8 +139,14 @@ Real-time trace stream via WebSocket. Watch agent calls as they happen.
 ### Session Replay
 Step through any past agent run exactly as it happened. Group traces by session to see multi-turn conversations.
 
+### Data Lifecycle Management
+Automatic index lifecycle management with hot/warm/cold/delete phases. Per-project retention policies configurable from the dashboard (1–365 days). Old data is cleaned up automatically.
+
 ### PII Scrubbing
 Emails, API keys, SSNs, and credit card numbers are auto-masked before data leaves your infrastructure. GDPR ready.
+
+### System Health Monitoring
+Sidebar indicator shows Elasticsearch status in real-time. When ES is unavailable, all analytics automatically fall back to PostgreSQL — zero downtime.
 
 ---
 
@@ -194,7 +206,9 @@ NestJS API                        ← BullMQ async processing
   ├──► Alert Engine                ← evaluates thresholds, sends notifications
   │
   ├──► PostgreSQL                  ← traces, spans, alerts, users, projects
-  └──► Elasticsearch               ← full input/output text, full-text search
+  └──► Elasticsearch               ← full-text search, aggregations, error clustering
+        │                             (ILM: hot → warm → cold → delete)
+        └──► PG fallback             ← auto-failover when ES is unavailable
 
 React Dashboard                   ← trace viewer, cost charts, live feed, alerts
   │
@@ -267,7 +281,7 @@ We welcome PRs. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
 ```bash
 git clone https://github.com/YOUR_USERNAME/agentlens
 pnpm install
-pnpm test       # 96 tests across all packages
+pnpm test       # 81 tests across all packages
 pnpm lint       # ESLint + Prettier
 ```
 
@@ -275,6 +289,11 @@ pnpm lint       # ESLint + Prettier
 
 ## Roadmap
 
+- [x] Elasticsearch-powered aggregations and analytics
+- [x] Error clustering and pattern detection
+- [x] Full-text search across prompts and completions
+- [x] Index lifecycle management (ILM) with rolling indices
+- [x] Per-project data retention policies
 - [ ] LangChain auto-patcher
 - [ ] LlamaIndex auto-patcher
 - [ ] Prompt versioning and diffing
