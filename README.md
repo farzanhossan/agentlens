@@ -61,6 +61,36 @@ Works with **any language, any framework, any HTTP client**. If it can call an A
 
 Streaming responses are fully supported — AgentLens buffers transparently without adding latency.
 
+**Trace grouping (optional):** If your agent makes multiple LLM calls per turn, you can group them into a single trace by passing optional headers:
+
+| Header | Purpose |
+|--------|---------|
+| `X-AgentLens-Trace-Id` | Shared trace ID — all requests with the same value appear under one trace |
+| `X-AgentLens-Parent-Span-Id` | Links this span as a child of a parent span |
+| `X-AgentLens-Span-Name` | Custom span name (default: `openai.proxy`) |
+
+These headers are stripped before forwarding to the LLM provider. Without them, each request creates its own trace — no change to existing behavior.
+
+```typescript
+// Example: group two LLM calls into one trace
+const traceId = crypto.randomUUID()
+
+// Call 1: extract data
+await fetch(proxyUrl, {
+  headers: { 'X-AgentLens-Trace-Id': traceId, 'X-AgentLens-Span-Name': 'extract-fields', ...auth },
+  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
+})
+
+// Call 2: generate response — same traceId
+await fetch(proxyUrl, {
+  headers: { 'X-AgentLens-Trace-Id': traceId, 'X-AgentLens-Span-Name': 'generate-reply', ...auth },
+  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
+})
+// Dashboard shows: 1 trace with 2 spans
+```
+
+Works with the SDK too — use `getCurrentTraceId()` and `getCurrentSpanId()` from `@farzanhossans/agentlens-core` to automatically propagate trace context.
+
 ### Option 2: SDK auto-instrumentation (one import)
 
 If you want richer metadata or custom span names, add the SDK. One import auto-patches your LLM client:
@@ -294,6 +324,7 @@ pnpm lint       # ESLint + Prettier
 - [x] Full-text search across prompts and completions
 - [x] Index lifecycle management (ILM) with rolling indices
 - [x] Per-project data retention policies
+- [x] Proxy trace grouping via optional headers
 - [ ] LangChain auto-patcher
 - [ ] LlamaIndex auto-patcher
 - [ ] Prompt versioning and diffing

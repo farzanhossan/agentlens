@@ -16,6 +16,7 @@ export interface ProxyRequestParams {
 
 const FORWARDED_HEADER_BLOCKLIST = new Set([
   'host', 'content-length', 'transfer-encoding', 'connection',
+  'x-agentlens-trace-id', 'x-agentlens-parent-span-id', 'x-agentlens-span-name',
 ]);
 
 function filterHeaders(headers: Record<string, string>): Record<string, string> {
@@ -52,18 +53,20 @@ function forwardResponseHeaders(upstreamHeaders: Headers): Record<string, string
 }
 
 export async function handleProxyRequest(params: ProxyRequestParams): Promise<Response> {
-  const { method, provider, projectId, upstreamPath, upstreamBaseUrl, requestBody, requestHeaders, emitter, bufferMaxSize } = params;
+  const { method, provider, projectId, upstreamPath, upstreamBaseUrl, requestBody, requestHeaders, emitter } = params;
   const parser = getParser(provider);
   const parsed = requestBody ? parser.parseRequest(requestBody) : { model: 'unknown', input: '', isStreaming: false };
   const startedAt = new Date().toISOString();
   const spanId = randomUUID();
-  const traceId = randomUUID();
+  const traceId = requestHeaders['x-agentlens-trace-id'] || randomUUID();
+  const parentSpanId = requestHeaders['x-agentlens-parent-span-id'] || undefined;
+  const spanName = requestHeaders['x-agentlens-span-name'] || `${provider}.proxy`;
 
   const upstreamUrl = `${upstreamBaseUrl}${upstreamPath}`;
   const forwardHeaders = filterHeaders(requestHeaders);
 
   if (parsed.isStreaming) {
-    return handleStreamingRequest(params, parser, parsed, upstreamUrl, forwardHeaders, spanId, traceId, startedAt);
+    return handleStreamingRequest(params, parser, parsed, upstreamUrl, forwardHeaders, spanId, traceId, startedAt, parentSpanId, spanName);
   }
 
   // Non-streaming flow
@@ -83,7 +86,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
     const errorMsg = (err as Error).message;
     emitter.emit({
       spanId, traceId, projectId,
-      name: `${provider}.proxy`, agentName: 'proxy',
+      name: spanName, agentName: spanName, parentSpanId,
       model: parsed.model, provider,
       input: parsed.input,
       status: 'error', errorMessage: errorMsg,
@@ -110,7 +113,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
         : undefined;
       span = {
         spanId, traceId, projectId,
-        name: `${provider}.proxy`, agentName: 'proxy',
+        name: spanName, agentName: spanName, parentSpanId,
         model: parsed.model, provider,
         input: parsed.input,
         output: parsedResponse.output,
@@ -123,7 +126,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
     } catch {
       span = {
         spanId, traceId, projectId,
-        name: `${provider}.proxy`, agentName: 'proxy',
+        name: spanName, agentName: spanName, parentSpanId,
         model: parsed.model, provider,
         input: parsed.input, output: responseBody,
         latencyMs, status: 'success',
@@ -133,7 +136,7 @@ export async function handleProxyRequest(params: ProxyRequestParams): Promise<Re
   } else {
     span = {
       spanId, traceId, projectId,
-      name: `${provider}.proxy`, agentName: 'proxy',
+      name: spanName, agentName: spanName, parentSpanId,
       model: parsed.model, provider,
       input: parsed.input,
       output: responseBody,
@@ -160,8 +163,11 @@ async function handleStreamingRequest(
   spanId: string,
   traceId: string,
   startedAt: string,
+  parentSpanId?: string,
+  spanName?: string,
 ): Promise<Response> {
   const { provider, projectId, emitter, bufferMaxSize } = params;
+  const resolvedSpanName = spanName || `${provider}.proxy`;
 
   let upstreamResponse: Response;
   try {
@@ -174,7 +180,7 @@ async function handleStreamingRequest(
     const endedAt = new Date().toISOString();
     emitter.emit({
       spanId, traceId, projectId,
-      name: `${provider}.proxy`, agentName: 'proxy',
+      name: resolvedSpanName, agentName: resolvedSpanName, parentSpanId,
       model: parsed.model, provider,
       input: parsed.input,
       status: 'error', errorMessage: (err as Error).message,
@@ -240,7 +246,7 @@ async function handleStreamingRequest(
         : undefined;
       emitter.emit({
         spanId, traceId, projectId,
-        name: `${provider}.proxy`, agentName: 'proxy',
+        name: resolvedSpanName, agentName: resolvedSpanName, parentSpanId,
         model: parsed.model, provider,
         input: parsed.input,
         output: parsedResponse.output,

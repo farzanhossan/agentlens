@@ -688,6 +688,11 @@
         <p class="feature-desc">The proxy works with any HTTP client &mdash; Python, Go, Rust, Java, curl. No SDK needed.</p>
       </div>
       <div class="feature-card fade-up">
+        <span class="feature-icon">&#x1F517;</span>
+        <div class="feature-title">Trace Grouping</div>
+        <p class="feature-desc">Group multiple LLM calls into one trace with optional headers. See parent/child span hierarchies for multi-step agent runs.</p>
+      </div>
+      <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F9E9;</span>
         <div class="feature-title">Error Clustering</div>
         <p class="feature-desc">Similar failures auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs.</p>
@@ -790,6 +795,13 @@ docker compose -f docker-compose.prod.yml up -d --build
             <td>Self-host (open source)</td>
             <td class="col-us check">&#x2705; MIT</td>
             <td class="cross">&#x274C;</td>
+            <td class="check">&#x2705;</td>
+            <td class="cross">&#x274C;</td>
+          </tr>
+          <tr>
+            <td>Trace grouping (multi-call)</td>
+            <td class="col-us check">&#x2705;</td>
+            <td class="check">&#x2705;</td>
             <td class="check">&#x2705;</td>
             <td class="cross">&#x274C;</td>
           </tr>

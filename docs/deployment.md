@@ -70,6 +70,53 @@ AgentLens.init({
 })
 ```
 
+### Trace grouping (optional)
+
+If your agent makes multiple LLM calls per turn, you can group them into a single trace by passing optional headers through the proxy:
+
+| Header | Purpose |
+|--------|---------|
+| `X-AgentLens-Trace-Id` | Shared trace ID — all requests with the same value appear under one trace |
+| `X-AgentLens-Parent-Span-Id` | Links this span as a child of a parent span |
+| `X-AgentLens-Span-Name` | Custom span name (default: `openai.proxy`) |
+
+These headers are **stripped before forwarding** to the LLM provider — OpenAI/Anthropic never sees them.
+
+Without these headers, each request creates its own trace (default behavior, fully backwards compatible).
+
+**Example: group two LLM calls into one trace**
+
+```typescript
+const traceId = crypto.randomUUID()
+
+// Call 1: extract data
+await fetch('http://localhost:8090/v1/p/{projectId}/openai/v1/chat/completions', {
+  headers: {
+    'X-AgentLens-Trace-Id': traceId,
+    'X-AgentLens-Span-Name': 'extract-fields',
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  },
+  method: 'POST',
+  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
+})
+
+// Call 2: generate response — same traceId
+await fetch('http://localhost:8090/v1/p/{projectId}/openai/v1/chat/completions', {
+  headers: {
+    'X-AgentLens-Trace-Id': traceId,
+    'X-AgentLens-Span-Name': 'generate-reply',
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  },
+  method: 'POST',
+  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
+})
+// Dashboard shows: 1 trace with 2 spans
+```
+
+**With the SDK:** Use `getCurrentTraceId()` and `getCurrentSpanId()` from `@farzanhossans/agentlens-core` to automatically propagate trace context when combining the SDK with the proxy.
+
 ### Customising ports
 
 Edit `infra/.env`:
