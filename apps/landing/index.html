@@ -3,21 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentLens — See every LLM call. Change zero code.</title>
-  <meta name="description" content="Open-source AI agent observability. Route your LLM traffic through the proxy — get traces, costs, and alerts without touching your code. Self-host in 2 minutes." />
+  <title>AgentLens — Open-Source LLM Observability for AI Agents</title>
+  <meta name="description" content="Open-source AI agent observability platform. Trace every LLM call, track costs, debug errors, and replay sessions — without changing your code. Self-host with Docker in 2 minutes. Free forever." />
+  <meta name="keywords" content="LLM observability, AI agent monitoring, OpenAI tracing, LLM debugging, AI observability, agent tracing, LLM cost tracking, open source observability, GPT monitoring, Anthropic tracing, AI agent debugging, LLM proxy, trace viewer, span hierarchy, LLM analytics, self-hosted observability" />
+  <meta name="author" content="Farzan Hossan" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="theme-color" content="#6366f1" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://agentlens.ai/" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='13' stroke='%236366f1' stroke-width='1.5' fill='none'/%3E%3Cellipse cx='14' cy='14' rx='8' ry='5' stroke='%236366f1' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%236366f1'/%3E%3C/svg%3E" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="AgentLens — See every LLM call. Change zero code." />
-  <meta property="og:description" content="Open-source AI agent observability. Traces, costs, alerts — without changing your application code. Self-host with Docker." />
+  <meta property="og:title" content="AgentLens — Open-Source LLM Observability for AI Agents" />
+  <meta property="og:description" content="Trace every LLM call, track costs, debug errors, and replay sessions — without changing your code. Self-host with Docker. Free forever." />
   <meta property="og:image" content="https://agentlens.ai/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="AgentLens — Open-source AI agent observability dashboard showing traces, costs, and errors" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://agentlens.ai" />
+  <meta property="og:url" content="https://agentlens.ai/" />
+  <meta property="og:site_name" content="AgentLens" />
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="AgentLens — See every LLM call. Change zero code." />
-  <meta name="twitter:description" content="Open-source AI agent observability. Traces, costs, alerts — without changing your application code." />
+  <meta name="twitter:title" content="AgentLens — Open-Source LLM Observability for AI Agents" />
+  <meta name="twitter:description" content="Trace every LLM call, track costs, debug errors — without changing your code. Self-host free." />
   <meta name="twitter:image" content="https://agentlens.ai/og.png" />
+  <meta name="twitter:image:alt" content="AgentLens dashboard showing LLM traces, costs, and error analytics" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -27,6 +43,121 @@
   <!-- Highlight.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "AgentLens",
+        "url": "https://agentlens.ai/",
+        "description": "Open-source AI agent observability platform. Trace every LLM call, track costs, debug errors, and replay sessions.",
+        "publisher": { "@id": "https://agentlens.ai/#organization" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://agentlens.ai/#organization",
+        "name": "AgentLens",
+        "url": "https://agentlens.ai/",
+        "logo": "https://agentlens.ai/og.png",
+        "sameAs": [
+          "https://github.com/farzanhossan/agentlens",
+          "https://www.npmjs.com/package/@farzanhossans/agentlens-core"
+        ],
+        "founder": {
+          "@type": "Person",
+          "name": "Farzan Hossan",
+          "url": "https://github.com/farzanhossan"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "AgentLens",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Linux, macOS, Windows (WSL2)",
+        "description": "Open-source observability platform for AI agents. Trace LLM calls, track costs, debug errors, and replay sessions — without changing your code.",
+        "url": "https://agentlens.ai/",
+        "downloadUrl": "https://github.com/farzanhossan/agentlens",
+        "softwareVersion": "1.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": { "@id": "https://agentlens.ai/#organization" },
+        "featureList": [
+          "LLM trace viewer with parent/child span hierarchy",
+          "Cost analytics by model, agent, and date",
+          "Real-time live feed via WebSocket",
+          "Error clustering and pattern detection",
+          "Full-text search across prompts and completions",
+          "Session replay for multi-turn conversations",
+          "PII scrubbing (GDPR ready)",
+          "Smart alerts (Slack, email, webhook)",
+          "Trace grouping for multi-call agent runs",
+          "Self-hostable with Docker Compose",
+          "Proxy mode — zero code changes, any language"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is AgentLens?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AgentLens is an open-source observability platform for AI agents. It captures every LLM call your application makes — traces, token usage, costs, latency, and errors — without requiring any code changes. Just point your LLM traffic at the AgentLens proxy."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does AgentLens work without code changes?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AgentLens includes a transparent proxy. Change your OpenAI or Anthropic base URL to point at the proxy, and every request is automatically captured and forwarded to the LLM provider. Works with any language or framework that can make HTTP requests."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is AgentLens free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. AgentLens is MIT licensed and completely free to self-host. There are no usage limits, no per-trace fees, and no vendor lock-in. You own your data on your own servers."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I install AgentLens?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Clone the repository, copy the example environment file, generate two secrets, and run docker compose up. The full stack (API, dashboard, proxy, PostgreSQL, Redis, Elasticsearch) starts in about 2 minutes."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does AgentLens support OpenAI and Anthropic?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. AgentLens supports OpenAI, Anthropic, and any custom LLM API via the proxy. It also provides TypeScript and Python SDKs for auto-instrumentation of OpenAI and Anthropic client libraries."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is AgentLens different from LangSmith or Langfuse?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AgentLens works with zero code changes via its proxy — no SDK or LangChain dependency required. It includes built-in PII scrubbing, real-time live feed, error clustering, and is fully self-hostable with MIT license. Unlike SaaS alternatives, there are no per-trace fees."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 
   <!-- GA placeholder -->
   <!-- GA_TAG_HERE -->
@@ -366,7 +497,7 @@
     .feature-icon {
       font-size: 26px; margin-bottom: 14px; display: block;
     }
-    .feature-title {
+    .feature-title, h3.feature-title, h3.how-title {
       font-size: 16px; font-weight: 700; margin-bottom: 8px;
     }
     .feature-desc  { font-size: 14px; color: var(--muted); line-height: 1.6; }
@@ -500,7 +631,7 @@
 <body>
 
 <!-- NAV -->
-<nav id="nav">
+<nav id="nav" aria-label="Main navigation">
   <div class="container">
     <div class="nav-inner">
       <a href="#" class="nav-logo">
@@ -522,6 +653,7 @@
   </div>
 </nav>
 
+<main>
 <!-- HERO -->
 <section id="hero">
   <div class="container">
@@ -604,7 +736,7 @@
       <div class="how-card recommended fade-up">
         <div class="how-badge">Recommended</div>
         <div class="how-step">Option 1</div>
-        <div class="how-title">Proxy &mdash; zero code changes</div>
+        <h3 class="how-title">Proxy &mdash; zero code changes</h3>
         <p class="how-desc">Change your LLM base URL. That's it. AgentLens forwards requests to OpenAI/Anthropic and captures everything automatically.</p>
         <div class="how-code">
           <span class="dim"># Before</span><br/>
@@ -617,7 +749,7 @@
       <!-- Option 2: SDK -->
       <div class="how-card fade-up">
         <div class="how-step">Option 2</div>
-        <div class="how-title">SDK &mdash; one import</div>
+        <h3 class="how-title">SDK &mdash; one import</h3>
         <p class="how-desc">Auto-patches your OpenAI or Anthropic client. Adds richer metadata and custom span names.</p>
         <div class="how-code">
           <span class="dim">// npm i @farzanhossans/agentlens-openai</span><br/><br/>
@@ -629,7 +761,7 @@
       <!-- Option 3: Manual -->
       <div class="how-card fade-up">
         <div class="how-step">Option 3</div>
-        <div class="how-title">Manual &mdash; full control</div>
+        <h3 class="how-title">Manual &mdash; full control</h3>
         <p class="how-desc">Wrap any code in AgentLens.trace() for custom spans, metadata, and parent/child hierarchies.</p>
         <div class="how-code">
           <span class="dim">// Full control over spans</span><br/><br/>
@@ -654,52 +786,52 @@
     <div class="features-grid">
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F50D;</span>
-        <div class="feature-title">Trace Viewer</div>
+        <h3 class="feature-title">Trace Viewer</h3>
         <p class="feature-desc">Full input/output timeline with parent/child span hierarchy. See exactly what the model received and returned.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F4B0;</span>
-        <div class="feature-title">Cost Analytics</div>
+        <h3 class="feature-title">Cost Analytics</h3>
         <p class="feature-desc">Token usage and dollar cost by model, agent, and date. Instant aggregations across millions of spans. Monthly budget tracking.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F6A8;</span>
-        <div class="feature-title">Smart Alerts</div>
+        <h3 class="feature-title">Smart Alerts</h3>
         <p class="feature-desc">Error rate, cost spike, P95 latency, failure count. Real-time metric evaluation. Notify via Slack, email, or webhook.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x26A1;</span>
-        <div class="feature-title">Live Feed</div>
+        <h3 class="feature-title">Live Feed</h3>
         <p class="feature-desc">Watch agent calls in real-time via WebSocket. See traces as they happen in production.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x23EA;</span>
-        <div class="feature-title">Session Replay</div>
+        <h3 class="feature-title">Session Replay</h3>
         <p class="feature-desc">Step through any past agent run. Group traces by session to see multi-turn conversations.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F512;</span>
-        <div class="feature-title">PII Scrubbing</div>
+        <h3 class="feature-title">PII Scrubbing</h3>
         <p class="feature-desc">Emails, API keys, SSNs, credit cards auto-masked before data leaves your infrastructure. GDPR ready.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F310;</span>
-        <div class="feature-title">Any Language</div>
+        <h3 class="feature-title">Any Language</h3>
         <p class="feature-desc">The proxy works with any HTTP client &mdash; Python, Go, Rust, Java, curl. No SDK needed.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F517;</span>
-        <div class="feature-title">Trace Grouping</div>
+        <h3 class="feature-title">Trace Grouping</h3>
         <p class="feature-desc">Group multiple LLM calls into one trace with optional headers. See parent/child span hierarchies for multi-step agent runs.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F9E9;</span>
-        <div class="feature-title">Error Clustering</div>
+        <h3 class="feature-title">Error Clustering</h3>
         <p class="feature-desc">Similar failures auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F3E0;</span>
-        <div class="feature-title">Self-Hostable</div>
+        <h3 class="feature-title">Self-Hostable</h3>
         <p class="feature-desc">One docker compose command. Your data stays on your servers. No third-party accounts required.</p>
       </div>
     </div>
@@ -867,6 +999,8 @@ docker compose -f docker-compose.prod.yml up -d --build
     </div>
   </div>
 </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
