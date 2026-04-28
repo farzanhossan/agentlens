@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ProjectEntity } from '../../database/entities/index.js';
-import { ElasticsearchService } from '../../span-processor/elasticsearch/elasticsearch.service.js';
+import { ElasticsearchService, type SummaryStats } from '../../span-processor/elasticsearch/elasticsearch.service.js';
 import { withEsFallback } from '../../shared/es-fallback.js';
 import {
   CostByAgentDto,
@@ -11,6 +11,37 @@ import {
   CostSummaryDto,
   CostTimeseriesDto,
 } from './dto/cost.dto.js';
+
+/* ── Raw SQL result-shape interfaces (for type-safe dataSource.query) ── */
+
+interface TotalCostRow {
+  total_cost: string;
+}
+
+interface TokenRow {
+  total_input_tokens: string;
+  total_output_tokens: string;
+}
+
+interface ModelCostRow {
+  model: string;
+  provider: string;
+  cost: string;
+  count: string;
+  avg_tokens: string;
+  avg_cost: string;
+  avg_latency_ms: string | null;
+}
+
+interface DateCostRow {
+  date: string;
+  cost: string;
+}
+
+interface AgentCostRow {
+  agent_name: string;
+  cost: string;
+}
 
 @Injectable()
 export class CostService {
@@ -34,14 +65,14 @@ export class CostService {
 
     // ── ES-powered queries with Postgres fallback ──────────────────────────
 
-    const [summaryStats, prevStats, byModel, byDate, byAgent] = await Promise.all([
+    const [summaryStats, prevStats, byModel, byDate, byAgent]: [SummaryStats, number, CostByModelDto[], CostByDateDto[], CostByAgentDto[]] = await Promise.all([
       // 1. Summary stats (total cost, tokens)
       withEsFallback(
         () => this.esService.getSummaryStats(projectId, dateFrom, dateTo),
-        async () => {
+        async (): Promise<SummaryStats> => {
           const [totalRow, tokenRow] = await Promise.all([
-            this.dataSource.query(`SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, dateFrom, dateTo]),
-            this.dataSource.query(`SELECT COALESCE(SUM(input_tokens), 0) AS total_input_tokens, COALESCE(SUM(output_tokens), 0) AS total_output_tokens FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, dateFrom, dateTo]),
+            this.dataSource.query<TotalCostRow[]>(`SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, dateFrom, dateTo]),
+            this.dataSource.query<TokenRow[]>(`SELECT COALESCE(SUM(input_tokens), 0) AS total_input_tokens, COALESCE(SUM(output_tokens), 0) AS total_output_tokens FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, dateFrom, dateTo]),
           ]);
           return {
             totalSpans: 0, errorCount: 0,
@@ -62,7 +93,7 @@ export class CostService {
           return stats.totalCostUsd;
         },
         async () => {
-          const rows = await this.dataSource.query(`SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, prevFrom, dateFrom]);
+          const rows = await this.dataSource.query<TotalCostRow[]>(`SELECT COALESCE(SUM(cost_usd::float), 0) AS total_cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3`, [projectId, prevFrom, dateFrom]);
           return parseFloat(rows[0]?.total_cost ?? '0');
         },
         this.logger,
@@ -84,8 +115,8 @@ export class CostService {
           }));
         },
         async () => {
-          const rows = await this.dataSource.query(`SELECT model, provider, SUM(cost_usd::float) AS cost, COUNT(*) AS count, AVG(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)) AS avg_tokens, AVG(cost_usd::float) AS avg_cost, AVG(latency_ms) AS avg_latency_ms FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3 GROUP BY model, provider ORDER BY cost DESC`, [projectId, dateFrom, dateTo]);
-          return rows.map((row: any) => ({
+          const rows = await this.dataSource.query<ModelCostRow[]>(`SELECT model, provider, SUM(cost_usd::float) AS cost, COUNT(*) AS count, AVG(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)) AS avg_tokens, AVG(cost_usd::float) AS avg_cost, AVG(latency_ms) AS avg_latency_ms FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3 GROUP BY model, provider ORDER BY cost DESC`, [projectId, dateFrom, dateTo]);
+          return rows.map((row: ModelCostRow) => ({
             model: row.model ?? 'unknown',
             provider: row.provider ?? 'unknown',
             costUsd: parseFloat(row.cost),
@@ -106,8 +137,8 @@ export class CostService {
           return dates.map((d) => ({ date: d.date, costUsd: d.costUsd }));
         },
         async () => {
-          const rows = await this.dataSource.query(`SELECT DATE(started_at) AS date, SUM(cost_usd::float) AS cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3 GROUP BY DATE(started_at) ORDER BY date ASC`, [projectId, dateFrom, dateTo]);
-          return rows.map((row: any) => ({
+          const rows = await this.dataSource.query<DateCostRow[]>(`SELECT DATE(started_at) AS date, SUM(cost_usd::float) AS cost FROM spans WHERE project_id = $1 AND started_at BETWEEN $2 AND $3 GROUP BY DATE(started_at) ORDER BY date ASC`, [projectId, dateFrom, dateTo]);
+          return rows.map((row: DateCostRow) => ({
             date: typeof row.date === 'string' ? row.date.slice(0, 10) : String(row.date).slice(0, 10),
             costUsd: parseFloat(row.cost),
           }));
@@ -122,8 +153,8 @@ export class CostService {
           return agents.map((a) => ({ agentName: a.agentName, costUsd: a.costUsd }));
         },
         async () => {
-          const rows = await this.dataSource.query(`SELECT t.agent_name, SUM(s.cost_usd::float) AS cost FROM spans s JOIN traces t ON t.id = s.trace_id WHERE s.project_id = $1 AND s.started_at BETWEEN $2 AND $3 GROUP BY t.agent_name ORDER BY cost DESC`, [projectId, dateFrom, dateTo]);
-          return rows.map((row: any) => ({
+          const rows = await this.dataSource.query<AgentCostRow[]>(`SELECT t.agent_name, SUM(s.cost_usd::float) AS cost FROM spans s JOIN traces t ON t.id = s.trace_id WHERE s.project_id = $1 AND s.started_at BETWEEN $2 AND $3 GROUP BY t.agent_name ORDER BY cost DESC`, [projectId, dateFrom, dateTo]);
+          return rows.map((row: AgentCostRow) => ({
             agentName: row.agent_name ?? 'unknown',
             costUsd: parseFloat(row.cost),
           }));

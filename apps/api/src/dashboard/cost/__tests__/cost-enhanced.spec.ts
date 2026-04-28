@@ -1,5 +1,6 @@
 import { CostService } from '../cost.service';
 import type { DataSource } from 'typeorm';
+import type { ElasticsearchService } from '../../../span-processor/elasticsearch/elasticsearch.service';
 
 function makeDataSource(results: unknown[][]): DataSource {
   let callIndex = 0;
@@ -29,7 +30,7 @@ describe('CostService — enhanced summary', () => {
 
     const ds = makeDataSource(results);
     const projectRepo = { findOne: jest.fn().mockResolvedValue(null) } as never;
-    const esService = { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as any;
+    const esService = { getSummaryStats: jest.fn().mockRejectedValue(new Error('no ES')) } as unknown as ElasticsearchService;
     const service = new CostService(ds, projectRepo, esService);
     const result = await service.getSummary('proj-1', '2026-03-25', '2026-04-01');
 

@@ -14,6 +14,53 @@ import {
   TopAgentDto,
 } from './dto/overview.dto.js';
 
+/* ── Raw SQL row interfaces for Postgres fallback queries ────────────── */
+
+interface PgSummaryRow {
+  total_requests: string;
+  error_count: string;
+  total_cost: string;
+  avg_latency_ms: string | null;
+  p95_latency_ms: string | null;
+}
+
+interface PgPrevSummaryRow {
+  total_requests: string;
+  error_count: string;
+}
+
+interface PgMonthCostRow {
+  month_cost: string;
+}
+
+interface PgHourlyVolumeRow {
+  hour: string | Date;
+  total: string;
+  errors: string;
+}
+
+interface PgModelUsageRow {
+  model: string | null;
+  calls: string;
+  cost: string;
+}
+
+interface PgTopAgentRow {
+  agent_name: string | null;
+  calls: string;
+  errors: string;
+  avg_latency_ms: string | null;
+  cost: string;
+}
+
+interface PgRecentErrorRow {
+  trace_id: string;
+  error_message: string | null;
+  agent_name: string | null;
+  model: string | null;
+  started_at: string | Date;
+}
+
 @Injectable()
 export class OverviewService {
   private readonly logger = new Logger(OverviewService.name);
@@ -49,11 +96,11 @@ export class OverviewService {
       withEsFallback(
         () => this.esService.getSummaryStats(projectId, windowStart, nowIso),
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgSummaryRow[]>(
             `SELECT COUNT(*) AS total_requests, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count, COALESCE(SUM(total_cost_usd::float), 0) AS total_cost, AVG(total_latency_ms) AS avg_latency_ms, PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_latency_ms) AS p95_latency_ms FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3`,
             [projectId, windowStart, nowIso],
           );
-          const r = rows[0] ?? {};
+          const r: PgSummaryRow = rows[0] ?? { total_requests: '0', error_count: '0', total_cost: '0', avg_latency_ms: null, p95_latency_ms: null };
           return {
             totalSpans: 0,
             errorCount: parseInt(r.error_count ?? '0', 10),
@@ -72,11 +119,11 @@ export class OverviewService {
       withEsFallback(
         () => this.esService.getSummaryStats(projectId, prevWindowStart, windowStart),
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgPrevSummaryRow[]>(
             `SELECT COUNT(*) AS total_requests, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at < $3`,
             [projectId, prevWindowStart, windowStart],
           );
-          const r = rows[0] ?? {};
+          const r: PgPrevSummaryRow = rows[0] ?? { total_requests: '0', error_count: '0' };
           return {
             totalSpans: 0, errorCount: parseInt(r.error_count ?? '0', 10),
             totalCostUsd: 0, avgLatencyMs: 0, p95LatencyMs: 0,
@@ -91,13 +138,14 @@ export class OverviewService {
       withEsFallback(
         () => this.esService.getSummaryStats(projectId, monthStart, nowIso),
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgMonthCostRow[]>(
             `SELECT COALESCE(SUM(total_cost_usd::float), 0) AS month_cost FROM traces WHERE project_id = $1 AND started_at >= $2`,
             [projectId, monthStart],
           );
+          const r: PgMonthCostRow = rows[0] ?? { month_cost: '0' };
           return {
             totalSpans: 0, errorCount: 0,
-            totalCostUsd: parseFloat(rows[0]?.month_cost ?? '0'),
+            totalCostUsd: parseFloat(r.month_cost ?? '0'),
             avgLatencyMs: 0, p95LatencyMs: 0,
             totalInputTokens: 0, totalOutputTokens: 0, uniqueTraces: 0,
           };
@@ -109,11 +157,11 @@ export class OverviewService {
       withEsFallback(
         () => this.esService.getHourlyVolume(projectId, windowStart, nowIso),
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgHourlyVolumeRow[]>(
             `SELECT date_trunc('hour', started_at) AS hour, COUNT(*) AS total, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 GROUP BY date_trunc('hour', started_at) ORDER BY hour ASC`,
             [projectId, windowStart, nowIso],
           );
-          return rows.map((r: any) => ({
+          return rows.map((r: PgHourlyVolumeRow) => ({
             hour: typeof r.hour === 'string' ? r.hour : new Date(r.hour).toISOString(),
             total: parseInt(r.total, 10),
             errors: parseInt(r.errors, 10),
@@ -129,11 +177,11 @@ export class OverviewService {
           return usage.map((u) => ({ model: u.model, calls: u.calls, costUsd: u.costUsd }));
         },
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgModelUsageRow[]>(
             `SELECT model, COUNT(*) AS calls, COALESCE(SUM(cost_usd::float), 0) AS cost FROM spans WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 AND model IS NOT NULL GROUP BY model ORDER BY calls DESC`,
             [projectId, windowStart, nowIso],
           );
-          return rows.map((r: any) => ({
+          return rows.map((r: PgModelUsageRow) => ({
             model: r.model ?? 'unknown',
             calls: parseInt(r.calls, 10),
             costUsd: parseFloat(r.cost),
@@ -155,11 +203,11 @@ export class OverviewService {
           }));
         },
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgTopAgentRow[]>(
             `SELECT agent_name, COUNT(*) AS calls, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors, AVG(total_latency_ms) AS avg_latency_ms, COALESCE(SUM(total_cost_usd::float), 0) AS cost FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at <= $3 GROUP BY agent_name ORDER BY calls DESC LIMIT 5`,
             [projectId, windowStart, nowIso],
           );
-          return rows.map((r: any) => ({
+          return rows.map((r: PgTopAgentRow) => ({
             agentName: r.agent_name ?? 'unknown',
             calls: parseInt(r.calls, 10),
             errors: parseInt(r.errors, 10),
@@ -183,11 +231,11 @@ export class OverviewService {
           }));
         },
         async () => {
-          const rows = await this.dataSource.query(
+          const rows = await this.dataSource.query<PgRecentErrorRow[]>(
             `SELECT t.id AS trace_id, s.error_message, t.agent_name, s.model, t.started_at FROM traces t LEFT JOIN LATERAL (SELECT error_message, model FROM spans WHERE trace_id = t.id AND status = 'error' ORDER BY started_at DESC LIMIT 1) s ON true WHERE t.project_id = $1 AND t.status = 'error' AND t.started_at >= $2 AND t.started_at <= $3 ORDER BY t.started_at DESC LIMIT 5`,
             [projectId, windowStart, nowIso],
           );
-          return rows.map((r: any) => ({
+          return rows.map((r: PgRecentErrorRow) => ({
             traceId: r.trace_id,
             errorMessage: r.error_message ?? 'Unknown error',
             agentName: r.agent_name ?? undefined,

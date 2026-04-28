@@ -19,11 +19,14 @@ describe('ILM Policy', () => {
     const policy = buildIlmPolicy();
     const phases = policy.policy.phases;
 
-    expect(phases.hot.actions.rollover.max_age).toBe('7d');
-    expect(phases.hot.actions.rollover.max_primary_shard_size).toBe('10gb');
+    const hotRollover = phases.hot.actions['rollover'] as { max_age: string; max_primary_shard_size: string };
+    expect(hotRollover.max_age).toBe('7d');
+    expect(hotRollover.max_primary_shard_size).toBe('10gb');
     expect(phases.warm.min_age).toBe('30d');
-    expect(phases.warm.actions.forcemerge.max_num_segments).toBe(1);
-    expect(phases.warm.actions.allocate.number_of_replicas).toBe(0);
+    const warmForcemerge = phases.warm.actions['forcemerge'] as { max_num_segments: number };
+    expect(warmForcemerge.max_num_segments).toBe(1);
+    const warmAllocate = phases.warm.actions['allocate'] as { number_of_replicas: number };
+    expect(warmAllocate.number_of_replicas).toBe(0);
     expect(phases.cold.min_age).toBe('60d');
     expect(phases.delete.min_age).toBe('90d');
   });
@@ -37,7 +40,8 @@ describe('ILM Policy', () => {
     });
     const phases = policy.policy.phases;
 
-    expect(phases.hot.actions.rollover.max_age).toBe('3d');
+    const hotRollover = phases.hot.actions['rollover'] as { max_age: string };
+    expect(hotRollover.max_age).toBe('3d');
     expect(phases.warm.min_age).toBe('14d');
     expect(phases.cold.min_age).toBe('30d');
     expect(phases.delete.min_age).toBe('60d');

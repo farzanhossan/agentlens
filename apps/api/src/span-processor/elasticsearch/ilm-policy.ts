@@ -26,7 +26,24 @@ export const DEFAULT_ILM_CONFIG: IlmConfig = {
   deleteAfterDays: 90,
 };
 
-export function buildIlmPolicy(config: IlmConfig = DEFAULT_ILM_CONFIG) {
+interface IlmPhaseActions {
+  min_age?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actions: Record<string, any>;
+}
+
+interface IlmPolicyBody {
+  policy: {
+    phases: {
+      hot: IlmPhaseActions;
+      warm: IlmPhaseActions;
+      cold: IlmPhaseActions;
+      delete: IlmPhaseActions;
+    };
+  };
+}
+
+export function buildIlmPolicy(config: IlmConfig = DEFAULT_ILM_CONFIG): IlmPolicyBody {
   return {
     policy: {
       phases: {

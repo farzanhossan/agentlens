@@ -13,6 +13,121 @@ import {
 
 const INDEX = INDEX_ALIAS;
 
+// ── ES Aggregation Response Shapes ──────────────────────────────────────────
+
+/** A single-value metric aggregation result (sum, avg, cardinality, max). */
+interface EsValueAgg {
+  value: number | null;
+  value_as_string?: string;
+}
+
+/** A percentiles aggregation result. */
+interface EsPercentilesAgg {
+  values: Record<string, number | null>;
+}
+
+/** A filter aggregation result. */
+interface EsFilterAgg {
+  doc_count: number;
+}
+
+/** A filter aggregation with a nested cardinality sub-aggregation. */
+interface EsFilterWithCardinalityAgg extends EsFilterAgg {
+  unique: EsValueAgg;
+}
+
+/** A generic terms bucket with doc_count and string key. */
+interface EsTermsBucket {
+  key: string;
+  doc_count: number;
+}
+
+/** Hourly histogram bucket shape. */
+interface EsHourlyBucket {
+  key: number;
+  key_as_string?: string;
+  doc_count: number;
+  errors: EsFilterAgg;
+}
+
+/** Model usage terms bucket shape. */
+interface EsModelBucket extends EsTermsBucket {
+  top_provider: { buckets: EsTermsBucket[] };
+  total_cost: EsValueAgg;
+  avg_latency: EsValueAgg;
+  avg_input_tokens: EsValueAgg;
+  avg_output_tokens: EsValueAgg;
+}
+
+/** Top agents terms bucket shape. */
+interface EsAgentBucket extends EsTermsBucket {
+  trace_count: EsValueAgg;
+  error_traces: EsFilterWithCardinalityAgg;
+  avg_latency: EsValueAgg;
+  total_cost: EsValueAgg;
+}
+
+/** Daily cost histogram bucket shape. */
+interface EsDailyBucket {
+  key: number;
+  key_as_string?: string;
+  doc_count: number;
+  cost: EsValueAgg;
+}
+
+/** Cost-by-agent terms bucket shape. */
+interface EsCostByAgentBucket extends EsTermsBucket {
+  cost: EsValueAgg;
+}
+
+/** Alert metrics per-project bucket shape. */
+interface EsAlertProjectBucket extends EsTermsBucket {
+  errors?: EsFilterAgg;
+  total_cost?: EsValueAgg;
+  latency_pct?: EsPercentilesAgg;
+}
+
+/** A top_hits result for error clusters. */
+interface EsTopHitsResult {
+  hits: { hits: Array<{ _source: { traceId?: string } }> };
+}
+
+/** Error pattern terms bucket shape. */
+interface EsErrorPatternBucket extends EsTermsBucket {
+  trace_count: EsValueAgg;
+  sample_traces: EsTopHitsResult;
+  affected_models: { buckets: EsTermsBucket[] };
+  last_seen: EsValueAgg;
+}
+
+/** Summary stats aggregation shape. */
+interface EsSummaryAggs {
+  error_count: EsFilterAgg;
+  total_cost: EsValueAgg;
+  avg_latency: EsValueAgg;
+  latency_percentiles: EsPercentilesAgg;
+  total_input_tokens: EsValueAgg;
+  total_output_tokens: EsValueAgg;
+  unique_traces: EsValueAgg;
+}
+
+/** Wraps a buckets aggregation result. */
+interface EsBucketsAgg<T> {
+  buckets: T[];
+}
+
+/** Recent error source shape (partial ProcessedSpan). */
+interface EsRecentErrorSource {
+  traceId?: string;
+  errorMessage?: string;
+  agentName?: string;
+  model?: string;
+  startedAt?: string;
+}
+
+/** Elasticsearch hit total — can be number or object with value. */
+type EsHitTotal = number | { value: number; relation?: string };
+
 /** Elasticsearch index mapping for spans. */
 const INDEX_MAPPING = {
   mappings: {
@@ -312,8 +427,7 @@ export class ElasticsearchService implements OnModuleInit {
     ];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private extractTotal(total: any): number {
+  private extractTotal(total: EsHitTotal | undefined): number {
     return typeof total === 'number' ? total : (total?.value ?? 0);
   }
 
@@ -353,9 +467,9 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
+    const aggs = response.aggregations as EsSummaryAggs | undefined;
     return {
-      totalSpans: this.extractTotal(response.hits.total),
+      totalSpans: this.extractTotal(response.hits.total as EsHitTotal | undefined),
       errorCount: aggs?.error_count?.doc_count ?? 0,
       totalCostUsd: aggs?.total_cost?.value ?? 0,
       avgLatencyMs: aggs?.avg_latency?.value ?? 0,
@@ -389,8 +503,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.hourly?.buckets ?? [];
+    const aggs = response.aggregations as { hourly: EsBucketsAgg<EsHourlyBucket> } | undefined;
+    const buckets: EsHourlyBucket[] = aggs?.hourly?.buckets ?? [];
     return buckets.map((b) => ({
       hour: b.key_as_string ?? new Date(b.key).toISOString(),
       total: b.doc_count,
@@ -431,8 +545,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.models?.buckets ?? [];
+    const aggs = response.aggregations as { models: EsBucketsAgg<EsModelBucket> } | undefined;
+    const buckets: EsModelBucket[] = aggs?.models?.buckets ?? [];
     return buckets.map((b) => ({
       model: b.key,
       provider: b.top_provider?.buckets?.[0]?.key ?? 'unknown',
@@ -482,8 +596,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.agents?.buckets ?? [];
+    const aggs = response.aggregations as { agents: EsBucketsAgg<EsAgentBucket> } | undefined;
+    const buckets: EsAgentBucket[] = aggs?.agents?.buckets ?? [];
     return buckets.map((b) => ({
       agentName: b.key,
       traceCount: b.trace_count?.value ?? 0,
@@ -517,13 +631,13 @@ export class ElasticsearchService implements OnModuleInit {
     });
 
     return response.hits.hits.map((h) => {
-      const s = h._source as Record<string, any>;
+      const s = h._source as EsRecentErrorSource | undefined;
       return {
-        traceId: s.traceId ?? '',
-        errorMessage: s.errorMessage ?? '',
-        agentName: s.agentName,
-        model: s.model,
-        startedAt: s.startedAt ?? '',
+        traceId: s?.traceId ?? '',
+        errorMessage: s?.errorMessage ?? '',
+        agentName: s?.agentName,
+        model: s?.model,
+        startedAt: s?.startedAt ?? '',
       };
     });
   }
@@ -551,8 +665,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.daily?.buckets ?? [];
+    const aggs = response.aggregations as { daily: EsBucketsAgg<EsDailyBucket> } | undefined;
+    const buckets: EsDailyBucket[] = aggs?.daily?.buckets ?? [];
     return buckets.map((b) => ({
       date: (b.key_as_string ?? new Date(b.key).toISOString()).slice(0, 10),
       costUsd: b.cost?.value ?? 0,
@@ -586,8 +700,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.agents?.buckets ?? [];
+    const aggs = response.aggregations as { agents: EsBucketsAgg<EsCostByAgentBucket> } | undefined;
+    const buckets: EsCostByAgentBucket[] = aggs?.agents?.buckets ?? [];
     return buckets.map((b) => ({
       agentName: b.key,
       costUsd: b.cost?.value ?? 0,
@@ -609,7 +723,7 @@ export class ElasticsearchService implements OnModuleInit {
     const from = new Date(now.getTime() - windowMinutes * 60_000).toISOString();
     const to = now.toISOString();
 
-    const subAggs: Record<string, any> = {};
+    const subAggs: Record<string, object> = {};
     if (type === 'error_rate') {
       subAggs.errors = { filter: { term: { status: 'error' } } };
     } else if (type === 'cost_spike') {
@@ -639,8 +753,8 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.by_project?.buckets ?? [];
+    const aggs = response.aggregations as { by_project: EsBucketsAgg<EsAlertProjectBucket> } | undefined;
+    const buckets: EsAlertProjectBucket[] = aggs?.by_project?.buckets ?? [];
     const result = new Map<string, number>();
 
     for (const b of buckets) {
@@ -701,15 +815,15 @@ export class ElasticsearchService implements OnModuleInit {
       },
     });
 
-    const aggs = response.aggregations as Record<string, any>;
-    const buckets: any[] = aggs?.error_patterns?.buckets ?? [];
+    const aggs = response.aggregations as { error_patterns: EsBucketsAgg<EsErrorPatternBucket> } | undefined;
+    const buckets: EsErrorPatternBucket[] = aggs?.error_patterns?.buckets ?? [];
     return buckets.map((b) => ({
       pattern: b.key,
       count: b.trace_count?.value ?? b.doc_count,
       traceIds: (b.sample_traces?.hits?.hits ?? []).map(
-        (h: any) => h._source?.traceId ?? '',
+        (h: { _source: { traceId?: string } }) => h._source?.traceId ?? '',
       ),
-      models: (b.affected_models?.buckets ?? []).map((m: any) => m.key),
+      models: (b.affected_models?.buckets ?? []).map((m: EsTermsBucket) => m.key),
       lastSeen: b.last_seen?.value_as_string ?? '',
     }));
   }

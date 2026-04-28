@@ -240,11 +240,13 @@ export class TracesService {
         };
       },
       async () => {
-        const result = await this.dataSource.query(
+        const result = await this.dataSource.query<Array<{
+          total_traces: string; error_count: string; avg_latency_ms: string | null; total_cost_usd: string | null;
+        }>>(
           `SELECT COUNT(*) AS total_traces, SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count, AVG(total_latency_ms) AS avg_latency_ms, SUM(total_cost_usd::float) AS total_cost_usd FROM traces WHERE project_id = $1 AND started_at >= $2 AND started_at < ($3::date + INTERVAL '1 day')`,
           [projectId, dateFrom, dateTo],
         );
-        const row = result[0] ?? {};
+        const row = result[0] ?? { total_traces: '0', error_count: '0', avg_latency_ms: null, total_cost_usd: null };
         return {
           totalTraces: parseInt(row.total_traces ?? '0', 10),
           errorCount: parseInt(row.error_count ?? '0', 10),

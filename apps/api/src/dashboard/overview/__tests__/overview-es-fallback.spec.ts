@@ -2,6 +2,7 @@ import type { DataSource, Repository } from 'typeorm';
 import { OverviewService } from '../overview.service';
 import type { ElasticsearchService } from '../../../span-processor/elasticsearch/elasticsearch.service';
 import type { SummaryStats } from '../../../span-processor/elasticsearch/elasticsearch.service';
+import type { TraceEntity } from '../../../database/entities/index';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -24,8 +25,8 @@ function makeDataSource(): DataSource {
   } as unknown as DataSource;
 }
 
-function makeTraceRepo(count = 0) {
-  return { count: jest.fn().mockResolvedValue(count) } as unknown as Repository<any>;
+function makeTraceRepo(count = 0): Repository<TraceEntity> {
+  return { count: jest.fn().mockResolvedValue(count) } as unknown as Repository<TraceEntity>;
 }
 
 function makeEsService(shouldFail = false): ElasticsearchService {
@@ -62,7 +63,9 @@ describe('OverviewService — ES fallback', () => {
     const result = await service.getOverview('proj-1', 24);
 
     // ES was called
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(es.getSummaryStats).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(es.getHourlyVolume).toHaveBeenCalled();
 
     // Postgres was NOT called for any analytics query (only for active traces count)
@@ -103,10 +106,12 @@ describe('OverviewService — ES fallback', () => {
     const result = await service.getOverview('proj-1', 24);
 
     // ES was attempted
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(es.getSummaryStats).toHaveBeenCalled();
 
     // Postgres was called as fallback
-    expect((ds.query as jest.Mock)).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(ds.query).toHaveBeenCalled();
 
     // Values come from Postgres fallback
     expect(result.totalRequests).toBe(50);

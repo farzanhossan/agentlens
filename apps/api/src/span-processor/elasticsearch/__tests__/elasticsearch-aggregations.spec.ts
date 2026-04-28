@@ -1,20 +1,27 @@
 import { ElasticsearchService } from '../elasticsearch.service';
+import type { ConfigService } from '@nestjs/config';
 
 // ---------------------------------------------------------------------------
 // Mock ES client
 // ---------------------------------------------------------------------------
 
-function makeService(searchResponse: any): ElasticsearchService {
-  const mockClient = {
+interface MockClient {
+  ping: jest.Mock;
+  search: jest.Mock;
+  indices: { exists: jest.Mock };
+}
+
+function makeService(searchResponse: unknown): ElasticsearchService {
+  const mockClient: MockClient = {
     ping: jest.fn().mockResolvedValue(true),
     search: jest.fn().mockResolvedValue(searchResponse),
     indices: { exists: jest.fn().mockResolvedValue(true) },
   };
   const svc = new ElasticsearchService({
     getOrThrow: () => 'http://localhost:9200',
-  } as any);
+  } as unknown as ConfigService);
   // Replace internal client
-  (svc as any).client = mockClient;
+  Object.assign(svc, { client: mockClient });
   return svc;
 }
 
@@ -30,7 +37,8 @@ describe('ElasticsearchService.isHealthy', () => {
 
   it('returns false when ping throws', async () => {
     const svc = makeService({});
-    (svc as any).client.ping.mockRejectedValue(new Error('down'));
+    const client = svc as unknown as { client: MockClient };
+    client.client.ping.mockRejectedValue(new Error('down'));
     expect(await svc.isHealthy()).toBe(false);
   });
 });

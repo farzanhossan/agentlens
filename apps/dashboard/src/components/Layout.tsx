@@ -97,7 +97,7 @@ function ProjectSelector({ activeProjectId, onSwitch }: {
 
   useEffect(() => {
     if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return (): void => { document.removeEventListener('mousedown', handleClickOutside); };
   }, [open, handleClickOutside]);
 
   return (
@@ -218,7 +218,7 @@ export function Layout(): React.JSX.Element {
   function switchProject(id: string): void {
     localStorage.setItem('agentlens_project_id', id);
     setProjectId(id);
-    queryClient.invalidateQueries();
+    void queryClient.invalidateQueries();
   }
 
   function handleLogout(): void {

@@ -1,6 +1,7 @@
 import { OverviewService } from '../overview.service';
 import type { DataSource, Repository } from 'typeorm';
 import type { TraceEntity } from '../../../database/entities/index';
+import type { ElasticsearchService } from '../../../span-processor/elasticsearch/elasticsearch.service';
 
 function makeDataSourceMock(queryResults: Record<string, unknown[]>): {
   ds: DataSource;
@@ -65,7 +66,7 @@ describe('OverviewService', () => {
       getModelUsage: jest.fn().mockRejectedValue(new Error('no ES')),
       getTopAgents: jest.fn().mockRejectedValue(new Error('no ES')),
       getRecentErrors: jest.fn().mockRejectedValue(new Error('no ES')),
-    } as any;
+    } as unknown as ElasticsearchService;
     const service = new OverviewService(ds, traceRepo, esService);
     const result = await service.getOverview('project-1', 24);
 
