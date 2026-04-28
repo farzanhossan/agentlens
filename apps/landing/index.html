@@ -288,9 +288,27 @@
     .nav-links a:hover { color: var(--text); }
     .nav-cta { margin-left: 8px; }
 
+    .nav-toggle {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      padding: 8px; margin-left: auto; color: var(--muted);
+    }
+    .nav-toggle svg { display: block; }
+
     @media (max-width: 640px) {
-      .nav-links { display: none; }
-      .nav-cta   { margin-left: auto; }
+      .nav-toggle { display: block; }
+      .nav-links {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        flex-direction: column; gap: 0;
+        background: rgba(10,10,10,.95); backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+      }
+      .nav-links.open { display: flex; }
+      .nav-links li { border-bottom: 1px solid var(--border); }
+      .nav-links li:last-child { border-bottom: none; }
+      .nav-links a { display: block; padding: 14px 24px; font-size: 15px; }
+      .nav-cta { margin-left: 0; margin-right: auto; }
     }
 
     /* Hero */
@@ -629,6 +647,70 @@
 
     /* hljs overrides */
     .hljs { background: transparent !important; }
+
+    /* ===== Mobile Responsive ===== */
+
+    @media (max-width: 768px) {
+      .container { padding: 0 16px; }
+      .section { padding: 64px 0; }
+      .section-sm { padding: 40px 0; }
+      .section-head { margin-bottom: 36px; }
+      .section-title { font-size: clamp(24px, 6vw, 32px); }
+      .section-sub { font-size: 15px; }
+
+      /* Hero */
+      #hero { padding: 120px 0 64px; }
+      .hero-sub { font-size: 16px; }
+      .hero-ctas { flex-direction: column; }
+      .hero-ctas .btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* Terminal */
+      .terminal-body { padding: 16px; font-size: 11px; min-height: 180px; }
+      .terminal-line { white-space: pre-wrap; word-break: break-all; }
+
+      /* How it works */
+      .how-card { padding: 24px 20px; }
+      .how-code { padding: 12px; font-size: 11px; }
+      .how-title { font-size: 18px; }
+
+      /* Features */
+      .feature-card { padding: 20px; }
+
+      /* Comparison table */
+      table { font-size: 12px; min-width: 600px; }
+      th, td { padding: 10px 12px; }
+
+      /* Self-host */
+      .selfhost-code pre { padding: 16px; font-size: 11px; }
+
+      /* Pricing */
+      .pricing-grid { max-width: 100%; }
+      .pricing-card { padding: 24px 20px; }
+      .pricing-price { font-size: 36px; }
+
+      /* CTA */
+      .cta-title { font-size: clamp(24px, 6vw, 32px); }
+      .cta-sub { font-size: 15px; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .cta-buttons .btn { width: 100%; text-align: center; justify-content: center; }
+    }
+
+    @media (max-width: 380px) {
+      .container { padding: 0 12px; }
+      #hero { padding: 100px 0 48px; }
+      .hero-headline { font-size: 28px; }
+      .hero-sub { font-size: 14px; }
+      .badge { font-size: 11px; padding: 5px 10px; }
+      .btn { padding: 10px 18px; font-size: 14px; }
+      .btn-sm { padding: 7px 14px; font-size: 12px; }
+      .terminal-body { font-size: 10px; padding: 12px; }
+      .how-code { font-size: 10px; }
+      .section { padding: 48px 0; }
+      .section-title { font-size: 22px; }
+      .feature-card { padding: 16px; }
+      .feature-icon { font-size: 22px; }
+      .selfhost-code pre { font-size: 10px; padding: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -646,7 +728,14 @@
         </svg>
         AgentLens
       </a>
-      <ul class="nav-links">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <ul class="nav-links" id="navLinks">
         <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="#features">Features</a></li>
         <li><a href="https://github.com/farzanhossan/agentlens" target="_blank">GitHub</a></li>
@@ -1046,6 +1135,17 @@ docker compose -f docker-compose.prod.yml up -d --build
   window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 20);
   }, { passive: true });
+
+  // Mobile nav toggle
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+  });
+  // Close menu when a link is clicked
+  navLinks.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => navLinks.classList.remove('open'));
+  });
 
   // Intersection Observer fade-up
   const fadeEls = document.querySelectorAll('.fade-up');
