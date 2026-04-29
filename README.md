@@ -21,6 +21,12 @@ See every LLM call, what it cost, and why it failed — without changing your co
 
 </div>
 
+<div align="center">
+
+![AgentLens Demo](./docs/demo.gif)
+
+</div>
+
 ---
 
 ## Why AgentLens?
@@ -142,11 +148,22 @@ Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 
 ## What You Get
 
+### Overview Dashboard
+At-a-glance metrics: total requests, error rate, cost, latency, and active traces. Model usage breakdown and top agents.
+
+![Overview](./docs/screenshots/overview.png)
+
 ### Trace Viewer
 Full input/output timeline for every span in your agent run. See exactly what the model received and what it returned, with parent/child hierarchy.
 
+![Traces](./docs/screenshots/traces.png)
+
+![Trace Detail](./docs/screenshots/trace-detail.png)
+
 ### Cost Analytics
 Token usage and dollar cost broken down by model, agent, and date. Instant aggregations across millions of spans powered by Elasticsearch. Monthly budget tracking with alerts.
+
+![Cost Analytics](./docs/screenshots/cost.png)
 
 ### Error Clustering
 Similar failures are auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs. Powered by Elasticsearch `significant_terms` analysis.
