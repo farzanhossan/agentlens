@@ -352,6 +352,25 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@24.12.0)(terser@5.46.0)
 
+  packages/sdk-universal:
+    dependencies:
+      '@farzanhossans/agentlens-core':
+        specifier: workspace:*
+        version: link:../sdk-core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.19.37
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@1.21.7)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.37)(terser@5.46.0)
+
   scripts:
     dependencies:
       '@elastic/elasticsearch':

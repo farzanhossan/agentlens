@@ -1,0 +1,61 @@
+{
+  "name": "@farzanhossans/agentlens",
+  "version": "0.1.0",
+  "description": "Universal AI agent observability — 1 line to trace every LLM call (OpenAI, Anthropic, Gemini, Cohere, Mistral)",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "eslint src --ext .ts --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build && pnpm test",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "observability",
+    "llm",
+    "tracing",
+    "openai",
+    "anthropic",
+    "gemini",
+    "cohere",
+    "mistral",
+    "monitoring"
+  ],
+  "author": "Farzan Hossan <farzanhossans@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://agentlens.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/farzanhossan/agentlens",
+    "directory": "packages/sdk-universal"
+  },
+  "bugs": {
+    "url": "https://github.com/farzanhossan/agentlens/issues"
+  },
+  "dependencies": {
+    "@farzanhossans/agentlens-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsup": "^8.5.1",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

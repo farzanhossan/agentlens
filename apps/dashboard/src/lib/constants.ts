@@ -1,5 +1,5 @@
-export const PROXY_BASE_URL = 'https://api-agentlens.techmatbd.com';
+export const INGEST_BASE_URL = 'https://api-agentlens.techmatbd.com';
 
-export function getProxyUrl(projectId: string, provider: string): string {
-  return `${PROXY_BASE_URL}/v1/p/${projectId}/${provider}/v1`;
+export function getIngestEndpoint(): string {
+  return `${INGEST_BASE_URL}/v1/spans`;
 }
