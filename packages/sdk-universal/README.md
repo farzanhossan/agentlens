@@ -67,13 +67,47 @@ For every matched LLM HTTP call:
 
 ## Supported providers
 
-| Provider  | Hosts                                  | Endpoints                                                      |
-| --------- | -------------------------------------- | -------------------------------------------------------------- |
-| OpenAI    | `api.openai.com`                       | `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`    |
-| Anthropic | `api.anthropic.com`                    | `/v1/messages`                                                 |
-| Gemini    | `generativelanguage.googleapis.com`    | `/v1beta/models`, `/v1/models`                                 |
-| Cohere    | `api.cohere.com`                       | `/v1/chat`, `/v1/generate`, `/v2/chat`                         |
-| Mistral   | `api.mistral.ai`                       | `/v1/chat/completions`                                         |
+All five providers support both streaming and non-streaming responses.
+
+| Provider  | Hosts                                  | Endpoints                                                      | Streaming |
+| --------- | -------------------------------------- | -------------------------------------------------------------- | --------- |
+| OpenAI    | `api.openai.com`                       | `/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`    | ✅        |
+| Anthropic | `api.anthropic.com`                    | `/v1/messages`                                                 | ✅        |
+| Gemini    | `generativelanguage.googleapis.com`    | `/v1beta/models`, `/v1/models`                                 | ✅        |
+| Cohere    | `api.cohere.com`                       | `/v1/chat`, `/v1/generate`, `/v2/chat` (v1 + v2 stream shapes) | ✅        |
+| Mistral   | `api.mistral.ai`                       | `/v1/chat/completions`                                         | ✅        |
+
+## Grouping calls with `trace()`
+
+Wrap a logical unit of work (an agent step, a multi-call retrieval, etc.) in
+`AgentLens.trace(name, fn)`. Every LLM call inside `fn` — including async ones
+and across nested traces — is auto-tagged with the same `traceId` and gets
+`parentSpanId` set to the trace's span. Built on Node's `AsyncLocalStorage`,
+so it composes with `Promise.all`, `setTimeout`, async generators, etc.
+
+```ts
+import { AgentLens } from '@farzanhossans/agentlens'
+
+AgentLens.init({ apiKey: 'proj_xxx' })
+
+await AgentLens.trace('classify-then-rephrase', async () => {
+  const classification = await openai.chat.completions.create({ ... })
+  // ↑ span emitted with parentSpanId = the trace's spanId
+  const rephrased = await anthropic.messages.create({ ... })
+  // ↑ same trace, same parentSpanId
+})
+```
+
+Nested traces nest:
+
+```ts
+await AgentLens.trace('outer', async () => {
+  await AgentLens.trace('inner', async () => {
+    await openai.chat.completions.create({ ... })
+    // child of `inner`, which is child of `outer`, all sharing one traceId
+  })
+})
+```
 
 ## PII scrubbing
 
@@ -102,7 +136,15 @@ AgentLens.init(config: {
 
 AgentLens.flush(): Promise<void>   // force-flush pending spans
 AgentLens.shutdown(): void         // stop the flush timer
+
+AgentLens.trace<T>(name: string, fn: () => Promise<T>): Promise<T>
+// re-exports from @farzanhossans/agentlens-core:
+getCurrentTrace(), getCurrentTraceId(), getCurrentSpanId(), runWithTrace(ctx, fn)
 ```
+
+## Requirements
+
+Node ≥ 18 (the SDK uses `AsyncLocalStorage`, `globalThis.fetch`, and `crypto.randomUUID`).
 
 ## License
 

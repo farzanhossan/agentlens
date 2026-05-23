@@ -55,6 +55,9 @@ export interface TransportConfig {
 }
 
 export interface OutboundSpan extends ParsedSpan {
+  spanId: string
+  traceId: string
+  parentSpanId?: string
   timestamp: string
   latency: number
   status: number

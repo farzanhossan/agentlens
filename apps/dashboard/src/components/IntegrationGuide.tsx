@@ -73,7 +73,7 @@ AgentLens.init({
 
       {/* Footer hint */}
       <div className="px-4 py-2 text-[11px] text-gray-500">
-        Python and other languages are coming soon. For now you can use the per-provider SDKs (<code className="text-gray-400">@farzanhossans/agentlens-openai</code>, <code className="text-gray-400">@farzanhossans/agentlens-anthropic</code>) or the <code className="text-gray-400">agentlens</code> Python package.
+        Python:&nbsp;<code className="text-gray-400">pip install agentlens</code> &nbsp;then&nbsp;<code className="text-gray-400">AgentLens.init(api_key, project_id)</code>. Same network-layer interception (httpx + requests), same providers.
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto'
+import { getCurrentSpanId, getCurrentTraceId } from '@farzanhossans/agentlens-core'
 import { parseSpan } from './parsers'
 import { scrubPII } from './pii/scrubber'
 import type {
@@ -54,7 +56,11 @@ export class Transport {
   }
 
   pushError(payload: ErrorPayload): void {
+    const ids = this.resolveIds()
     const span: OutboundSpan = {
+      spanId: ids.spanId,
+      traceId: ids.traceId,
+      parentSpanId: ids.parentSpanId,
       model: 'unknown',
       provider: payload.provider,
       inputTokens: 0,
@@ -96,13 +102,38 @@ export class Transport {
   }
 
   private toOutbound(parsed: ParsedSpan, latency: number, status: number): OutboundSpan {
+    const ids = this.resolveIds()
     return {
       ...parsed,
+      spanId: ids.spanId,
+      traceId: ids.traceId,
+      parentSpanId: ids.parentSpanId,
       inputText: this.scrub(parsed.inputText),
       outputText: this.scrub(parsed.outputText),
       latency,
       status,
       timestamp: new Date().toISOString(),
+    }
+  }
+
+  /**
+   * Resolves the trace-context IDs to stamp on an outbound span.
+   *
+   * - `spanId` is always fresh per LLM call (the call IS the leaf span).
+   * - `traceId` reuses the surrounding `trace()` block's traceId if any,
+   *   else a new one (the standalone LLM call is its own single-span trace).
+   * - `parentSpanId` is the surrounding trace's currentSpanId, or undefined
+   *   when there is no enclosing `trace()`.
+   *
+   * AsyncLocalStorage propagates through the patched fetch's promise chain,
+   * so this still resolves correctly for streamed spans emitted from the
+   * background `captureSSEStream()` reader.
+   */
+  private resolveIds(): { spanId: string; traceId: string; parentSpanId?: string } {
+    return {
+      spanId: randomUUID(),
+      traceId: getCurrentTraceId() ?? randomUUID(),
+      parentSpanId: getCurrentSpanId(),
     }
   }
 

@@ -4,12 +4,16 @@ interface PIIPattern {
   replacement: string
 }
 
+// Order matters: more specific / higher-stakes patterns run first.
+// SSN and credit cards must precede phone, because the phone regex is greedy
+// enough to eat 10 contiguous digits out of an unspaced 16-digit card number,
+// leaving fragments that no longer match the card pattern.
 const PII_PATTERNS: PIIPattern[] = [
   { name: 'email', pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: '[EMAIL]' },
-  { name: 'phone', pattern: /(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, replacement: '[PHONE]' },
-  { name: 'ssn', pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]' },
   { name: 'apikey', pattern: /\b(sk|pk|key|token|secret|api[-_]?key)[-_]?[a-zA-Z0-9]{20,}/gi, replacement: '[API_KEY]' },
   { name: 'creditcard', pattern: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, replacement: '[CARD]' },
+  { name: 'ssn', pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]' },
+  { name: 'phone', pattern: /(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, replacement: '[PHONE]' },
   { name: 'ipv4', pattern: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, replacement: '[IP]' },
 ]
 
