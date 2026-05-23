@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentlens"
+name = "farzanhossans-agentlens"
 version = "0.2.0"
 description = "AI Agent Observability SDK for Python"
 readme = "README.md"
@@ -42,6 +42,12 @@ dev = [
 Homepage = "https://agentlens.dev"
 Repository = "https://github.com/farzanhossan/agentlens"
 Issues = "https://github.com/farzanhossan/agentlens/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentlens"]
+
+[tool.hatch.build.targets.sdist]
+include = ["agentlens", "README.md", "LICENSE"]
 
 [tool.ruff]
 line-length = 100

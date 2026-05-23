@@ -73,7 +73,7 @@ AgentLens.init({
 
       {/* Footer hint */}
       <div className="px-4 py-2 text-[11px] text-gray-500">
-        Python:&nbsp;<code className="text-gray-400">pip install agentlens</code> &nbsp;then&nbsp;<code className="text-gray-400">AgentLens.init(api_key, project_id)</code>. Same network-layer interception (httpx + requests), same providers.
+        Python:&nbsp;<code className="text-gray-400">pip install farzanhossans-agentlens</code> &nbsp;then&nbsp;<code className="text-gray-400">AgentLens.init(api_key, project_id)</code>. Same network-layer interception (httpx + requests), same providers.
       </div>
     </div>
   );
