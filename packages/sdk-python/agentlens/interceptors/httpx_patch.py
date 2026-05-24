@@ -83,9 +83,10 @@ def _read_request_body(request: httpx.Request) -> dict[str, Any] | None:
     if not raw:
         return None
     try:
-        return json.loads(raw.decode("utf-8"))
+        parsed = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def _is_stream(request_body: dict[str, Any] | None, response: httpx.Response) -> bool:
@@ -136,6 +137,7 @@ def _capture_async(
 
 def _safe_json(response: httpx.Response) -> dict[str, Any] | None:
     try:
-        return response.json()
+        parsed = response.json()
     except (json.JSONDecodeError, ValueError):
         return None
+    return parsed if isinstance(parsed, dict) else None

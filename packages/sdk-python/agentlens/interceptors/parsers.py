@@ -189,9 +189,13 @@ def _anthropic_output(response: dict[str, Any] | None) -> str:
     content = response.get("content")
     if not isinstance(content, list):
         return ""
-    return "".join(
-        p.get("text") for p in content if isinstance(p, dict) and isinstance(p.get("text"), str)
-    )
+    parts: list[str] = []
+    for p in content:
+        if isinstance(p, dict):
+            t = p.get("text")
+            if isinstance(t, str):
+                parts.append(t)
+    return "".join(parts)
 
 
 def parse_anthropic(
@@ -249,9 +253,13 @@ def _gemini_output(response: dict[str, Any] | None) -> str:
     parts = (first.get("content") or {}).get("parts") if isinstance(first, dict) else None
     if not isinstance(parts, list):
         return ""
-    return "".join(
-        p.get("text") for p in parts if isinstance(p, dict) and isinstance(p.get("text"), str)
-    )
+    out: list[str] = []
+    for p in parts:
+        if isinstance(p, dict):
+            t = p.get("text")
+            if isinstance(t, str):
+                out.append(t)
+    return "".join(out)
 
 
 def parse_gemini(
@@ -284,35 +292,48 @@ def parse_gemini(
 def _cohere_input(request: dict[str, Any] | None) -> str:
     if not request:
         return ""
-    if isinstance(request.get("message"), str):
-        return request["message"]
-    if isinstance(request.get("prompt"), str):
-        return request["prompt"]
+    msg = request.get("message")
+    if isinstance(msg, str):
+        return msg
+    prompt = request.get("prompt")
+    if isinstance(prompt, str):
+        return prompt
     msgs = request.get("messages")
     if isinstance(msgs, list):
-        return "\n".join(
-            m.get("content", "")
-            for m in msgs
-            if isinstance(m, dict) and isinstance(m.get("content"), str)
-        )
+        contents: list[str] = []
+        for m in msgs:
+            if isinstance(m, dict):
+                c = m.get("content")
+                if isinstance(c, str):
+                    contents.append(c)
+        return "\n".join(contents)
     return ""
 
 
 def _cohere_output(response: dict[str, Any] | None) -> str:
     if not response:
         return ""
-    if isinstance(response.get("text"), str):
-        return response["text"]
+    top_text = response.get("text")
+    if isinstance(top_text, str):
+        return top_text
     msg = response.get("message")
     if isinstance(msg, dict):
         content = msg.get("content")
         if isinstance(content, list):
-            return "".join(c.get("text", "") for c in content if isinstance(c, dict))
+            parts: list[str] = []
+            for c in content:
+                if isinstance(c, dict):
+                    t = c.get("text")
+                    if isinstance(t, str):
+                        parts.append(t)
+            return "".join(parts)
     gens = response.get("generations")
     if isinstance(gens, list) and gens:
         first = gens[0]
-        if isinstance(first, dict) and isinstance(first.get("text"), str):
-            return first["text"]
+        if isinstance(first, dict):
+            gt = first.get("text")
+            if isinstance(gt, str):
+                return gt
     return ""
 
 

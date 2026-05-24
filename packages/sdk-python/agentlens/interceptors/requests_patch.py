@@ -10,7 +10,7 @@ import json
 import time
 from typing import Any
 
-import requests  # type: ignore[import-not-found]
+import requests
 
 from .emitter import emit_error, emit_span
 from .registry import LLMEndpoint, match_llm
@@ -43,7 +43,7 @@ def patch_requests() -> None:
         return response
 
     setattr(patched_send, _PATCHED_FLAG, True)
-    requests.Session.send = patched_send  # type: ignore[method-assign]
+    requests.Session.send = patched_send
 
 
 # ---------------------------------------------------------------------------
@@ -67,9 +67,10 @@ def _read_request_body(request: requests.PreparedRequest) -> dict[str, Any] | No
     if not isinstance(body, str):
         return None
     try:
-        return json.loads(body)
+        parsed = json.loads(body)
     except json.JSONDecodeError:
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def _is_stream(request_body: dict[str, Any] | None, response: requests.Response) -> bool:
