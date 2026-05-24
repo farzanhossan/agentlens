@@ -15,12 +15,15 @@ pnpm add @farzanhossans/agentlens
 
 ## Quickstart
 
-### 1. Cloud — zero config (default)
+### 1. Cloud — zero config
 
 ```ts
 import { AgentLens } from '@farzanhossans/agentlens'
 
-AgentLens.init({ apiKey: 'proj_xxx' })
+AgentLens.init({
+  apiKey:    'proj_xxx',                          // from your dashboard
+  projectId: '00000000-0000-0000-0000-000000000000',
+})
 ```
 
 ### 2. Self-hosted — point at your own ingest endpoint
@@ -29,18 +32,19 @@ AgentLens.init({ apiKey: 'proj_xxx' })
 import { AgentLens } from '@farzanhossans/agentlens'
 
 AgentLens.init({
-  apiKey: 'proj_xxx', // key from your own AgentLens dashboard
-  endpoint: 'https://agentlens.your-company.com/v1/spans',
+  apiKey:    'proj_xxx',
+  projectId: '<your-project-uuid>',
+  endpoint:  'https://agentlens.your-company.com/v1/spans',
 })
 ```
 
-### 3. Self-hosted + debug mode (logs each captured span to stdout)
+### 3. Debug mode — logs each captured span to stdout
 
 ```ts
 AgentLens.init({
-  apiKey: 'proj_xxx',
-  endpoint: 'https://agentlens.your-company.com/v1/spans',
-  debug: true,
+  apiKey:    'proj_xxx',
+  projectId: '<your-project-uuid>',
+  debug:     true,
 })
 ```
 
@@ -48,22 +52,26 @@ AgentLens.init({
 
 ```ts
 AgentLens.init({
-  apiKey: 'proj_xxx',
-  pii: false,
+  apiKey:    'proj_xxx',
+  projectId: '<your-project-uuid>',
+  pii:       false,
 })
 ```
 
 ## What gets captured
 
-For every matched LLM HTTP call:
+Each emitted span contains:
 
-- `provider` and `model`
-- `inputTokens`, `outputTokens`, `totalTokens`
-- `costUsd` (calculated from a built-in price table per provider)
-- `inputText` and `outputText` (PII-scrubbed by default)
-- `latency` and `status`
-- `isStream` flag — streaming responses are tapped via `ReadableStream.tee()` so
-  the stream you read is byte-identical to the original
+- `spanId`, `traceId`, `parentSpanId?` (auto-linked by `trace()`)
+- `projectId`, `name` (e.g. `openai.chat`, `anthropic.messages`)
+- `provider`, `model`
+- `inputTokens`, `outputTokens`, `totalTokens`, `costUsd`
+- `input` and `output` text (PII-scrubbed by default)
+- `latencyMs`, `status` (`success | error | timeout`)
+- `startedAt`, `endedAt`, `metadata` (carries `httpStatus`)
+- `isStream` flag — streaming responses are tapped via `ReadableStream.tee()`
+  (fetch) or `IncomingMessage.push` hook (axios/got/node-fetch) so the bytes
+  the user reads are unchanged. Brotli/gzip/deflate responses are auto-decompressed.
 
 ## Supported providers
 
@@ -88,7 +96,7 @@ so it composes with `Promise.all`, `setTimeout`, async generators, etc.
 ```ts
 import { AgentLens } from '@farzanhossans/agentlens'
 
-AgentLens.init({ apiKey: 'proj_xxx' })
+AgentLens.init({ apiKey: 'proj_xxx', projectId: '<your-project-uuid>' })
 
 await AgentLens.trace('classify-then-rephrase', async () => {
   const classification = await openai.chat.completions.create({ ... })
@@ -112,26 +120,27 @@ await AgentLens.trace('outer', async () => {
 ## PII scrubbing
 
 Enabled by default. Strips emails, phone numbers, SSNs, credit cards, IPv4
-addresses, and obvious API-key shapes from `inputText` / `outputText` before
-spans leave your process. Pass `pii: false` to disable.
+addresses, and obvious API-key shapes from `input` / `output` before spans
+leave your process. Pass `pii: false` to disable.
 
 ## Self-hosted flow
 
-1. Deploy AgentLens via Docker Compose on your own server
-2. Open your own dashboard → create a project → copy the API key
-3. `AgentLens.init({ apiKey, endpoint })` pointing at your own ingest URL
+1. Deploy AgentLens via Docker Compose on your own server.
+2. Open your own dashboard → create a project → copy the API key and project UUID.
+3. `AgentLens.init({ apiKey, projectId, endpoint })` pointing at your own ingest URL.
 4. Spans flow: your app → your worker → your DB. Nothing touches AgentLens cloud.
 
 ## API
 
 ```ts
 AgentLens.init(config: {
-  apiKey: string
-  endpoint?: string       // default: https://ingest.agentlens.dev/v1/spans
-  debug?: boolean         // default: false
-  pii?: boolean           // default: true
-  flushIntervalMs?: number // default: 500
-  maxBatchSize?: number   // default: 50
+  apiKey: string             // required — your project API key
+  projectId: string          // required — your project UUID
+  endpoint?: string          // default: https://ingest.agentlens.dev/v1/spans
+  debug?: boolean            // default: false — log captured spans to stdout
+  pii?: boolean              // default: true — scrub input/output text
+  flushIntervalMs?: number   // default: 500
+  maxBatchSize?: number      // default: 50
 }): void
 
 AgentLens.flush(): Promise<void>   // force-flush pending spans

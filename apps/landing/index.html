@@ -68,7 +68,8 @@
         "sameAs": [
           "https://github.com/farzanhossan/agentlens",
           "https://www.npmjs.com/package/@farzanhossans/agentlens",
-          "https://www.npmjs.com/package/@farzanhossans/agentlens-core"
+          "https://www.npmjs.com/package/@farzanhossans/agentlens-core",
+          "https://pypi.org/project/farzanhossans-agentlens/"
         ],
         "founder": {
           "@type": "Person",
@@ -116,7 +117,7 @@
             "name": "What is AgentLens?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "AgentLens is an open-source observability platform for AI agents. It captures every LLM call your application makes — traces, token usage, costs, latency, and errors. Add one line with the universal SDK (@farzanhossans/agentlens) and every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral is traced automatically."
+              "text": "AgentLens is an open-source observability platform for AI agents. It captures every LLM call your application makes — traces, token usage, costs, latency, and errors. Add one line with the universal SDK (@farzanhossans/agentlens for Node, farzanhossans-agentlens for Python) and every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral is traced automatically."
             }
           },
           {
@@ -124,7 +125,7 @@
             "name": "How does the AgentLens universal SDK work?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Install @farzanhossans/agentlens and call AgentLens.init({ apiKey }) once at app startup. The SDK patches globalThis.fetch and Node's http/https modules, so every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral — whether made via the official SDK, axios, got, or node-fetch — is traced automatically. Streaming responses are tapped via ReadableStream.tee() so the bytes you read are unchanged. PII is scrubbed before spans leave your process."
+              "text": "Install @farzanhossans/agentlens (Node) or farzanhossans-agentlens (Python) and call AgentLens.init({ apiKey, projectId }) once at app startup. The SDK patches globalThis.fetch and Node's http/https modules (Python: httpx + requests), so every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral — whether made via the official SDK, axios, got, or node-fetch — is traced automatically. Streaming responses are tapped without buffering. PII is scrubbed before spans leave your process."
             }
           },
           {
@@ -838,8 +839,9 @@
           <span class="dim">// npm i @farzanhossans/agentlens</span><br/><br/>
           import { AgentLens } from '<span class="hl">@farzanhossans/agentlens</span>'<br/>
           AgentLens.<span class="hl">init</span>({<br/>
-          &nbsp;&nbsp;apiKey: '<span class="grn">proj_xxx</span>',<br/>
-          &nbsp;&nbsp;endpoint: '<span class="grn">https://your-agentlens.com/v1/spans</span>',<br/>
+          &nbsp;&nbsp;apiKey:&nbsp;&nbsp;&nbsp;&nbsp;'<span class="grn">proj_xxx</span>',<br/>
+          &nbsp;&nbsp;projectId: '<span class="grn">&lt;your-project-uuid&gt;</span>',<br/>
+          &nbsp;&nbsp;endpoint:&nbsp;&nbsp;'<span class="grn">https://your-agentlens.com/v1/spans</span>',<br/>
           })<br/><br/>
           <span class="grn">// done. every LLM call is traced.</span>
         </div>
@@ -1170,8 +1172,9 @@ docker compose -f docker-compose.prod.yml up -d --build
     { cls: 'comment', text: '// Add one line at app startup' },
     { cls: 'import',  text: "import { AgentLens } from '@farzanhossans/agentlens'" },
     { cls: 'method',  text: 'AgentLens.init({' },
-    { cls: 'method',  text: "  apiKey:   'proj_xxx'," },
-    { cls: 'method',  text: "  endpoint: 'https://your-agentlens.com/v1/spans'," },
+    { cls: 'method',  text: "  apiKey:    'proj_xxx'," },
+    { cls: 'method',  text: "  projectId: '<your-project-uuid>'," },
+    { cls: 'method',  text: "  endpoint:  'https://your-agentlens.com/v1/spans'," },
     { cls: 'method',  text: '})' },
     { cls: 'blank',   text: '' },
     { cls: 'success', text: '\u2713 OpenAI, Anthropic, Gemini, Cohere, Mistral' },

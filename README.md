@@ -46,18 +46,27 @@ Two ways to integrate, from one line of code to full control:
 Drop in `@farzanhossans/agentlens` and every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral is traced automatically. No client wrappers. No code changes inside your call sites.
 
 ```typescript
-// ☁️ Cloud hosted (default)
 import { AgentLens } from '@farzanhossans/agentlens'
-AgentLens.init({ apiKey: 'proj_xxx' })
 
-// 🖥️ Self-hosted — point at your own ingest endpoint
 AgentLens.init({
-  apiKey: 'proj_xxx',
-  endpoint: 'https://agentlens.your-company.com/v1/spans',
+  apiKey:    'proj_xxx',                    // from your dashboard
+  projectId: '<your-project-uuid>',
+  endpoint:  'https://agentlens.your-company.com/v1/spans', // omit for cloud
 })
 ```
 
-Patches `globalThis.fetch` and Node's `http`/`https` so every matching LLM call is captured — including axios, got, node-fetch, and any provider SDK. Streaming responses are tapped via `ReadableStream.tee()` so the bytes you read are byte-identical to the original. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
+```python
+# Python — same one-line install
+from agentlens import AgentLens
+
+AgentLens.init(
+    api_key='proj_xxx',
+    project_id='<your-project-uuid>',
+    endpoint='https://agentlens.your-company.com',  # omit for cloud
+)
+```
+
+Patches `globalThis.fetch` and Node's `http`/`https` (or Python's `httpx` + `requests`) so every matching LLM call is captured — including axios, got, node-fetch, and any provider SDK. Streaming responses are tapped via `ReadableStream.tee()` (fetch) or `IncomingMessage.push` hook (http) so the bytes you read are unchanged. Brotli/gzip/deflate responses are auto-decompressed. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
 
 | Provider  | Captured                                       |
 | --------- | ---------------------------------------------- |
@@ -214,7 +223,7 @@ React Dashboard                   ← trace viewer, cost charts, live feed, aler
 | [`@farzanhossans/agentlens-core`](./packages/sdk-core) | Core tracer — manual spans, context propagation | `npm i @farzanhossans/agentlens-core` |
 | [`@farzanhossans/agentlens-openai`](./packages/sdk-openai) | Provider-specific: auto-patches the OpenAI SDK (chat, completions, embeddings) | `npm i @farzanhossans/agentlens-openai` |
 | [`@farzanhossans/agentlens-anthropic`](./packages/sdk-anthropic) | Provider-specific: auto-patches the Anthropic SDK | `npm i @farzanhossans/agentlens-anthropic` |
-| [`agentlens`](./packages/sdk-python) | Python SDK with decorators + auto-patchers | `pip install agentlens` |
+| [`farzanhossans-agentlens`](./packages/sdk-python) | **Python — universal SDK ⭐** Same one-line install: patches `httpx` + `requests` for OpenAI / Anthropic / Gemini / Cohere / Mistral. Decorators (`@AgentLens.traced`) + context-manager (`with AgentLens.trace`) also available | `pip install farzanhossans-agentlens` |
 
 ---
 

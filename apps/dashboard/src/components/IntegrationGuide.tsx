@@ -31,8 +31,9 @@ export function IntegrationGuide({ projectId }: IntegrationGuideProps): React.JS
   const initSnippet = `import { AgentLens } from '@farzanhossans/agentlens';
 
 AgentLens.init({
-  apiKey: '${projectId}',
-  endpoint: '${endpoint}',
+  apiKey:    '<your-api-key>',  // shown once when you create the key
+  projectId: '${projectId}',
+  endpoint:  '${endpoint}',
 });
 
 // Done. Every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral
@@ -73,7 +74,7 @@ AgentLens.init({
 
       {/* Footer hint */}
       <div className="px-4 py-2 text-[11px] text-gray-500">
-        Python:&nbsp;<code className="text-gray-400">pip install farzanhossans-agentlens</code> &nbsp;then&nbsp;<code className="text-gray-400">AgentLens.init(api_key, project_id)</code>. Same network-layer interception (httpx + requests), same providers.
+        Python:&nbsp;<code className="text-gray-400">pip install farzanhossans-agentlens</code> &nbsp;then&nbsp;<code className="text-gray-400">AgentLens.init(api_key=..., project_id={'"' + projectId + '"'})</code>. Same network-layer interception (httpx + requests), same providers.
       </div>
     </div>
   );
