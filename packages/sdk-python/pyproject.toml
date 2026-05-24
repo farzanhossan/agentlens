@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentlens"
-version = "0.1.0"
+name = "farzanhossans-agentlens"
+version = "0.2.1"
 description = "AI Agent Observability SDK for Python"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -26,18 +26,28 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
 anthropic = ["anthropic>=0.24.0"]
-all = ["openai>=1.0.0", "anthropic>=0.24.0"]
+requests = ["requests>=2.28.0"]
+all = ["openai>=1.0.0", "anthropic>=0.24.0", "requests>=2.28.0"]
 dev = [
   "pytest>=8.1.0",
   "pytest-asyncio>=0.23.0",
   "mypy>=1.9.0",
   "ruff>=0.4.0",
+  "respx>=0.21.0",
+  "responses>=0.25.0",
+  "requests>=2.28.0",
 ]
 
 [project.urls]
 Homepage = "https://agentlens.dev"
 Repository = "https://github.com/farzanhossan/agentlens"
 Issues = "https://github.com/farzanhossan/agentlens/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentlens"]
+
+[tool.hatch.build.targets.sdist]
+include = ["agentlens", "README.md", "LICENSE"]
 
 [tool.ruff]
 line-length = 100
@@ -47,8 +57,14 @@ target-version = "py39"
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 strict = true
+
+# requests has no first-party type stubs in our dev deps — treat it as Any so
+# we don't have to either pin types-requests or sprinkle ignores at call sites.
+[[tool.mypy.overrides]]
+module = "requests.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

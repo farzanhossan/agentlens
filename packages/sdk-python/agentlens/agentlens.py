@@ -107,6 +107,11 @@ class AgentLens:
             redact_pii=redact_pii,
         )
         cls._instance = cls(config)
+        # Network-layer auto-tracing: patch httpx (always) + requests (if installed).
+        # Idempotent; skipped when AGENTLENS_DISABLE_AUTO_INSTRUMENTATION is truthy.
+        from .interceptors import enable_auto_instrumentation
+
+        enable_auto_instrumentation()
 
     @classmethod
     @contextmanager

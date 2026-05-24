@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentLens — Open-Source LLM Observability for AI Agents</title>
-  <meta name="description" content="Open-source AI agent observability platform. Trace every LLM call, track costs, debug errors, and replay sessions — without changing your code. Self-host with Docker in 2 minutes. Free forever." />
-  <meta name="keywords" content="LLM observability, AI agent monitoring, OpenAI tracing, LLM debugging, AI observability, agent tracing, LLM cost tracking, open source observability, GPT monitoring, Anthropic tracing, AI agent debugging, LLM proxy, trace viewer, span hierarchy, LLM analytics, self-hosted observability" />
+  <title>AgentLens — Universal LLM Observability — One Line, Every Provider</title>
+  <meta name="description" content="Open-source AI agent observability. One line of code traces every LLM call across OpenAI, Anthropic, Gemini, Cohere, and Mistral. Track costs, debug errors, replay sessions. Self-host with Docker in 2 minutes. Free forever." />
+  <meta name="keywords" content="universal LLM SDK, one line LLM observability, AI agent monitoring, OpenAI tracing, Anthropic tracing, Gemini observability, Cohere monitoring, Mistral tracing, LLM debugging, AI observability, agent tracing, LLM cost tracking, open source observability, GPT monitoring, AI agent debugging, trace viewer, span hierarchy, LLM analytics, self-hosted observability" />
   <meta name="author" content="Farzan Hossan" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="theme-color" content="#6366f1" />
@@ -20,8 +20,8 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='13' stroke='%236366f1' stroke-width='1.5' fill='none'/%3E%3Cellipse cx='14' cy='14' rx='8' ry='5' stroke='%236366f1' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%236366f1'/%3E%3C/svg%3E" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="AgentLens — Open-Source LLM Observability for AI Agents" />
-  <meta property="og:description" content="Trace every LLM call, track costs, debug errors, and replay sessions — without changing your code. Self-host with Docker. Free forever." />
+  <meta property="og:title" content="AgentLens — Universal LLM Observability — One Line, Every Provider" />
+  <meta property="og:description" content="One line of code traces every LLM call — OpenAI, Anthropic, Gemini, Cohere, Mistral. Costs, errors, session replay included. Self-host with Docker. Free forever." />
   <meta property="og:image" content="https://agentlens.techmatbd.com/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -33,8 +33,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="AgentLens — Open-Source LLM Observability for AI Agents" />
-  <meta name="twitter:description" content="Trace every LLM call, track costs, debug errors — without changing your code. Self-host free." />
+  <meta name="twitter:title" content="AgentLens — Universal LLM Observability — One Line, Every Provider" />
+  <meta name="twitter:description" content="One line. OpenAI, Anthropic, Gemini, Cohere, Mistral — every call traced. Costs, errors, replay. Self-host free." />
   <meta name="twitter:image" content="https://agentlens.techmatbd.com/og.png" />
   <meta name="twitter:image:alt" content="AgentLens dashboard showing LLM traces, costs, and error analytics" />
 
@@ -56,7 +56,7 @@
         "@type": "WebSite",
         "name": "AgentLens",
         "url": "https://agentlens.techmatbd.com/",
-        "description": "Open-source AI agent observability platform. Trace every LLM call, track costs, debug errors, and replay sessions.",
+        "description": "Open-source AI agent observability. One line of code traces every LLM call across OpenAI, Anthropic, Gemini, Cohere, and Mistral.",
         "publisher": { "@id": "https://agentlens.techmatbd.com/#organization" }
       },
       {
@@ -67,7 +67,9 @@
         "logo": "https://agentlens.techmatbd.com/og.png",
         "sameAs": [
           "https://github.com/farzanhossan/agentlens",
-          "https://www.npmjs.com/package/@farzanhossans/agentlens-core"
+          "https://www.npmjs.com/package/@farzanhossans/agentlens",
+          "https://www.npmjs.com/package/@farzanhossans/agentlens-core",
+          "https://pypi.org/project/farzanhossans-agentlens/"
         ],
         "founder": {
           "@type": "Person",
@@ -80,7 +82,7 @@
         "name": "AgentLens",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Linux, macOS, Windows (WSL2)",
-        "description": "Open-source observability platform for AI agents. Trace LLM calls, track costs, debug errors, and replay sessions — without changing your code.",
+        "description": "Open-source observability platform for AI agents. One line of code traces every LLM call across OpenAI, Anthropic, Gemini, Cohere, and Mistral. Track costs, debug errors, replay sessions.",
         "url": "https://agentlens.techmatbd.com/",
         "downloadUrl": "https://github.com/farzanhossan/agentlens",
         "softwareVersion": "1.0",
@@ -92,6 +94,9 @@
         },
         "author": { "@id": "https://agentlens.techmatbd.com/#organization" },
         "featureList": [
+          "Universal SDK — one line traces every provider (OpenAI, Anthropic, Gemini, Cohere, Mistral)",
+          "Network-layer interception via fetch + Node http/https — covers axios, got, node-fetch, and any provider SDK",
+          "Streaming-safe via ReadableStream.tee()",
           "LLM trace viewer with parent/child span hierarchy",
           "Cost analytics by model, agent, and date",
           "Real-time live feed via WebSocket",
@@ -101,8 +106,7 @@
           "PII scrubbing (GDPR ready)",
           "Smart alerts (Slack, email, webhook)",
           "Trace grouping for multi-call agent runs",
-          "Self-hostable with Docker Compose",
-          "Proxy mode — zero code changes, any language"
+          "Self-hostable with Docker Compose"
         ]
       },
       {
@@ -113,15 +117,15 @@
             "name": "What is AgentLens?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "AgentLens is an open-source observability platform for AI agents. It captures every LLM call your application makes — traces, token usage, costs, latency, and errors — without requiring any code changes. Just point your LLM traffic at the AgentLens proxy."
+              "text": "AgentLens is an open-source observability platform for AI agents. It captures every LLM call your application makes — traces, token usage, costs, latency, and errors. Add one line with the universal SDK (@farzanhossans/agentlens for Node, farzanhossans-agentlens for Python) and every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral is traced automatically."
             }
           },
           {
             "@type": "Question",
-            "name": "How does AgentLens work without code changes?",
+            "name": "How does the AgentLens universal SDK work?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "AgentLens includes a transparent proxy. Change your OpenAI or Anthropic base URL to point at the proxy, and every request is automatically captured and forwarded to the LLM provider. Works with any language or framework that can make HTTP requests."
+              "text": "Install @farzanhossans/agentlens (Node) or farzanhossans-agentlens (Python) and call AgentLens.init({ apiKey, projectId }) once at app startup. The SDK patches globalThis.fetch and Node's http/https modules (Python: httpx + requests), so every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral — whether made via the official SDK, axios, got, or node-fetch — is traced automatically. Streaming responses are tapped without buffering. PII is scrubbed before spans leave your process."
             }
           },
           {
@@ -137,15 +141,15 @@
             "name": "How do I install AgentLens?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Clone the repository, copy the example environment file, generate two secrets, and run docker compose up. The full stack (API, dashboard, proxy, PostgreSQL, Redis, Elasticsearch) starts in about 2 minutes."
+              "text": "Clone the repository, copy the example environment file, generate two secrets, and run docker compose up. The full stack (API, dashboard, PostgreSQL, Redis, Elasticsearch) starts in about 2 minutes."
             }
           },
           {
             "@type": "Question",
-            "name": "Does AgentLens support OpenAI and Anthropic?",
+            "name": "Which LLM providers does AgentLens support?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. AgentLens supports OpenAI, Anthropic, and any custom LLM API via the proxy. It also provides TypeScript and Python SDKs for auto-instrumentation of OpenAI and Anthropic client libraries."
+              "text": "The universal SDK supports OpenAI, Anthropic, Gemini, Cohere, and Mistral out of the box — including streaming responses, axios, got, node-fetch, and any provider's official SDK."
             }
           },
           {
@@ -153,7 +157,7 @@
             "name": "How is AgentLens different from LangSmith or Langfuse?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "AgentLens works with zero code changes via its proxy — no SDK or LangChain dependency required. It includes built-in PII scrubbing, real-time live feed, error clustering, and is fully self-hostable with MIT license. Unlike SaaS alternatives, there are no per-trace fees."
+              "text": "AgentLens traces every major LLM provider — OpenAI, Anthropic, Gemini, Cohere, Mistral — with one line of code via the universal SDK. No LangChain dependency required. Built-in PII scrubbing, real-time live feed, error clustering, and fully self-hostable under MIT license. Unlike SaaS alternatives, there are no per-trace fees."
             }
           }
         ]
@@ -382,7 +386,7 @@
     }
     .terminal-body {
       padding: 24px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-      font-size: 13px; line-height: 1.8; min-height: 220px;
+      font-size: 13px; line-height: 1.8; min-height: 280px;
     }
     .terminal-line { opacity: 0; display: block; white-space: pre; }
     .terminal-line.visible { opacity: 1; }
@@ -447,7 +451,8 @@
     /* How it works */
     #how-it-works { background: var(--bg3); }
     .how-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+      max-width: 880px; margin: 0 auto;
     }
     @media (max-width: 860px) { .how-grid { grid-template-columns: 1fr; } }
 
@@ -755,11 +760,11 @@
           <span class="badge">Open Source</span>
         </div>
         <h1 class="hero-headline fade-up" style="transition-delay:.1s">
-          See every LLM call.<br/><span>Change zero code.</span>
+          Trace every LLM call.<br/><span>One line of code.</span>
         </h1>
         <p class="hero-sub fade-up" style="transition-delay:.2s">
-          Point your LLM traffic at the AgentLens proxy. Get traces, costs, errors, and session replay.
-          No SDK required. Works with any language.
+          Drop in <code>@farzanhossans/agentlens</code>. OpenAI, Anthropic, Gemini, Cohere, Mistral &mdash; every call traced automatically.
+          Costs, errors, session replay included. No client wrappers, no code changes inside your call sites.
         </p>
         <div class="hero-ctas fade-up" style="transition-delay:.3s">
           <a href="https://github.com/farzanhossan/agentlens" class="btn btn-primary" target="_blank">Self-Host with Docker</a>
@@ -819,40 +824,32 @@
   <div class="container">
     <div class="section-head fade-up" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
       <div class="section-label">How it works</div>
-      <h2 class="section-title">Three ways to integrate.<br/>Start with zero effort.</h2>
-      <p class="section-sub" style="text-align:center">The proxy works with any language and any framework. Use the SDK only when you need more control.</p>
+      <h2 class="section-title">Two ways to integrate.<br/>Start with one line.</h2>
+      <p class="section-sub" style="text-align:center">The universal SDK covers every major provider in one line. Drop down to manual tracing when you need custom span hierarchies.</p>
     </div>
     <div class="how-grid">
 
-      <!-- Option 1: Proxy -->
+      <!-- Option 1: Universal SDK -->
       <div class="how-card recommended fade-up">
         <div class="how-badge">Recommended</div>
         <div class="how-step">Option 1</div>
-        <h3 class="how-title">Proxy &mdash; zero code changes</h3>
-        <p class="how-desc">Change your LLM base URL. That's it. AgentLens forwards requests to OpenAI/Anthropic and captures everything automatically.</p>
+        <h3 class="how-title">Universal SDK &mdash; one line</h3>
+        <p class="how-desc">Drop in <code>@farzanhossans/agentlens</code>. Every call to OpenAI, Anthropic, Gemini, Cohere, and Mistral is traced automatically &mdash; including streaming.</p>
         <div class="how-code">
-          <span class="dim"># Before</span><br/>
-          OPENAI_BASE_URL=<span class="hl">https://api.openai.com</span><br/><br/>
-          <span class="dim"># After</span><br/>
-          OPENAI_BASE_URL=<span class="grn">http://localhost:8090/v1/p/{id}/openai</span>
+          <span class="dim">// npm i @farzanhossans/agentlens</span><br/><br/>
+          import { AgentLens } from '<span class="hl">@farzanhossans/agentlens</span>'<br/>
+          AgentLens.<span class="hl">init</span>({<br/>
+          &nbsp;&nbsp;apiKey:&nbsp;&nbsp;&nbsp;&nbsp;'<span class="grn">proj_xxx</span>',<br/>
+          &nbsp;&nbsp;projectId: '<span class="grn">&lt;your-project-uuid&gt;</span>',<br/>
+          &nbsp;&nbsp;endpoint:&nbsp;&nbsp;'<span class="grn">https://your-agentlens.com/v1/spans</span>',<br/>
+          })<br/><br/>
+          <span class="grn">// done. every LLM call is traced.</span>
         </div>
       </div>
 
-      <!-- Option 2: SDK -->
+      <!-- Option 2: Manual -->
       <div class="how-card fade-up">
         <div class="how-step">Option 2</div>
-        <h3 class="how-title">SDK &mdash; one import</h3>
-        <p class="how-desc">Auto-patches your OpenAI or Anthropic client. Adds richer metadata and custom span names.</p>
-        <div class="how-code">
-          <span class="dim">// npm i @farzanhossans/agentlens-openai</span><br/><br/>
-          import '<span class="hl">@farzanhossans/agentlens-openai</span>'<br/><br/>
-          <span class="grn">// done. every call is traced.</span>
-        </div>
-      </div>
-
-      <!-- Option 3: Manual -->
-      <div class="how-card fade-up">
-        <div class="how-step">Option 3</div>
         <h3 class="how-title">Manual &mdash; full control</h3>
         <p class="how-desc">Wrap any code in AgentLens.trace() for custom spans, metadata, and parent/child hierarchies.</p>
         <div class="how-code">
@@ -876,6 +873,11 @@
       <h2 class="section-title">Everything you need to<br/>debug AI agents.</h2>
     </div>
     <div class="features-grid">
+      <div class="feature-card fade-up">
+        <span class="feature-icon">&#x26A1;</span>
+        <h3 class="feature-title">Universal SDK</h3>
+        <p class="feature-desc">One line traces every provider &mdash; OpenAI, Anthropic, Gemini, Cohere, Mistral. Network-layer interception works with axios, got, node-fetch, or any client.</p>
+      </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F50D;</span>
         <h3 class="feature-title">Trace Viewer</h3>
@@ -907,9 +909,9 @@
         <p class="feature-desc">Emails, API keys, SSNs, credit cards auto-masked before data leaves your infrastructure. GDPR ready.</p>
       </div>
       <div class="feature-card fade-up">
-        <span class="feature-icon">&#x1F310;</span>
-        <h3 class="feature-title">Any Language</h3>
-        <p class="feature-desc">The proxy works with any HTTP client &mdash; Python, Go, Rust, Java, curl. No SDK needed.</p>
+        <span class="feature-icon">&#x1F30A;</span>
+        <h3 class="feature-title">Streaming-safe</h3>
+        <p class="feature-desc">SSE streams are tapped via <code>ReadableStream.tee()</code> &mdash; the bytes you read are byte-identical to the original. Zero latency added.</p>
       </div>
       <div class="feature-card fade-up">
         <span class="feature-icon">&#x1F517;</span>
@@ -961,8 +963,7 @@ openssl rand -hex 32  <span class="dim"># paste as HMAC_SECRET</span>
 docker compose -f docker-compose.prod.yml up -d --build
 
 <span class="grn"># Dashboard  http://localhost:4021</span>
-<span class="grn"># API        http://localhost:4020</span>
-<span class="grn"># Proxy      http://localhost:8090</span></pre>
+<span class="grn"># API        http://localhost:4020</span></pre>
       </div>
     </div>
   </div>
@@ -988,11 +989,11 @@ docker compose -f docker-compose.prod.yml up -d --build
         </thead>
         <tbody>
           <tr>
-            <td>Zero code changes (proxy)</td>
+            <td>Universal SDK &mdash; one line, every provider</td>
             <td class="col-us check">&#x2705;</td>
-            <td class="cross">&#x274C;</td>
-            <td class="cross">&#x274C;</td>
-            <td class="check">&#x2705;</td>
+            <td class="cross">&#x274C; LangChain only</td>
+            <td class="partial">&#x26A0;&#xFE0F; Per-provider</td>
+            <td class="cross">&#x274C; Proxy only</td>
           </tr>
           <tr>
             <td>Any language / framework</td>
@@ -1164,18 +1165,20 @@ docker compose -f docker-compose.prod.yml up -d --build
     setTimeout(() => el.classList.add('in'), 50);
   });
 
-  // Terminal typewriter — shows proxy approach
+  // Terminal typewriter — shows universal SDK approach
   const termLines = [
-    { cls: 'comment', text: '# Change one environment variable' },
+    { cls: 'cmd',     text: '$ npm i @farzanhossans/agentlens' },
     { cls: 'blank',   text: '' },
-    { cls: 'cmd',     text: '$ export OPENAI_BASE_URL=\\' },
-    { cls: 'url',     text: '    http://localhost:8090/v1/p/my-project/openai' },
+    { cls: 'comment', text: '// Add one line at app startup' },
+    { cls: 'import',  text: "import { AgentLens } from '@farzanhossans/agentlens'" },
+    { cls: 'method',  text: 'AgentLens.init({' },
+    { cls: 'method',  text: "  apiKey:    'proj_xxx'," },
+    { cls: 'method',  text: "  projectId: '<your-project-uuid>'," },
+    { cls: 'method',  text: "  endpoint:  'https://your-agentlens.com/v1/spans'," },
+    { cls: 'method',  text: '})' },
     { cls: 'blank',   text: '' },
-    { cls: 'comment', text: '# Run your app normally' },
-    { cls: 'cmd',     text: '$ python my_agent.py' },
-    { cls: 'blank',   text: '' },
+    { cls: 'success', text: '\u2713 OpenAI, Anthropic, Gemini, Cohere, Mistral' },
     { cls: 'success', text: '\u2713 Every LLM call is now traced' },
-    { cls: 'success', text: '\u2713 Dashboard at http://localhost:4021' },
   ];
 
   function runTerminal() {

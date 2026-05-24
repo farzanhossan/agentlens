@@ -6,7 +6,7 @@
 
 ## Self-Hosting (Docker Compose)
 
-Run the full AgentLens stack on any server with Docker. Everything is included: API, dashboard, proxy, PostgreSQL, Redis, and Elasticsearch.
+Run the full AgentLens stack on any server with Docker. Everything is included: API, dashboard, PostgreSQL, Redis, and Elasticsearch.
 
 ### Prerequisites
 
@@ -47,75 +47,53 @@ Wait ~60 seconds for Elasticsearch to initialise, then open:
 | Dashboard | http://localhost:4021 |
 | API | http://localhost:4020 |
 | API Health | http://localhost:4020/health |
-| Proxy (SDK endpoint) | http://localhost:8090 |
 
 That's it — AgentLens is running.
 
 ### 4. Connect your app
 
-Install the SDK in your application:
+Install the universal SDK:
 
 ```bash
-npm install @farzanhossans/agentlens-core @farzanhossans/agentlens-openai
+# Node
+npm install @farzanhossans/agentlens
+
+# Python
+pip install farzanhossans-agentlens
 ```
 
+Add one line at app startup. Grab the project UUID from the dashboard
+(click the copy icon next to the project name on the Projects page) and
+the API key from the one-time "save your API key" banner shown when you
+create or rotate a key.
+
+**Node:**
+
 ```typescript
-import { AgentLens } from '@farzanhossans/agentlens-core'
-import '@farzanhossans/agentlens-openai'
+import { AgentLens } from '@farzanhossans/agentlens'
 
 AgentLens.init({
-  apiKey: 'your-project-api-key',   // from the dashboard
-  projectId: 'your-project-uuid',   // from the dashboard
-  endpoint: 'http://your-server:3001',  // your self-hosted API URL
+  apiKey:    'proj_xxx',                            // from "save your API key" banner
+  projectId: '<your-project-uuid>',                 // copy from Projects page
+  endpoint:  'http://your-server:4020/v1/spans',    // your self-hosted API URL
 })
 ```
 
-### Trace grouping (optional)
+**Python:**
 
-If your agent makes multiple LLM calls per turn, you can group them into a single trace by passing optional headers through the proxy:
+```python
+from agentlens import AgentLens
 
-| Header | Purpose |
-|--------|---------|
-| `X-AgentLens-Trace-Id` | Shared trace ID — all requests with the same value appear under one trace |
-| `X-AgentLens-Parent-Span-Id` | Links this span as a child of a parent span |
-| `X-AgentLens-Span-Name` | Custom span name (default: `openai.proxy`) |
-
-These headers are **stripped before forwarding** to the LLM provider — OpenAI/Anthropic never sees them.
-
-Without these headers, each request creates its own trace (default behavior, fully backwards compatible).
-
-**Example: group two LLM calls into one trace**
-
-```typescript
-const traceId = crypto.randomUUID()
-
-// Call 1: extract data
-await fetch('http://localhost:8090/v1/p/{projectId}/openai/v1/chat/completions', {
-  headers: {
-    'X-AgentLens-Trace-Id': traceId,
-    'X-AgentLens-Span-Name': 'extract-fields',
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-  },
-  method: 'POST',
-  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
-})
-
-// Call 2: generate response — same traceId
-await fetch('http://localhost:8090/v1/p/{projectId}/openai/v1/chat/completions', {
-  headers: {
-    'X-AgentLens-Trace-Id': traceId,
-    'X-AgentLens-Span-Name': 'generate-reply',
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-  },
-  method: 'POST',
-  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
-})
-// Dashboard shows: 1 trace with 2 spans
+AgentLens.init(
+    api_key='proj_xxx',
+    project_id='<your-project-uuid>',
+    endpoint='http://your-server:4020',  # base URL — SDK appends /v1/spans
+)
 ```
 
-**With the SDK:** Use `getCurrentTraceId()` and `getCurrentSpanId()` from `@farzanhossans/agentlens-core` to automatically propagate trace context when combining the SDK with the proxy.
+That's it. Every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral from this app — whether it goes through the official SDK, axios, got, node-fetch (Node) or httpx / requests (Python) — is now traced. Streaming responses are tapped without buffering. Brotli/gzip/deflate response bodies are auto-decompressed. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
+
+See [`packages/sdk-universal/README.md`](../packages/sdk-universal/README.md) for the full API reference (debug mode, PII toggle, custom flush interval, `AgentLens.trace()` for grouping calls).
 
 ### Customising ports
 
@@ -124,7 +102,6 @@ Edit `infra/.env`:
 ```env
 API_PORT=4020
 DASHBOARD_PORT=4021
-PROXY_PORT=8090
 ```
 
 ### Using a custom domain (with reverse proxy)
@@ -286,7 +263,7 @@ docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens llen
 | Elasticsearch won't start | Increase `vm.max_map_count`: `sysctl -w vm.max_map_count=262144` (add to `/etc/sysctl.conf` to persist) |
 | Dashboard shows "Network Error" | Check `VITE_API_URL` points to reachable API, then rebuild dashboard |
 | API exits immediately | Check `docker compose logs api` — usually a missing secret or DB connection issue |
-| Port conflict | Change `API_PORT`, `DASHBOARD_PORT`, or `PROXY_PORT` in `.env` |
+| Port conflict | Change `API_PORT` or `DASHBOARD_PORT` in `.env` |
 
 ### Environment variables reference
 
@@ -300,7 +277,6 @@ docker compose -f docker-compose.prod.yml exec redis redis-cli -a agentlens llen
 | `REDIS_PASSWORD` | `agentlens` | Redis password (change for production!) |
 | `API_PORT` | `4020` | Host port for the API |
 | `DASHBOARD_PORT` | `4021` | Host port for the dashboard |
-| `PROXY_PORT` | `8090` | Host port for the SDK proxy |
 | `CORS_ORIGIN` | **(required)** | Allowed CORS origin (e.g. `http://localhost:4021` or your domain) |
 | `FRONTEND_URL` | **(required)** | Used in email links (e.g. `http://localhost:4021` or your domain) |
 | `VITE_API_URL` | **(required)** | API URL baked into dashboard at build time |

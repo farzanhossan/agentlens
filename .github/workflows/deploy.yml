@@ -63,7 +63,6 @@ jobs:
             set_env "VITE_WS_URL"      "https://api-agentlens.techmatbd.com"
             set_env "API_PORT"         "4020"
             set_env "DASHBOARD_PORT"   "4021"
-            set_env "PROXY_PORT"       "8090"
 
             # ── Detect docker compose version ────────────────────────
             if docker compose version >/dev/null 2>&1; then

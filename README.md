@@ -13,7 +13,7 @@
 
 See every LLM call, what it cost, and why it failed — without changing your code.
 
-[![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens-core?color=6366f1&label=npm)](https://www.npmjs.com/package/@farzanhossans/agentlens-core)
+[![npm](https://img.shields.io/npm/v/@farzanhossans/agentlens?color=6366f1&label=npm)](https://www.npmjs.com/package/@farzanhossans/agentlens)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-22c55e.svg)](#)
 [![Tests](https://img.shields.io/badge/tests-81%2F81-22c55e.svg)](#)
@@ -33,97 +33,50 @@ See every LLM call, what it cost, and why it failed — without changing your co
 
 You're building AI agents that make dozens of LLM calls per session. Something breaks in production. You have no idea which call failed, how much it cost, or what the model actually said.
 
-AgentLens fixes that. Point your LLM traffic at the proxy, and you get full visibility — traces, costs, errors, and session replay — **without touching your application code**.
+AgentLens fixes that. Drop in `@farzanhossans/agentlens` once at app startup and every LLM call is traced automatically — costs, errors, full input/output, and session replay — **without changing the call sites in your application code**.
 
 ---
 
 ## How It Works
 
-AgentLens sits between your app and the LLM provider. There are three ways to integrate, from zero effort to full control:
+Two ways to integrate, from one line of code to full control:
 
-### Option 1: Proxy (zero code changes)
+### Option 1: Universal SDK — one line, every provider ⭐
 
-Just change your base URL. That's it. No SDK, no imports, no wrappers.
-
-```bash
-# Before — your app talks directly to OpenAI
-OPENAI_BASE_URL=https://api.openai.com
-
-# After — route through AgentLens proxy
-OPENAI_BASE_URL=http://localhost:8090/v1/p/{projectId}/openai
-```
-
-Every request is forwarded to OpenAI (or Anthropic), and AgentLens automatically captures the trace, tokens, cost, latency, and full input/output — then shows it all in the dashboard.
-
-Works with **any language, any framework, any HTTP client**. If it can call an API, it works with AgentLens.
-
-**Supported providers:**
-
-| Provider | Proxy path |
-|----------|-----------|
-| OpenAI | `/v1/p/{projectId}/openai/v1/chat/completions` |
-| Anthropic | `/v1/p/{projectId}/anthropic/v1/messages` |
-| Any LLM API | `/v1/p/{projectId}/custom/...` + `X-AgentLens-Upstream` header |
-
-Streaming responses are fully supported — AgentLens buffers transparently without adding latency.
-
-**Trace grouping (optional):** If your agent makes multiple LLM calls per turn, you can group them into a single trace by passing optional headers:
-
-| Header | Purpose |
-|--------|---------|
-| `X-AgentLens-Trace-Id` | Shared trace ID — all requests with the same value appear under one trace |
-| `X-AgentLens-Parent-Span-Id` | Links this span as a child of a parent span |
-| `X-AgentLens-Span-Name` | Custom span name (default: `openai.proxy`) |
-
-These headers are stripped before forwarding to the LLM provider. Without them, each request creates its own trace — no change to existing behavior.
+Drop in `@farzanhossans/agentlens` and every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral is traced automatically. No client wrappers. No code changes inside your call sites.
 
 ```typescript
-// Example: group two LLM calls into one trace
-const traceId = crypto.randomUUID()
+import { AgentLens } from '@farzanhossans/agentlens'
 
-// Call 1: extract data
-await fetch(proxyUrl, {
-  headers: { 'X-AgentLens-Trace-Id': traceId, 'X-AgentLens-Span-Name': 'extract-fields', ...auth },
-  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
-})
-
-// Call 2: generate response — same traceId
-await fetch(proxyUrl, {
-  headers: { 'X-AgentLens-Trace-Id': traceId, 'X-AgentLens-Span-Name': 'generate-reply', ...auth },
-  body: JSON.stringify({ model: 'gpt-4o', messages: [...] }),
-})
-// Dashboard shows: 1 trace with 2 spans
-```
-
-Works with the SDK too — use `getCurrentTraceId()` and `getCurrentSpanId()` from `@farzanhossans/agentlens-core` to automatically propagate trace context.
-
-### Option 2: SDK auto-instrumentation (one import)
-
-If you want richer metadata or custom span names, add the SDK. One import auto-patches your LLM client:
-
-```typescript
-import { AgentLens } from '@farzanhossans/agentlens-core'
-import '@farzanhossans/agentlens-openai'   // auto-patches OpenAI — that's it
-
-AgentLens.init({ apiKey: 'proj_xxx', projectId: 'your-project-uuid' })
-
-// Every OpenAI call is now traced automatically. No other changes needed.
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'Summarise this ticket...' }],
+AgentLens.init({
+  apiKey:    'proj_xxx',                    // from your dashboard
+  projectId: '<your-project-uuid>',
+  endpoint:  'https://agentlens.your-company.com/v1/spans', // omit for cloud
 })
 ```
 
 ```python
-# Python — same idea
+# Python — same one-line install
 from agentlens import AgentLens
-import agentlens.patchers.openai
 
-AgentLens.init(api_key='proj_xxx', project_id='your-project-uuid')
-# All OpenAI calls are now traced
+AgentLens.init(
+    api_key='proj_xxx',
+    project_id='<your-project-uuid>',
+    endpoint='https://agentlens.your-company.com',  # omit for cloud
+)
 ```
 
-### Option 3: Manual tracing (full control)
+Patches `globalThis.fetch` and Node's `http`/`https` (or Python's `httpx` + `requests`) so every matching LLM call is captured — including axios, got, node-fetch, and any provider SDK. Streaming responses are tapped via `ReadableStream.tee()` (fetch) or `IncomingMessage.push` hook (http) so the bytes you read are unchanged. Brotli/gzip/deflate responses are auto-decompressed. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
+
+| Provider  | Captured                                       |
+| --------- | ---------------------------------------------- |
+| OpenAI    | chat.completions, completions, embeddings      |
+| Anthropic | messages                                       |
+| Gemini    | generateContent (v1, v1beta)                   |
+| Cohere    | chat (v1, v2), generate                        |
+| Mistral   | chat.completions                               |
+
+### Option 2: Manual tracing (full control)
 
 For complex agent flows where you want to name spans, add metadata, or create parent/child hierarchies:
 
@@ -213,11 +166,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 |---------|-----|
 | Dashboard | http://localhost:4021 |
 | API | http://localhost:4020 |
-| Proxy | http://localhost:8090 |
 
 **Requirements:** Docker, 4 GB RAM.
 
-The stack includes PostgreSQL, Redis, Elasticsearch, the API, dashboard, and proxy — all containerised.
+The stack includes PostgreSQL, Redis, Elasticsearch, the API, and dashboard — all containerised.
 
 See [docs/deployment.md](./docs/deployment.md) for custom domains, SSL, backups, monitoring, and production hardening.
 
@@ -238,11 +190,10 @@ pnpm install && pnpm dev
 ```
 Your App
   │
-  │  Option A: change base URL (proxy)
-  │  Option B: import SDK (auto-patch)
-  │  Option C: manual AgentLens.trace()
+  │  Option A: import @farzanhossans/agentlens (1 line, network-layer)
+  │  Option B: manual AgentLens.trace() for custom spans
   ▼
-AgentLens Proxy / SDK
+AgentLens SDK
   │
   │  POST /v1/spans  (batched, gzip-compressed)
   ▼
@@ -266,14 +217,13 @@ React Dashboard                   ← trace viewer, cost charts, live feed, aler
 
 ## SDK Packages
 
-The proxy covers most use cases with zero code changes. Use the SDKs when you want richer control:
-
 | Package | Description | Install |
 |---------|-------------|---------|
+| [`@farzanhossans/agentlens`](./packages/sdk-universal) | **Universal SDK ⭐ — one line, every provider** (OpenAI, Anthropic, Gemini, Cohere, Mistral). Network-layer interception via fetch + Node http/https patching | `npm i @farzanhossans/agentlens` |
 | [`@farzanhossans/agentlens-core`](./packages/sdk-core) | Core tracer — manual spans, context propagation | `npm i @farzanhossans/agentlens-core` |
-| [`@farzanhossans/agentlens-openai`](./packages/sdk-openai) | Auto-patches OpenAI SDK (chat, completions, embeddings) | `npm i @farzanhossans/agentlens-openai` |
-| [`@farzanhossans/agentlens-anthropic`](./packages/sdk-anthropic) | Auto-patches Anthropic SDK | `npm i @farzanhossans/agentlens-anthropic` |
-| [`agentlens`](./packages/sdk-python) | Python SDK with decorators + auto-patchers | `pip install agentlens` |
+| [`@farzanhossans/agentlens-openai`](./packages/sdk-openai) | Provider-specific: auto-patches the OpenAI SDK (chat, completions, embeddings) | `npm i @farzanhossans/agentlens-openai` |
+| [`@farzanhossans/agentlens-anthropic`](./packages/sdk-anthropic) | Provider-specific: auto-patches the Anthropic SDK | `npm i @farzanhossans/agentlens-anthropic` |
+| [`farzanhossans-agentlens`](./packages/sdk-python) | **Python — universal SDK ⭐** Same one-line install: patches `httpx` + `requests` for OpenAI / Anthropic / Gemini / Cohere / Mistral. Decorators (`@AgentLens.traced`) + context-manager (`with AgentLens.trace`) also available | `pip install farzanhossans-agentlens` |
 
 ---
 

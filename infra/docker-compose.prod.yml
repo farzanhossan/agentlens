@@ -11,7 +11,6 @@ version: "3.9"
 # Services exposed:
 #   - API:       http://localhost:4020
 #   - Dashboard: http://localhost:4021
-#   - Proxy:     http://localhost:8090
 # ============================================================================
 
 services:
@@ -67,29 +66,6 @@ services:
         condition: service_started
     ports:
       - "${DASHBOARD_PORT:-4021}:80"
-    networks:
-      - agentlens-prod
-
-  proxy:
-    build:
-      context: ..
-      dockerfile: apps/proxy/Dockerfile
-    restart: always
-    environment:
-      AGENTLENS_INGEST_URL: http://api:${API_PORT:-4020}/v1/spans
-      PORT: "${PROXY_PORT:-8090}"
-      LOG_LEVEL: info
-    ports:
-      - "${PROXY_PORT:-8090}:${PROXY_PORT:-8090}"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:$${PORT}/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      start_period: 5s
-      retries: 3
-    depends_on:
-      api:
-        condition: service_started
     networks:
       - agentlens-prod
 
