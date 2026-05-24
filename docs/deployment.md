@@ -55,23 +55,45 @@ That's it — AgentLens is running.
 Install the universal SDK:
 
 ```bash
+# Node
 npm install @farzanhossans/agentlens
+
+# Python
+pip install farzanhossans-agentlens
 ```
 
-Add one line at app startup:
+Add one line at app startup. Grab the project UUID from the dashboard
+(click the copy icon next to the project name on the Projects page) and
+the API key from the one-time "save your API key" banner shown when you
+create or rotate a key.
+
+**Node:**
 
 ```typescript
 import { AgentLens } from '@farzanhossans/agentlens'
 
 AgentLens.init({
-  apiKey: 'proj_xxx',                           // from the dashboard
-  endpoint: 'http://your-server:4020/v1/spans', // your self-hosted API URL
+  apiKey:    'proj_xxx',                            // from "save your API key" banner
+  projectId: '<your-project-uuid>',                 // copy from Projects page
+  endpoint:  'http://your-server:4020/v1/spans',    // your self-hosted API URL
 })
 ```
 
-That's it. Every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral from this app — whether it goes through the official SDK, axios, got, or node-fetch — is now traced. Streaming responses are tapped via `ReadableStream.tee()` so the bytes you read are byte-identical to the original. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
+**Python:**
 
-See [`packages/sdk-universal/README.md`](../packages/sdk-universal/README.md) for the full API reference (debug mode, PII toggle, custom flush interval, manual `AgentLens.trace()`).
+```python
+from agentlens import AgentLens
+
+AgentLens.init(
+    api_key='proj_xxx',
+    project_id='<your-project-uuid>',
+    endpoint='http://your-server:4020',  # base URL — SDK appends /v1/spans
+)
+```
+
+That's it. Every call to OpenAI, Anthropic, Gemini, Cohere, or Mistral from this app — whether it goes through the official SDK, axios, got, node-fetch (Node) or httpx / requests (Python) — is now traced. Streaming responses are tapped without buffering. Brotli/gzip/deflate response bodies are auto-decompressed. PII (emails, keys, SSNs, cards, IPs) is scrubbed before spans leave your process.
+
+See [`packages/sdk-universal/README.md`](../packages/sdk-universal/README.md) for the full API reference (debug mode, PII toggle, custom flush interval, `AgentLens.trace()` for grouping calls).
 
 ### Customising ports
 
