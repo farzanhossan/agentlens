@@ -7,6 +7,7 @@ import type {
   OutboundSpan,
   ParsedSpan,
   RawSpanPayload,
+  SpanStatus,
   TransportConfig,
 } from './types'
 
@@ -24,6 +25,7 @@ export class Transport {
   constructor(config: TransportConfig) {
     this.config = {
       apiKey: config.apiKey,
+      projectId: config.projectId,
       endpoint: config.endpoint,
       flushIntervalMs: config.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS,
       maxBatchSize: config.maxBatchSize ?? DEFAULT_MAX_BATCH_SIZE,
@@ -35,6 +37,8 @@ export class Transport {
   }
 
   push(payload: RawSpanPayload): void {
+    const startedAt = new Date(Date.now() - payload.latency).toISOString()
+    const endedAt = new Date().toISOString()
     let parsed: ParsedSpan
     try {
       parsed = parseSpan({
@@ -51,29 +55,35 @@ export class Transport {
       return
     }
 
-    const outbound = this.toOutbound(parsed, payload.latency, payload.status)
+    const outbound = this.toOutbound(parsed, payload, startedAt, endedAt)
     this.enqueue(outbound)
   }
 
   pushError(payload: ErrorPayload): void {
     const ids = this.resolveIds()
+    const startedAt = new Date(Date.now() - payload.latency).toISOString()
+    const endedAt = new Date().toISOString()
     const span: OutboundSpan = {
       spanId: ids.spanId,
       traceId: ids.traceId,
       parentSpanId: ids.parentSpanId,
+      projectId: this.config.projectId,
+      name: `${payload.provider}.error`,
       model: 'unknown',
       provider: payload.provider,
+      input: this.scrub(this.stringifyRequest(payload.request)),
+      output: '',
       inputTokens: 0,
       outputTokens: 0,
       totalTokens: 0,
       costUsd: 0,
-      inputText: this.scrub(this.stringifyRequest(payload.request)),
-      outputText: '',
+      latencyMs: payload.latency,
+      status: 'error',
+      errorMessage: payload.error,
+      metadata: { httpStatus: 0 },
+      startedAt,
+      endedAt,
       isStream: false,
-      error: payload.error,
-      latency: payload.latency,
-      status: 0,
-      timestamp: new Date().toISOString(),
     }
     this.enqueue(span)
   }
@@ -101,18 +111,35 @@ export class Transport {
     }
   }
 
-  private toOutbound(parsed: ParsedSpan, latency: number, status: number): OutboundSpan {
+  private toOutbound(
+    parsed: ParsedSpan,
+    payload: RawSpanPayload,
+    startedAt: string,
+    endedAt: string,
+  ): OutboundSpan {
     const ids = this.resolveIds()
+    const status: SpanStatus = payload.status >= 200 && payload.status < 400 ? 'success' : 'error'
     return {
-      ...parsed,
       spanId: ids.spanId,
       traceId: ids.traceId,
       parentSpanId: ids.parentSpanId,
-      inputText: this.scrub(parsed.inputText),
-      outputText: this.scrub(parsed.outputText),
-      latency,
+      projectId: this.config.projectId,
+      name: spanNameFor(payload),
+      model: parsed.model,
+      provider: parsed.provider,
+      input: this.scrub(parsed.inputText),
+      output: this.scrub(parsed.outputText),
+      inputTokens: parsed.inputTokens,
+      outputTokens: parsed.outputTokens,
+      totalTokens: parsed.totalTokens,
+      costUsd: parsed.costUsd,
+      latencyMs: payload.latency,
       status,
-      timestamp: new Date().toISOString(),
+      errorMessage: parsed.error,
+      metadata: { httpStatus: payload.status },
+      startedAt,
+      endedAt,
+      isStream: parsed.isStream,
     }
   }
 
@@ -156,12 +183,13 @@ export class Transport {
     if (this.config.debug) {
       // eslint-disable-next-line no-console
       console.log('[agentlens] span', {
+        name: span.name,
         model: span.model,
         provider: span.provider,
         inputTokens: span.inputTokens,
         outputTokens: span.outputTokens,
         costUsd: span.costUsd,
-        latency: span.latency,
+        latencyMs: span.latencyMs,
         isStream: span.isStream,
       })
     }
@@ -176,7 +204,6 @@ export class Transport {
     this.timer = setInterval(() => {
       void this.flush()
     }, this.config.flushIntervalMs)
-    // Don't keep the Node event loop alive on this interval alone
     if (typeof (this.timer as { unref?: () => void }).unref === 'function') {
       ;(this.timer as { unref: () => void }).unref()
     }
@@ -200,7 +227,6 @@ export class Transport {
       try {
         const res = await this.doFetch(body)
         if (res.ok) return
-        // 4xx — don't retry, drop
         if (res.status >= 400 && res.status < 500) {
           if (this.config.debug) {
             // eslint-disable-next-line no-console
@@ -224,8 +250,6 @@ export class Transport {
   }
 
   private async doFetch(body: string): Promise<{ ok: boolean; status: number }> {
-    // Use the ORIGINAL fetch, not a patched one. The interceptor stores the
-    // original on globalThis under a private key so we don't intercept ourselves.
     const f =
       (globalThis as { __agentlens_originalFetch?: typeof fetch }).__agentlens_originalFetch ??
       globalThis.fetch
@@ -236,12 +260,28 @@ export class Transport {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        // Hosted ingest expects X-API-Key. Send Authorization too for any
+        // gateways that may sit in front (some Cloudflare workers want it).
+        'x-api-key': this.config.apiKey,
         authorization: `Bearer ${this.config.apiKey}`,
       },
       body,
     })
     return { ok: res.ok, status: res.status }
   }
+}
+
+function spanNameFor(payload: RawSpanPayload): string {
+  const req = payload.request as Record<string, unknown> | null
+  // Detect endpoint kind from the request shape, no URL parsing needed.
+  if (req && Array.isArray(req.messages)) return `${payload.provider}.chat`
+  if (req && (typeof req.prompt === 'string' || typeof req.input === 'string')) {
+    return `${payload.provider}.completion`
+  }
+  if (req && (req.input !== undefined || req.contents !== undefined)) {
+    return `${payload.provider}.embedding`
+  }
+  return `${payload.provider}.call`
 }
 
 function sleep(ms: number): Promise<void> {

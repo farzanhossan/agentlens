@@ -1,6 +1,6 @@
 {
   "name": "@farzanhossans/agentlens",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Universal AI agent observability — 1 line to trace every LLM call (OpenAI, Anthropic, Gemini, Cohere, Mistral)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -16,10 +16,14 @@ export const AgentLens = {
     if (!config?.apiKey) {
       throw new Error('AgentLens.init requires an apiKey')
     }
+    if (!config?.projectId) {
+      throw new Error('AgentLens.init requires a projectId')
+    }
     initialized = true
 
     transport = new Transport({
       apiKey: config.apiKey,
+      projectId: config.projectId,
       endpoint: config.endpoint ?? DEFAULT_ENDPOINT,
       debug: config.debug ?? false,
       pii: config.pii ?? true,

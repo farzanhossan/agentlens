@@ -25,6 +25,7 @@ describe('Transport', () => {
     vi.useFakeTimers()
     const t = new Transport({
       apiKey: 'k',
+      projectId: 'p-test',
       endpoint: 'https://x.example/spans',
       flushIntervalMs: 100,
     })
@@ -51,7 +52,12 @@ describe('Transport', () => {
     const body = JSON.parse(calls[0].init?.body as string)
     expect(body.spans).toHaveLength(1)
     expect(body.spans[0].provider).toBe('openai')
-    expect(body.spans[0].outputText).toBe('hello')
+    expect(body.spans[0].output).toBe('hello')
+    expect(body.spans[0].projectId).toBe('p-test')
+    expect(body.spans[0].name).toBe('openai.chat')
+    expect(typeof body.spans[0].startedAt).toBe('string')
+    expect(typeof body.spans[0].endedAt).toBe('string')
+    expect(body.spans[0].status).toBe('success')
 
     t.shutdown()
   })
@@ -62,6 +68,7 @@ describe('Transport', () => {
 
     const t = new Transport({
       apiKey: 'k',
+      projectId: 'p-test',
       endpoint: 'https://x.example/spans',
       flushIntervalMs: 60_000,
       maxBatchSize: 2,
@@ -93,6 +100,7 @@ describe('Transport', () => {
 
     const t = new Transport({
       apiKey: 'k',
+      projectId: 'p-test',
       endpoint: 'https://x.example/spans',
       flushIntervalMs: 60_000,
       maxBatchSize: 1,
@@ -124,6 +132,7 @@ describe('Transport', () => {
 
     const t = new Transport({
       apiKey: 'k',
+      projectId: 'p-test',
       endpoint: 'https://x.example/spans',
       flushIntervalMs: 60_000,
       maxBatchSize: 1,
@@ -139,8 +148,9 @@ describe('Transport', () => {
     await new Promise((r) => setTimeout(r, 10))
     expect(capturedBody).not.toBeNull()
     const body = JSON.parse(capturedBody as unknown as string)
-    expect(body.spans[0].error).toBe('boom')
-    expect(body.spans[0].latency).toBe(42)
+    expect(body.spans[0].errorMessage).toBe('boom')
+    expect(body.spans[0].latencyMs).toBe(42)
+    expect(body.spans[0].status).toBe('error')
     expect(body.spans[0].provider).toBe('openai')
     t.shutdown()
   })

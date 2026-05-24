@@ -37,6 +37,7 @@ describe('trace() context propagation', () => {
   it('standalone LLM call gets a fresh traceId and no parent', async () => {
     AgentLens.init({
       apiKey: 'k',
+      projectId: 'p-trace-test',
       endpoint: 'https://ingest.example/spans',
       flushIntervalMs: 50,
       pii: false,
@@ -57,6 +58,7 @@ describe('trace() context propagation', () => {
   it('LLM call inside trace() is parented to the trace span and shares its traceId', async () => {
     AgentLens.init({
       apiKey: 'k',
+      projectId: 'p-trace-test',
       endpoint: 'https://ingest.example/spans',
       flushIntervalMs: 50,
       pii: false,
@@ -87,6 +89,7 @@ describe('trace() context propagation', () => {
   it('nested trace() blocks produce nested parentage and a shared traceId', async () => {
     AgentLens.init({
       apiKey: 'k',
+      projectId: 'p-trace-test',
       endpoint: 'https://ingest.example/spans',
       flushIntervalMs: 50,
       pii: false,
