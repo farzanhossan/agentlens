@@ -66,8 +66,8 @@ def patch_httpx() -> None:
     setattr(patched_send, _PATCHED_FLAG, True)
     setattr(patched_send_async, _PATCHED_FLAG, True)
     # setattr (not `Class.send = ...`) so mypy doesn't flag method reassignment.
-    setattr(httpx.Client, "send", patched_send)
-    setattr(httpx.AsyncClient, "send", patched_send_async)
+    setattr(httpx.Client, "send", patched_send)  # noqa: B010
+    setattr(httpx.AsyncClient, "send", patched_send_async)  # noqa: B010
 
 
 # ---------------------------------------------------------------------------

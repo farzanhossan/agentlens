@@ -44,7 +44,7 @@ def patch_requests() -> None:
 
     setattr(patched_send, _PATCHED_FLAG, True)
     # setattr (not `Session.send = ...`) so mypy doesn't flag method reassignment.
-    setattr(requests.Session, "send", patched_send)
+    setattr(requests.Session, "send", patched_send)  # noqa: B010
 
 
 # ---------------------------------------------------------------------------
