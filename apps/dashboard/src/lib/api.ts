@@ -14,6 +14,9 @@ import type {
   CreateAlertPayload,
   OverviewData,
   SystemHealth,
+  F1Response,
+  F1GroupBy,
+  MisclassificationsResponse,
 } from './types';
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
@@ -368,6 +371,66 @@ export async function fetchCostByAgent(params: CostRangeParams): Promise<CostByA
     costUsd: String(a.costUsd),
     traceCount: 0,
   }));
+}
+
+// ── Evaluations (F1) ────────────────────────────────────────────────────────
+
+export interface EvaluationFilterParams {
+  from?: string;
+  to?: string;
+  task?: string;
+  split?: string;
+  agentName?: string;
+  model?: string;
+}
+
+export interface F1Params extends EvaluationFilterParams {
+  groupBy?: F1GroupBy;
+}
+
+export interface MisclassificationParams extends EvaluationFilterParams {
+  limit?: number;
+  offset?: number;
+  expected?: string;
+  predicted?: string;
+}
+
+export async function fetchF1(params: F1Params): Promise<F1Response> {
+  const res = await api.get<F1Response>(`/projects/${getProjectId()}/evaluations/f1`, {
+    params: {
+      dateFrom: params.from,
+      dateTo: params.to,
+      task: params.task,
+      split: params.split,
+      agentName: params.agentName,
+      model: params.model,
+      groupBy: params.groupBy,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchMisclassifications(
+  params: MisclassificationParams,
+): Promise<MisclassificationsResponse> {
+  const res = await api.get<MisclassificationsResponse>(
+    `/projects/${getProjectId()}/evaluations/misclassifications`,
+    {
+      params: {
+        dateFrom: params.from,
+        dateTo: params.to,
+        task: params.task,
+        split: params.split,
+        agentName: params.agentName,
+        model: params.model,
+        limit: params.limit,
+        offset: params.offset,
+        expected: params.expected,
+        predicted: params.predicted,
+      },
+    },
+  );
+  return res.data;
 }
 
 // ── Alerts ────────────────────────────────────────────────────────────────────

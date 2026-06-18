@@ -97,6 +97,35 @@ const result = await AgentLens.trace('classify-intent', async (span) => {
 
 Nested `AgentLens.trace()` calls are automatically linked as parent/child spans.
 
+### Scoring classifications with F1
+
+For classification, routing, extraction, or labeling agents, attach the expected and
+predicted labels to a span and AgentLens computes precision, recall, F1, and accuracy on
+the **Evaluations** dashboard. You provide the labels — AgentLens does not judge outputs
+automatically in this version.
+
+```typescript
+await AgentLens.trace('classify-intent', async (span) => {
+  span.setInput(JSON.stringify({ userMessage }))
+
+  const predicted = await classify(userMessage)
+
+  span.setMetadata('agentlens', {
+    eval: {
+      expected: 'billing',     // ground-truth label (required)
+      predicted,               // model output label (required)
+      task: 'intent-classification', // optional, defaults to "default"
+      split: 'prod',                 // optional, defaults to "default"
+    },
+  })
+
+  return predicted
+})
+```
+
+Spans missing either `expected` or `predicted` (or with empty strings) are ignored by F1
+aggregation.
+
 ---
 
 ## What You Get
@@ -117,6 +146,14 @@ Full input/output timeline for every span in your agent run. See exactly what th
 Token usage and dollar cost broken down by model, agent, and date. Instant aggregations across millions of spans powered by Elasticsearch. Monthly budget tracking with alerts.
 
 ![Cost Analytics](./docs/screenshots/cost.png)
+
+### Evaluations (F1 Score)
+Track classification quality alongside cost and latency. Attach `expected` and `predicted`
+labels to spans via `metadata.agentlens.eval` and AgentLens aggregates micro-averaged
+precision, recall, F1, and accuracy over any time range. Drill into per-label, per-agent,
+per-model, or per-task breakdowns to find weak labels, and jump from any misclassification
+straight to its trace. Filter by task, split, agent, and model. Labels are user-provided —
+there is no automatic LLM judging in this version.
 
 ### Error Clustering
 Similar failures are auto-grouped with count badges and affected models. Spot patterns instantly instead of scrolling through logs. Powered by Elasticsearch `significant_terms` analysis.

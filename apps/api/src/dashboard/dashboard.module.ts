@@ -9,6 +9,8 @@ import { AlertsController } from './alerts/alerts.controller.js';
 import { AlertsService } from './alerts/alerts.service.js';
 import { CostController } from './cost/cost.controller.js';
 import { CostService } from './cost/cost.service.js';
+import { EvaluationsController } from './evaluations/evaluations.controller.js';
+import { EvaluationsService } from './evaluations/evaluations.service.js';
 import { OverviewController } from './overview/overview.controller.js';
 import { OverviewService } from './overview/overview.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -35,6 +37,7 @@ import { TraceGateway } from './websocket/trace.gateway.js';
     TracesController,
     SpansController,
     CostController,
+    EvaluationsController,
     AlertsController,
     OverviewController,
     SystemHealthController,
@@ -44,6 +47,7 @@ import { TraceGateway } from './websocket/trace.gateway.js';
     TracesService,
     SpansService,
     CostService,
+    EvaluationsService,
     AlertsService,
     TraceGateway,
     ElasticsearchService,

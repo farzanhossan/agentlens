@@ -8,6 +8,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { TracesPage } from './pages/TracesPage';
 import { TraceDetailPage } from './pages/TraceDetailPage';
 import { CostPage } from './pages/CostPage';
+import { EvaluationsPage } from './pages/EvaluationsPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { AlertHistoryPage } from './pages/AlertHistoryPage';
 import { TraceComparePage } from './pages/TraceComparePage';
@@ -44,6 +45,7 @@ export function App(): React.JSX.Element {
               <Route path="traces" element={<TracesPage />} />
               <Route path="traces/:traceId" element={<TraceDetailPage />} />
               <Route path="traces/compare" element={<TraceComparePage />} />
+              <Route path="evaluations" element={<EvaluationsPage />} />
               <Route path="cost" element={<CostPage />} />
               <Route path="alerts" element={<AlertsPage />} />
               <Route path="alerts/history" element={<AlertHistoryPage />} />

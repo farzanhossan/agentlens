@@ -177,6 +177,61 @@ export interface OverviewData {
   errorClusters?: ErrorCluster[];
 }
 
+// Evaluations (F1)
+export type F1GroupBy = 'label' | 'agent' | 'model' | 'task';
+
+export interface F1Summary {
+  evaluated: number;
+  correct: number;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  truePositive: number;
+  falsePositive: number;
+  falseNegative: number;
+}
+
+export interface F1BreakdownRow {
+  key: string;
+  evaluated: number;
+  support: number;
+  correct: number;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  truePositive: number;
+  falsePositive: number;
+  falseNegative: number;
+}
+
+export interface F1Response {
+  dateFrom: string;
+  dateTo: string;
+  summary: F1Summary;
+  breakdown: F1BreakdownRow[];
+}
+
+export interface Misclassification {
+  spanId: string;
+  traceId: string;
+  agentName: string | null;
+  model: string | null;
+  expected: string;
+  predicted: string;
+  task: string;
+  split: string;
+  startedAt: string;
+  inputPreview: string | null;
+  outputPreview: string | null;
+}
+
+export interface MisclassificationsResponse {
+  items: Misclassification[];
+  total: number;
+}
+
 // System Health
 export interface SystemHealth {
   elasticsearch: 'connected' | 'unavailable';
