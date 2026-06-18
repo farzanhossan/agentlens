@@ -34,6 +34,14 @@ function TracesIcon(): React.JSX.Element {
   );
 }
 
+function EvaluationsIcon(): React.JSX.Element {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 function CostIcon(): React.JSX.Element {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,6 +185,7 @@ function HealthIndicator(): React.JSX.Element {
 const mainNavItems: NavItem[] = [
   { to: '/overview', label: 'Overview', icon: <OverviewIcon /> },
   { to: '/traces', label: 'Traces', icon: <TracesIcon /> },
+  { to: '/evaluations', label: 'Evaluations', icon: <EvaluationsIcon /> },
   { to: '/live', label: 'Live Feed', icon: <LiveFeedIcon /> },
   { to: '/cost', label: 'Cost', icon: <CostIcon /> },
   { to: '/alerts', label: 'Alerts', icon: <AlertsIcon /> },
@@ -189,6 +198,7 @@ const bottomNavItems: NavItem[] = [
 const pageTitles: Record<string, string> = {
   '/overview': 'Overview',
   '/traces': 'Traces',
+  '/evaluations': 'Evaluations',
   '/live': 'Live Feed',
   '/cost': 'Cost',
   '/traces/compare': 'Compare Traces',
